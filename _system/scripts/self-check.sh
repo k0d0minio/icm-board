@@ -22,8 +22,8 @@ ROOT="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 [[ -d "$ROOT" ]] || { echo "Not a directory: $ROOT" >&2; exit 2; }
 cd "$ROOT" || exit 2
 
-bold=$'\033[1m'; red=$'\033[31m'; green=$'\033[32m'; dim=$'\033[2m'; off=$'\033[0m'
-[[ -t 1 ]] || { bold=; red=; green=; dim=; off=; }
+bold=$'\033[1m'; red=$'\033[31m'; green=$'\033[32m'; off=$'\033[0m'
+[[ -t 1 ]] || { bold=; red=; green=; off=; }
 
 problems=0
 report() { printf '  %s%s%s %s\n' "$red" "$1" "$off" "$2"; problems=$((problems + 1)); }

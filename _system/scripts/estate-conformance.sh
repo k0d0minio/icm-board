@@ -151,6 +151,9 @@ if (( ! QUIET )); then
     [[ -n "$name" ]] || continue
     printf '      %swarn%s %-24s %s\n' "$yellow" "$off" "$name" "$w"
   done <<<"$warn_rows"
+  if (( n_gap == 0 && n_warn == 0 )); then
+    echo "  ${green}every adopted repo carries the baseline${off}"
+  fi
   if (( ${#unadopted[@]} > 0 )); then
     echo
     echo "${dim}Not adopted — no .icm/ at all. Outside the estate, or /project has never run:${off}"

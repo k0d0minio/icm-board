@@ -25,8 +25,8 @@ done
 
 EXEMPT=("sustentus")
 
-bold=$'\033[1m'; dim=$'\033[2m'; off=$'\033[0m'
-[[ -t 1 ]] || { bold=; dim=; off=; }
+bold=$'\033[1m'; off=$'\033[0m'
+[[ -t 1 ]] || { bold=; off=; }
 
 mapfile -t repos < <(
   find "$APPS_ROOT" -mindepth 2 -maxdepth 3 -name .git \

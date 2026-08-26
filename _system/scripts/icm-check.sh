@@ -9,11 +9,15 @@
 #   .icm/intake/_done/       finished-ticket folder
 #   .icm/docs/               ad hoc reports
 #   .claude/settings.json    clean policy baseline
+#   .claude/hooks/*          canonical estate hooks (session-start, wrap-reminder)
+#   .claude/skills/*         canonical estate skills (ticket-craft, pr-conventions)
 #   CLAUDE.md                reported only — never templated (each repo writes its own)
 #   .icm/project.md          reported only — /project writes it from an interrogation
 #
 # --fix creates ONLY what is missing, from the template; existing files are never
-# touched. Prefix resolution: existing tickets → known map → derived from repo name
+# touched. A repo's copy of a canonical asset that has diverged from the template is
+# reported as drift and never repaired — repos own their copies (template/README.md).
+# Prefix resolution: existing tickets → known map → derived from repo name
 # (flagged "suggested" — confirm before cutting the first ticket).
 #
 # Usage: _system/scripts/icm-check.sh [--fix] [root]
@@ -39,6 +43,15 @@ if [[ ! -d "$TEMPLATE/icm" || ! -d "$TEMPLATE/claude" ]]; then
 fi
 
 EXEMPT=("sustentus")
+
+# Canonical Claude assets (template/claude/…): seeded when missing, drift-reported when
+# a repo's copy diverges — never overwritten. Paths relative to <repo>/.claude/.
+CANONICAL=(
+  "hooks/session-start.sh"
+  "hooks/wrap-reminder.sh"
+  "skills/ticket-craft/SKILL.md"
+  "skills/pr-conventions/SKILL.md"
+)
 
 # Known ticket prefixes (contracts/TICKETS.md); anything else is derived + flagged.
 prefix_for() {
@@ -115,6 +128,25 @@ for repo in "${repos[@]}"; do
   # --- .claude baseline ---
   [[ -d "$repo/.claude" ]]               || missing+=(".claude/")
   [[ -f "$repo/.claude/settings.json" ]] || missing+=(".claude/settings.json")
+  for asset in "${CANONICAL[@]}"; do
+    [[ -f "$repo/.claude/$asset" ]] || missing+=(".claude/$asset")
+  done
+
+  # --- canonical drift (report-only, never repaired — repos own their copies) ---
+  for asset in "${CANONICAL[@]}"; do
+    if [[ -f "$repo/.claude/$asset" ]] && ! cmp -s "$TEMPLATE/claude/$asset" "$repo/.claude/$asset"; then
+      warns+=("drift from canonical: .claude/$asset differs from _system/template/claude/$asset")
+    fi
+  done
+  # Hooks seeded into a repo whose settings.json predates the wiring are inert; say so.
+  if [[ -f "$repo/.claude/settings.json" ]]; then
+    for hook in session-start.sh wrap-reminder.sh; do
+      if [[ -f "$repo/.claude/hooks/$hook" ]] && \
+         ! grep -q "$hook" "$repo/.claude/settings.json" 2>/dev/null; then
+        warns+=("hook .claude/hooks/$hook exists but settings.json never registers it (inert)")
+      fi
+    done
+  fi
 
   # --- report-only checks (agent/human territory, never auto-fixed) ---
   [[ -f "$repo/CLAUDE.md" ]] || warns+=("no CLAUDE.md (Layer-0 identity/routing file)")
@@ -158,11 +190,22 @@ for repo in "${repos[@]}"; do
       cp "$TEMPLATE/claude/settings.json" "$repo/.claude/settings.json"
       actions+=("created .claude/settings.json")
     fi
+    for asset in "${CANONICAL[@]}"; do
+      if [[ ! -f "$repo/.claude/$asset" ]]; then
+        mkdir -p "$(dirname "$repo/.claude/$asset")"
+        cp "$TEMPLATE/claude/$asset" "$repo/.claude/$asset"
+        case "$asset" in hooks/*) chmod +x "$repo/.claude/$asset" ;; esac
+        actions+=("created .claude/$asset")
+      fi
+    done
     fixed=$((fixed + 1))
     missing=()
     # re-verify what we just created
     for p in .icm/intake/README.md .icm/intake/_done .icm/docs .claude/settings.json; do
       [[ -e "$repo/$p" ]] || missing+=("$p (fix failed)")
+    done
+    for asset in "${CANONICAL[@]}"; do
+      [[ -f "$repo/.claude/$asset" ]] || missing+=(".claude/$asset (fix failed)")
     done
   fi
 

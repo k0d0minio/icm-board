@@ -7,22 +7,27 @@
 
 ## What this is
 
-The orchestrator of Jamie Nisbet's repo estate: the contracts every repo is measured
-against, the scripts that measure them, the three commands that do the work, and the
-workflows that keep the measurement honest without needing the repos on disk. It holds no
-application code and ships no product. Its one user is Jamie; its one job is that every
-other repo in the estate stays aligned and well structured.
+The second brain of Jamie Nisbet's business, written as an ICM system: three workspaces
+(`sell`, `start`, `deliver`) that carry the whole client lifecycle as stage contracts
+with human gates; the knowledge layer they cite (services, pricing, voice, terms,
+stack); the contracts every repo is measured against; the scripts that measure them; and
+the canonical Claude assets seeded across the estate. It holds no application code and
+ships no product. Its one user is Jamie; its jobs are that every deal moves through a
+defined, improvable process, and every repo in the estate stays aligned.
 
 ## Intent
 
 - **For whom** — Jamie, and every Claude session opened at `~/Apps` or in any estate repo.
-- **The job** — keep the estate conformant: every repo carries `.icm/` and a Layer-0
-  `CLAUDE.md`, every ticket meets the contract, and drift is visible before it compounds.
-- **Done looks like** — a repo can be adopted, analysed and ticketed without anyone
-  remembering how; and a repo that has drifted says so without being asked.
-- **Explicitly not** — a pipeline driver. The folders are the orchestration. This repo
-  *checks* structure; it never runs a build, a deploy, or a client's work. The house rule
-  "never build an orchestrator" survives the rename of this repo, and outranks it.
+- **The job** — two, and the first wins when they conflict: (1) the business's processes
+  and knowledge live here, versioned and improvable, so no deal reinvents them;
+  (2) the estate stays conformant, with drift visible before it compounds.
+- **Done looks like** — a lead can be taken from first contact to a running project by
+  walking folders anyone could read; a repo can be adopted, analysed and ticketed
+  without anyone remembering how; and both say so when they drift.
+- **Explicitly not** — a pipeline driver. The folders are the orchestration; stages run
+  when Jamie enters them, and no outbound action leaves a session. The house rule
+  "never build an orchestrator" survives the return of the business workspaces, and
+  outranks everything here.
 
 ## Business logic
 
@@ -40,7 +45,12 @@ other repo in the estate stays aligned and well structured.
 ## Features
 | Feature | State | Tickets |
 |---|---|---|
-| Three commands — `/project`, `/day`, `/icm-check` | shipped | — |
+| Four commands — `/client`, `/project`, `/day`, `/icm-check` (thin routers) | shipped | — |
+| Sell workspace — intake → discovery → quote → proposal | shipped, unproven | — |
+| Start workspace — onboarding → repo → kickoff | shipped, unproven | — |
+| Deliver workspace — the three rituals as stage contracts | shipped | — |
+| Knowledge layer — services, pricing, voice, terms, stack | scaffolded | ICM-009 |
+| Canonical Claude asset library + drift report | shipped, unproven | ICM-010 |
 | Four estate scripts — icm-check, tickets-board, ticket-hygiene, pull-all | shipped | ICM-003, ICM-004 |
 | Self-check CI — shellcheck, contract links, ticket lint | shipped | — |
 | Remote conformance CI over the `k0d0minio` org | shipped, unproven | ICM-005 |
@@ -61,6 +71,13 @@ other repo in the estate stays aligned and well structured.
 |---|---|---|---|
 | D1 | The control layer gets its own repo, `icm-board`; `jamienisbet` becomes a normal repo under `projects/` and keeps its remote, CI and tickets | 2026-08-26 | the 2026-08-12 consolidation |
 | D2 | Ticketing and workflows live next to the code whose logic they describe, not centrally | 2026-08-26 | — |
+| D3 | The business processes return as **full ICM workspaces** (Van Clief grammar: numbered stages, CONTEXT.md contracts, review gates) — contracts + human gates, never a driver | 2026-08-26 | the 2026-08-12 factory retirement, narrowly |
+| D4 | The whole repo is one five-layer tree: `sell`/`start`/`deliver` under `workspaces/`; the three rituals become deliver's stage contracts; slash commands survive as thin routers. **The stage contracts are the process** | 2026-08-26 | "the commands are the process" (2026-08-14 consolidation), in wording only |
+| D5 | Deal artifacts are **tracked in git** at `workspaces/deals/<slug>/` (private repo; cloud sessions must run the pipelines; past deals are precedent). Durable docs copy into the client repo at kickoff; never a secret in a deal folder | 2026-08-26 | — |
+| D6 | This repo holds the business **knowledge layer** (`_system/knowledge/`): services, pricing (fixed-price · retainer · in-kind; no day rate), voice, terms, stack — filled via `_system/setup/questionnaire.md`, honest gaps until then | 2026-08-26 | — |
+| D7 | Estate Claude assets: **canonical library** in `_system/template/claude/` (session-start + wrap-reminder hooks, ticket-craft + pr-conventions skills); `icm-check.sh` seeds what's missing and reports drift, never overwrites — the repo's copy wins | 2026-08-26 | AUDIT open decisions #1 (skills layering) and #3 (hook strategy) |
+| D8 | Client acquisition covers **inbound + outbound** (qualification, target profile, outreach playbook) — marketing/content stays with `jamienisbet` | 2026-08-26 | — |
+| D9 | Proposals are **markdown → PDF** in the deal folder; markdown canonical, PDF a build artifact | 2026-08-26 | — |
 
 ## Open questions
 
@@ -75,3 +92,4 @@ other repo in the estate stays aligned and well structured.
 | Date | Commit | What changed |
 |---|---|---|
 | 2026-08-26 | — | Seeded at the split. Not a `/project` run; intent taken verbatim from the session that created this repo. |
+| 2026-08-26 | — | The second-brain build (cloud session, interrogation-driven — decisions D3–D9 are Jamie's answers verbatim). Three workspaces created, rituals rehoused, knowledge layer scaffolded, canonical asset library seeded into the template. ICM-006 amended; ICM-009/ICM-010 cut. |

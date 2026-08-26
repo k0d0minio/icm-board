@@ -48,9 +48,11 @@ the run log dates it.
 
 ## Decisions needed from Jamie
 
-1. **Skills layering** — repo forks vs global copies: global-only, repo-only, or documented shadowing rule?
+1. ~~**Skills layering**~~ — decided 2026-08-26 (see Done): canonical library in
+   `_system/template/claude/`, seeded + drift-reported, repo wins.
 2. **Pipeline upstream** — is Gen-3 a template product? If so, sustentus or remi-ai is canonical, and is remi-ai worth maintaining at zero runs?
-3. **Hook strategy** — repo copies exist for web/cloud parity but have drifted 3 ways. Keep, drop, or generate from the global?
+3. ~~**Hook strategy**~~ — decided 2026-08-26 (see Done): same canonical library; seeded
+   hooks stay inert until a repo's `settings.json` wires them, and `icm-check` reports that.
 4. **Is merging a PR** an outward action Claude may take, or always yours?
 5. **`gh` CLI** — banned by sustentus docs, granted in settings. Which is real?
 6. **The ≤50-line `CLAUDE.md` rule** — teaching material says it, flagship repos break it. Which moves?
@@ -64,6 +66,14 @@ the run log dates it.
 - Global skills emptied to `~/.claude/skills-archive-2026-08-10/` · hook double-fire fixed (global defers to repo copy) · `settings.json` allow shrunk 53→9 with a deny-list added (2026-08-10).
 - Client sites are build-once-hand-off — stub configs are fine, by Jamie's July answer.
 - The ICM business factory retired (2026-08-12); the control layer is `_system/` + `.claude/`, not a factory.
+  **Narrowly superseded 2026-08-26** (decision D3, `.icm/project.md`): the business
+  processes returned as ICM *workspaces* — stage contracts + human gates under
+  `workspaces/`, per `_system/contracts/WORKSPACES.md`. Nothing auto-runs; the
+  never-build-an-orchestrator rule stands.
+- **Skills layering + hook strategy decided** (2026-08-26, D7): the canonical estate
+  assets live in `_system/template/claude/` (2 hooks, 2 skills); `icm-check.sh` seeds
+  what's missing and reports drift, never overwrites — the repo's copy wins. The old
+  3-way hook drift becomes visible via the drift report instead of being resolved by fiat.
 - **jamienisbet** — question retired 2026-08-14: the repo *is* the estate control layer, so "run a client through it or freeze it" no longer applies.
 - Six commands consolidated to three; `PROCESS.md` and `WORK-TRACKING.md` retired into the commands and the specs (2026-08-14).
 

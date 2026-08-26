@@ -11,9 +11,13 @@
 # It mirrors icm-check.sh's severity model exactly, because two tools disagreeing about
 # what "conformant" means is worse than one tool:
 #   GAP   what --fix would seed — intake/, intake/README.md, _done/, docs/,
-#         .claude/, .claude/settings.json. These fail the run.
+#         .claude/, .claude/settings.json, and the canonical Claude assets
+#         (hooks + skills from _system/template/claude/). These fail the run.
 #   warn  agent/human territory, never auto-fixed — no CLAUDE.md, no project.md,
 #         a tracked settings.local.json, a loose TODO.md. Reported, never fatal.
+#         (Canonical *drift* is icm-check.sh's warn alone — content comparison over
+#         the API would cost a request per file per repo for a question the local
+#         run answers better.)
 #
 # Membership is the one thing the API cannot tell us: on disk, "in projects/" means
 # "in the estate". Here, a repo carrying no .icm/ at all is reported as **not adopted**
@@ -116,6 +120,22 @@ for repo in "${repos[@]}"; do
     # Visible over the API at all means it is committed — which is the warn condition.
     [[ "$cl" == *" settings.local.json "* ]] && \
       warns+=(".claude/settings.local.json is tracked (accretion layer should stay local)")
+    # Canonical assets (mirrors icm-check.sh's CANONICAL list; presence only — drift
+    # comparison is the local script's job).
+    if [[ "$cl" == *" hooks "* ]]; then
+      hooks=$(ls_path "$repo" .claude/hooks)
+      [[ "$hooks" == *" session-start.sh "* ]] || missing+=(".claude/hooks/session-start.sh")
+      [[ "$hooks" == *" wrap-reminder.sh "* ]] || missing+=(".claude/hooks/wrap-reminder.sh")
+    else
+      missing+=(".claude/hooks/session-start.sh" ".claude/hooks/wrap-reminder.sh")
+    fi
+    if [[ "$cl" == *" skills "* ]]; then
+      skills=$(ls_path "$repo" .claude/skills)
+      [[ "$skills" == *" ticket-craft "* ]]   || missing+=(".claude/skills/ticket-craft/SKILL.md")
+      [[ "$skills" == *" pr-conventions "* ]] || missing+=(".claude/skills/pr-conventions/SKILL.md")
+    else
+      missing+=(".claude/skills/ticket-craft/SKILL.md" ".claude/skills/pr-conventions/SKILL.md")
+    fi
   else
     missing+=(".claude/" ".claude/settings.json")
   fi

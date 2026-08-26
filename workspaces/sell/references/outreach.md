@@ -17,9 +17,19 @@ action from a session, ever. Voice per
 - **Track it like inbound.** The moment they reply, a Neon row exists and the ladder
   applies — outreach is just another way to arrive at `new`.
 
+## Where outbound aims
+
+Per [`target-profile.md`](target-profile.md) (2026-08-26): the growth bet is **SMEs with
+a process worth automating** — the AI consulting line. Local site work grows through
+referrals and the in-person network, which outbound supports but does not replace. The
+channel where those SMEs get found is still unestablished — treat the first outbound
+deals as experiments and record per deal folder which channel produced the reply.
+
 ## Message shapes
 
-Each shape gets a real example once ICM-009 lands; until then the slots are honest gaps.
+Each shape still needs a real example — the questionnaire run of 2026-08-26 had no past
+outreach to paste (little cold outbound has been sent). The shapes stand; fill each slot
+from the first real message that gets a reply.
 
 ### Cold — first contact
 — not yet established. Shape: one observed specific about them → one relevant thing we

@@ -65,4 +65,4 @@ each `— not yet established` marker. Skip freely — a skipped question stays 
 
 | Date | Sections filled | By |
 |---|---|---|
-| — | — | — |
+| 2026-08-26 | All seven, conversationally (ICM-009). Still open, deliberately: voice example pastes (Q8) · outreach message examples (Q20) · web-app/AI standing inclusions (Q3, partial) · the AI-SME outbound channel (Q21, partial). Each is marked in its file. | Jamie + Claude session |

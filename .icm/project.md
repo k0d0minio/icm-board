@@ -49,7 +49,7 @@ defined, improvable process, and every repo in the estate stays aligned.
 | Sell workspace — intake → discovery → quote → proposal | shipped, unproven | — |
 | Start workspace — onboarding → repo → kickoff | shipped, unproven | — |
 | Deliver workspace — the three rituals as stage contracts | shipped | — |
-| Knowledge layer — services, pricing, voice, terms, stack | scaffolded | ICM-009 |
+| Knowledge layer — services, pricing, voice, terms, stack | shipped | — |
 | Canonical Claude asset library + drift report | shipped, unproven | ICM-010 |
 | Four estate scripts — icm-check, tickets-board, ticket-hygiene, pull-all | shipped | ICM-003, ICM-004 |
 | Self-check CI — shellcheck, contract links, ticket lint | shipped | — |
@@ -93,3 +93,4 @@ defined, improvable process, and every repo in the estate stays aligned.
 |---|---|---|
 | 2026-08-26 | — | Seeded at the split. Not a `/project` run; intent taken verbatim from the session that created this repo. |
 | 2026-08-26 | — | The second-brain build (cloud session, interrogation-driven — decisions D3–D9 are Jamie's answers verbatim). Three workspaces created, rituals rehoused, knowledge layer scaffolded, canonical asset library seeded into the template. ICM-006 amended; ICM-009/ICM-010 cut. |
+| 2026-08-26 | — | ICM-009 done in the same session: questionnaire run conversationally, all seven sections. Knowledge layer + target-profile + outreach filled with Jamie's real answers (band €1.000–€2.500 sites, €500 floor, method-not-band for apps/AI, scoped retainers €200–€4.000/mo, 50/50 default, two revision rounds, both ownership patterns, stack confirmed as policy, profile weighted to AI). Deliberate remaining gaps: voice/outreach example pastes, app/AI standing inclusions, the AI-SME channel. |

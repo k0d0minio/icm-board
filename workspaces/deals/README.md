@@ -42,6 +42,25 @@ not a broken one. Numbering continues across sell → start because it is one st
 One dated line per event that matters: sent, heard back, quoted, went quiet, won, lost.
 ```
 
+## Adopted deals — relationships that predate the system
+
+The business ran for years before this workspace existed; those relationships are
+**adopted, never re-enacted** (house rule: adopt or stop). Nothing gets orphaned, and
+nothing gets a fake history:
+
+- The folder is created at the deal's **true stage**, confirmed with Jamie. `DEAL.md`
+  carries an extra `Adopted` row (`| Adopted | 2026-08-27, at 05_onboarding |`) and its
+  Ladder/Stage rows reflect reality, not the pipeline's beginning.
+- Real artifacts that exist — a sent proposal, discovery notes, the client's own
+  emails — are copied in under their stage numbers, each opening with one provenance
+  line (*"adopted 2026-08-27 from &lt;where&gt;; written &lt;when&gt;"*).
+- Stages that happened before the system are **honest gaps, never reconstructed** — no
+  invented `01-intake.md` for a client won a year ago. The stage contracts apply from
+  the adopted stage forward; the look-back at `07_kickoff` still runs on what exists.
+- A relationship already **delivered** needs no deal folder at all: its record is the
+  Neon row and the client repo, and its doorway is `/project`, not `/client`. Deal
+  folders serve deals in motion.
+
 ## Rules
 
 - **Never a secret.** No credentials, tokens, or identity documents — an access grant is

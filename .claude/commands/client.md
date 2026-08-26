@@ -11,16 +11,24 @@ ambiguous; never guess between two similar names.
 **Routing, not process** — the stage contracts are the process:
 
 1. Find the deal: `workspaces/deals/<slug>/` matching the argument.
-2. **No folder** → this is a new relationship. Confirm with Jamie (inbound lead or
-   outbound prospect), then enter
+2. **No folder, genuinely new** → confirm with Jamie (inbound lead or outbound
+   prospect), then enter
    [`workspaces/sell/stages/01_intake/CONTEXT.md`](../../workspaces/sell/stages/01_intake/CONTEXT.md).
-3. **Folder exists** → read its `DEAL.md`. The `Stage` row names the next stage to run;
+3. **No folder, but the relationship predates the system** — a Neon row already at
+   `talking` or `client`, a repo, a proposal already sent → **adopt, never
+   fabricate**: create the folder at its *true* stage (confirmed with Jamie), fold in
+   the real artifacts that exist under their stage numbers with a provenance line
+   each, and leave pre-system stages as honest gaps. Format:
+   [`workspaces/deals/README.md`](../../workspaces/deals/README.md) § Adopted deals.
+   A relationship already delivered gets no folder at all — point at
+   `/project <repo>` instead.
+4. **Folder exists** → read its `DEAL.md`. The `Stage` row names the next stage to run;
    read that stage's `CONTEXT.md` under
    [`workspaces/sell/`](../../workspaces/sell/CONTEXT.md) or
    [`workspaces/start/`](../../workspaces/start/CONTEXT.md) and follow it. State the
    stage out loud before working, so Jamie can correct it — the folder may be behind
    the truth.
-4. A deal past `07_kickoff`, or one whose ladder rung is `lost`, gets a summary and a
+5. A deal past `07_kickoff`, or one whose ladder rung is `lost`, gets a summary and a
    pointer (`/project <repo>` for a running client; nothing to do for a lost one) — not
    a re-run.
 

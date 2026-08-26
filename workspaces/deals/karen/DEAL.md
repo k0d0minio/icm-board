@@ -11,9 +11,10 @@
 | Company | Barzinho, Ribamar (operated by Karen under a lease from Afonso / BARZA) |
 | Repo | k0d0minio/barzinho |
 
-> **No Neon row existed at adoption.** This relationship was invisible to the dashboard
-> entirely. Jamie's decision in the ICM-011 sweep: create the row as `lost` and archive
-> it. Until he does, the Ladder above is the deal's own record, not a mirror.
+> **No Neon row existed at adoption** — this relationship was invisible to the dashboard
+> entirely. Jamie created it on 2026-08-26 and set it `lost`, so the Ladder above is a
+> true mirror again. The row carries no delivery repo and no deal terms, which is correct
+> for a deal that never closed.
 
 ## Log
 - 2026-06-27 — negotiation workspace opened; facts gathered from the questionnaire.
@@ -25,7 +26,8 @@
 - 2026-07-08 → 2026-08-26 — **quiet.** No further deal activity; the only commits after
   this date are estate housekeeping, not negotiation.
 - 2026-08-26 — adopted into the pipeline by the ICM-011 sweep and marked **lost**
-  (Jamie's decision). Folder and log kept: if Karen comes back, this same folder reopens.
+  (Jamie's decision). Neon row created the same day. Folder and log kept: if Karen comes
+  back, this same folder reopens.
 
 ## Where it stood when it went quiet
 

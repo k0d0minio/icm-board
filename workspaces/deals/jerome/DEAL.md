@@ -1,4 +1,4 @@
-# Le Pavillon Vert — deal
+# Jerome — deal (Le Pavillon Vert)
 
 | | |
 |---|---|
@@ -9,17 +9,19 @@
 | Value | — see `proposal.pdf`; never entered in the dashboard |
 | Source | pre-system — not recorded |
 | Company | Le Pavillon Vert — brasserie and events venue, Château-ferme de Falnuée, Gembloux, Belgium |
-| Repo | k0d0minio/le-pavillon-vert |
+| Repo | k0d0minio/le-pavillon-vert (not connected to the row) |
 
-> **No Neon row existed at adoption**, and no contact name is recorded anywhere in the
-> repo — the folder is named for the business because that is all the record holds.
-> Jamie's decision in the ICM-011 sweep: **lost**. The folder is kept as precedent.
+> **No Neon row existed at adoption**, and the repo records no contact name — the folder
+> was first created as `le-pavillon-vert/`. Jamie created the row on 2026-08-26 and set it
+> `lost`, which is where the name **Jerome** came from; the folder was renamed to match
+> the `01_intake` rule that a slug is the person's name.
 
 ## Log
 - 2026-07-14 — repo opened.
 - 2026-07-15 — landing page built and `proposal.pdf` produced.
 - 2026-07-15 → 2026-08-26 — **quiet.** Later commits are estate housekeeping only.
-- 2026-08-26 — adopted by the ICM-011 sweep and marked **lost** (Jamie's decision).
+- 2026-08-26 — adopted by the ICM-011 sweep and marked **lost** (Jamie's decision); Neon
+  row created the same day.
 
 ## The artifact
 

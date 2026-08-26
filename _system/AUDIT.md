@@ -56,7 +56,8 @@ the run log dates it.
 4. **Is merging a PR** an outward action Claude may take, or always yours?
 5. **`gh` CLI** — banned by sustentus docs, granted in settings. Which is real?
 6. **The ≤50-line `CLAUDE.md` rule** — teaching material says it, flagship repos break it. Which moves?
-7. **barzinho** — is the deal still live? Gates the history-scrub urgency.
+7. ~~**barzinho**~~ — answered 2026-08-26 (see Done): the deal is dead, so nothing gates
+   the history scrub any more — `ICM-008` proceeds on its own merits.
 8. **Scheduled routines** — wanted in July, none exist. First candidate: a weekly automated re-run of this audit's checks.
 9. **tenderdesk / courseday** — active, migrate, or archive?
 
@@ -75,6 +76,12 @@ the run log dates it.
   what's missing and reports drift, never overwrites — the repo's copy wins. The old
   3-way hook drift becomes visible via the drift report instead of being resolved by fiat.
 - **jamienisbet** — question retired 2026-08-14: the repo *is* the estate control layer, so "run a client through it or freeze it" no longer applies.
+- **barzinho answered** (2026-08-26, the ICM-011 adoption sweep): the deal with Karen is
+  **not live**. Proposal sent 2026-06-30, her counter analysed and answered 2026-07-08,
+  then silence — every later commit is estate housekeeping. Marked `lost` in Neon and
+  adopted as `workspaces/deals/karen/`, folder and negotiation documents kept as
+  precedent. The history-scrub urgency this question gated is therefore gone:
+  `ICM-008` (untrack the P&L PDFs) stands on its own, at its own priority.
 - Six commands consolidated to three; `PROCESS.md` and `WORK-TRACKING.md` retired into the commands and the specs (2026-08-14).
 
 ---

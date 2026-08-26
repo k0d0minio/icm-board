@@ -1,7 +1,7 @@
 # ICM-011 — the adoption sweep, run 2026-08-26
 
 *The one-time record of walking the ladder with Jamie. Ticket:
-[`ICM-011`](../intake/ICM-011-adopt-inflight-relationships.md). Source of truth for the
+[`ICM-011`](../intake/_done/ICM-011-adopt-inflight-relationships.md). Source of truth for the
 rungs: the admin dashboard (`app.jamienisbet.com`), read live during the sweep.*
 
 ## What the ladder held
@@ -17,11 +17,11 @@ rungs: the admin dashboard (`app.jamienisbet.com`), read live during the sweep.*
 | [`alix-hahusseau`](../../workspaces/deals/alix-hahusseau/DEAL.md) | Alix Hahusseau · Berceo | `talking` | `01_intake` | none |
 | [`dragon`](../../workspaces/deals/dragon/DEAL.md) | Dragon · Private chef | `talking` | `01_intake` | none |
 | [`billy-carlson`](../../workspaces/deals/billy-carlson/DEAL.md) | Billy Carlson · Vinecliff | `talking` | `01_intake` | none |
-| [`alex-valexo`](../../workspaces/deals/alex-valexo/DEAL.md) | Alex Valexo · Alfredo | `talking` | `01_intake` | none |
+| [`alex-valexo`](../../workspaces/deals/alex-valexo/DEAL.md) | Alex Valexo · Alfredo | `lost` | `01_intake` | none |
 | [`casey-hebbel`](../../workspaces/deals/casey-hebbel/DEAL.md) | Casey Hebbel · Broadway | `talking` | `03_quote` | 20 questionnaire answers → `02-discovery-notes.md` |
-| [`karen`](../../workspaces/deals/karen/DEAL.md) | *(none)* | `lost` | `04_proposal` | proposal, counter-analysis, structure memo, confirmed facts, diligence questions |
-| [`le-pavillon-vert`](../../workspaces/deals/le-pavillon-vert/DEAL.md) | *(none)* | `lost` | `04_proposal` | `proposal.pdf` referenced, not copied |
-| [`collabimmo`](../../workspaces/deals/collabimmo/DEAL.md) | *(none)* | *(none)* | `01_intake` | none — follow-on only |
+| [`karen`](../../workspaces/deals/karen/DEAL.md) | Karen · Barzinho | `lost` | `04_proposal` | proposal, counter-analysis, structure memo, confirmed facts, diligence questions |
+| [`jerome`](../../workspaces/deals/jerome/DEAL.md) | Jerome · Le Pavillon Vert | `lost` | `04_proposal` | `proposal.pdf` referenced, not copied |
+| [`magali`](../../workspaces/deals/magali/DEAL.md) | Magali · CollabImmo | `client` | `01_intake` | none — follow-on only |
 
 **Jamie's decision on the five bare `talking` rows:** adopt at `01_intake`, not
 `02_discovery`. They have gone quiet 8–14 days with no artifacts and no terms, so the
@@ -38,12 +38,12 @@ Their record is the Neon row and the client repo; the doorway is `/project`, not
 
 | Row | Repo | Note |
 |---|---|---|
-| Max Rettich · Boys to Men Retreat | `boystomenretreat` | **Jamie's decision: delivered.** Deal terms and `work_started_at` were simply never set — a dashboard gap, not a pipeline gap. |
+| Max Rettich · Boys to Men Retreat | `boystomenretreat` | **Jamie's decision: delivered.** Terms were never set; €1,000 entered during the sweep. |
 | Tristan Boxford · Little Grass Shack | `little-grass-shack` | €150, delivered |
 | Kuuipo · Jardim | `cafe-jardim` | €150, delivered |
 | Miriam · Accounting | `miriamfridman` | barter, delivered |
 | Morgane Paquet · Remi AI | `remi-ai` | 10% equity, work started |
-| David Hamilton · Sustentus | *(not connected)* | €3,890/mo, work started |
+| David Hamilton · Sustentus | *(different GitHub org)* | €3,890/mo, work started. The delivery repo lives outside `k0d0minio`, so the dashboard cannot link it — a known limitation, not a gap. |
 | Dungeons & Dragons | `dungeons-dragons` | barter, work started |
 | Diogo · Agorasim | `agorasim` | 4% commission, work started |
 
@@ -72,28 +72,42 @@ carry no Neon row and no deal paper. They stay folder-less under the standing ru
 `the-library` is additionally the one repo in the estate with **no `.icm/`** — a
 conformance gap, not a deal gap.
 
-## What this sweep could not do — Neon actions for Jamie
+## The Neon actions — all taken, 2026-08-26
 
-Nothing in a session writes to Neon, and no outbound action was taken. These are the
-dashboard steps the sweep depends on:
+Nothing in a session writes to Neon and no outbound action was taken; Jamie performed
+these in the dashboard while the sweep was open, and the ladder was re-read afterwards to
+confirm. It went from **14 rows (6 open · 8 client · 0 lost)** to
+**17 rows (5 open · 9 client · 3 lost)**.
 
-- [ ] **Karen / Barzinho** — create the row, set `lost`, archive it. Until then
-      `karen/DEAL.md`'s Ladder mirrors nothing.
-- [ ] **Le Pavillon Vert** — same: create the row, set `lost`, archive it.
-- [ ] **CollabImmo** — create a row. Neither the delivered work nor the follow-on is
-      visible to the dashboard today.
-- [ ] **Max Rettich** — enter the deal terms so the ConvertFlow badge clears.
-- [ ] **Sustentus** — connect `k0d0minio/sustentus` as the delivery repo.
-- [ ] Optional: link Stripe customers for Tristan Boxford and Kuuipo (€150 each).
+- [x] **Karen / Barzinho** — row created, set `lost`.
+- [x] **Jerome / Le Pavillon Vert** — row created, set `lost`. This is where the contact
+      name came from; the folder was renamed from `le-pavillon-vert/` to `jerome/`.
+- [x] **Magali / CollabImmo** — row created at `client`, delivery repo connected. Folder
+      renamed from `collabimmo/` to `magali/` for the same reason.
+- [x] **Max Rettich** — deal terms entered, €1,000.
+- [x] **David Hamilton / Sustentus** — *closed as not-applicable.* The delivery repo is
+      in a different GitHub org, so the dashboard cannot link it. Known limitation.
+- [ ] Optional, left open: Stripe customers for Tristan Boxford and Kuuipo (€150 each).
+
+### Two things the re-read turned up
+
+**Alex Valexo moved to `lost`** during the sweep, after his folder had already been
+adopted at `talking`. The folder now records that he was adopted and closed the same day.
+No reason for the loss is written down — `deals/README.md` expects `DEAL.md` to say why a
+deal exited, so that is one line still owed.
+
+**The three `lost` rows are not archived.** [`CLIENTS.md`](../../_system/contracts/CLIENTS.md)
+says `lost` is terminal and archiving is what takes them off the list. They are visible
+by choice; noting it so the next reader doesn't take it for drift.
 
 ## Acceptance — where ICM-011 stands
 
-- **Every open row adopted or decided** — yes. All 6 `talking` rows have folders.
+- **Every open row adopted or decided** — yes. All 6 rows that were `talking` at the
+  start of the sweep have folders.
 - **Real artifacts only, no invented history** — yes. Only Casey's answers and barzinho's
   five documents were folded in, each with a provenance line. Every pre-system stage is
   left as an honest gap.
 - **Delivered clients confirmed folder-less** — yes, with the assumption above flagged.
-- **`DEAL.md` mirrors agree with the dashboard rung** — **not yet**, for three deals.
-  `karen`, `le-pavillon-vert` and `collabimmo` have no row to mirror. This is the one
-  acceptance box the sweep cannot tick from a session; it clears when Jamie does the
-  Neon actions listed above.
+- **`DEAL.md` mirrors agree with the dashboard rung** — **yes, verified.** Every adopted
+  deal now has a row, and each `Ladder` value was re-read from the dashboard after Jamie's
+  changes rather than assumed.

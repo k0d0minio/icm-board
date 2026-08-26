@@ -1,0 +1,19 @@
+# Secrets — never commit. Env vars only.
+.env
+.env.*
+!.env.example
+
+# The estate lives in projects/ as separate git repos — never tracked here.
+# This blanket exclusion is the whole mechanism: it is what keeps client code,
+# client data and 22 unrelated histories out of this repo. It has no exceptions
+# and never gains one — a repo that needs tracking gets its own remote, not a
+# negation line here.
+/projects/
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+
+# Claude Code accretion layer stays per-machine (settings.json is clean policy).
+.claude/settings.local.json

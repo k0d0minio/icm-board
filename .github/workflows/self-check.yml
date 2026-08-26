@@ -1,0 +1,37 @@
+name: Self-check
+
+# This repo enforces a baseline on ~20 others, so it holds itself to one too. Two checks,
+# both fast:
+#   - shellcheck over every script and hook. They are the estate's only executables and
+#     they run against real repos with --fix; a quoting bug here does damage elsewhere.
+#   - self-check.sh: every relative markdown link resolves, and every ticket meets
+#     contracts/TICKETS.md. This repo is almost entirely docs and contracts, so a dead
+#     link IS a defect — it is the estate's named failure mode ("aspirational docs are
+#     richer than the running system", _system/AUDIT.md) in miniature.
+#
+# Deliberately absent: any build, lint or test of application code. There is none here.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: self-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Scripts + docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Preinstalled on ubuntu-latest, but pinning the invocation keeps the failure
+      # legible if that ever changes.
+      - name: Shellcheck the estate scripts
+        run: shellcheck --severity=warning _system/scripts/*.sh _system/hooks/*.sh
+
+      - name: Links and ticket contract
+        run: _system/scripts/self-check.sh

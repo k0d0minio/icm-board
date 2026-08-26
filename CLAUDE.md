@@ -20,8 +20,9 @@ the estate stays aligned and well structured.
   are the process* — there is deliberately no second narrative describing them.
 - **[`.icm/`](.icm/)** — this repo's own register and backlog (`ICM-NNN-slug.md`). It is
   held to the same baseline it enforces.
-- **[`projects/`](projects/)** — every repo in the estate, one folder each. Separate git
-  repos, **gitignored here**, present only on this machine.
+- **`projects/`** — every repo in the estate, one folder each. Separate git repos,
+  **gitignored here**, present only on this machine. Deliberately not a link: it does not
+  exist in a checkout of this repo, which is the entire point of it.
 
 ### Never build an orchestrator
 

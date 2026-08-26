@@ -39,3 +39,27 @@ row: for each in-flight relationship, run /client <name> — its adoption path c
 the deal folder at the true stage and folds in real artifacts with provenance; for
 each stale row, archive per CLIENTS.md. Never reconstruct pre-system stages. Batch
 the questions; leave commits for Jamie's review per the house branch rules.
+
+## Outcome — swept 2026-08-26
+
+Run with Jamie against the live dashboard. Full record, including every decision and the
+Neon actions still outstanding:
+[`.icm/docs/2026-08-26-icm-011-adoption-sweep.md`](../docs/2026-08-26-icm-011-adoption-sweep.md).
+
+**9 deal folders adopted** — 6 for the open rungs (`rui-matias`, `alix-hahusseau`,
+`dragon`, `billy-carlson`, `alex-valexo` at `01_intake`; `casey-hebbel` at `03_quote`),
+plus 3 orphans with no Neon row: `karen` (Barzinho, marked lost), `le-pavillon-vert`
+(lost), `collabimmo` (follow-on sale on a delivered client).
+
+**Folder-less by decision** — the 8 `client` rows, `messy-play` (a personal project, not
+a relationship), and the build-once-hand-off sites.
+
+**Not reconstructed** — no `01-intake.md` was invented anywhere. Only real artifacts were
+folded in: Casey Hebbel's 20 questionnaire answers, and barzinho's five negotiation
+documents, each carrying a provenance line.
+
+Answers [`_system/AUDIT.md`](../../_system/AUDIT.md) open question #7 — *"barzinho: is the
+deal still live?"* No: quiet since 2026-07-08, marked lost.
+
+**The acceptance boxes above are left unticked deliberately** — three adopted deals have
+no dashboard rung to mirror yet, and the Neon actions are Jamie's to perform.

@@ -92,9 +92,10 @@ confirm. It went from **14 rows (6 open · 8 client · 0 lost)** to
 ### Two things the re-read turned up
 
 **Alex Valexo moved to `lost`** during the sweep, after his folder had already been
-adopted at `talking`. The folder now records that he was adopted and closed the same day.
-No reason for the loss is written down — `deals/README.md` expects `DEAL.md` to say why a
-deal exited, so that is one line still owed.
+adopted at `talking`. The folder records that he was adopted and closed the same day, and
+now carries the reason (Jamie, 2026-08-27): he was already under contract with another
+developer on a prior engagement and could not get out of it. Not a loss on price, scope
+or fit — worth knowing if he comes back.
 
 **The three `lost` rows are not archived.** [`CLIENTS.md`](../../_system/contracts/CLIENTS.md)
 says `lost` is terminal and archiving is what takes them off the list. They are visible

@@ -16,12 +16,16 @@
 - 2026-08-26 — adopted into the pipeline by the ICM-011 sweep at `01_intake`, and marked
   **lost** by Jamie the same day, before the stage ever ran. The folder is kept: nothing
   is deleted, and if Alex comes back this is the folder that reopens.
+- 2026-08-27 — reason for the loss recorded: a prior contract with another developer.
 
 ## Why it ended
 
-**Not recorded.** The rung moved to `lost` during the sweep and no reason was written
-down. [`deals/README.md`](../README.md) expects `DEAL.md` to say why a deal exited — one
-line from Jamie closes that gap, and none is invented here.
+He was already under contract with another developer on a prior engagement, and could not
+get out of it. Not a loss on price, scope or fit — the timing was simply taken. (Jamie,
+2026-08-27.)
+
+Worth remembering if he comes back: nothing about the work itself was rejected, so a
+future conversation starts from interest, not from an objection to answer.
 
 ## Stages that are honest gaps
 

@@ -53,7 +53,7 @@ the run log dates it.
 2. **Pipeline upstream** — is Gen-3 a template product? If so, sustentus or remi-ai is canonical, and is remi-ai worth maintaining at zero runs?
 3. ~~**Hook strategy**~~ — decided 2026-08-26 (see Done): same canonical library; seeded
    hooks stay inert until a repo's `settings.json` wires them, and `icm-check` reports that.
-4. **Is merging a PR** an outward action Claude may take, or always yours?
+4. ~~**Is merging a PR**~~ — answered 2026-08-27 (see Done): Claude may merge, cautiously.
 5. **`gh` CLI** — banned by sustentus docs, granted in settings. Which is real?
 6. **The ≤50-line `CLAUDE.md` rule** — teaching material says it, flagship repos break it. Which moves?
 7. ~~**barzinho**~~ — answered 2026-08-26 (see Done): the deal is dead, so nothing gates
@@ -76,6 +76,10 @@ the run log dates it.
   what's missing and reports drift, never overwrites — the repo's copy wins. The old
   3-way hook drift becomes visible via the drift report instead of being resolved by fiat.
 - **jamienisbet** — question retired 2026-08-14: the repo *is* the estate control layer, so "run a client through it or freeze it" no longer applies.
+- **Merging answered** (2026-08-27): merging a PR *is* an outward action, and Claude may
+  take it — **cautiously**. Read as: green CI and a PR whose scope Jamie has seen, not a
+  blanket licence. It does not widen anything else; no outbound message, no dashboard
+  write, and no ticking of a human gate ever leaves a session.
 - **barzinho answered** (2026-08-26, the ICM-011 adoption sweep): the deal with Karen is
   **not live**. Proposal sent 2026-06-30, her counter analysed and answered 2026-07-08,
   then silence — every later commit is estate housekeeping. Marked `lost` in Neon and

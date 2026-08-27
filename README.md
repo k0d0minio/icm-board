@@ -49,7 +49,7 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
 - **Two halves of the same check.** On this machine the estate is on disk, so
   `icm-check.sh` reads it directly — and now also seeds and drift-checks the canonical
   Claude assets. In CI it isn't, so `estate-conformance.sh` asks the GitHub API the same
-  questions about the `k0d0minio` org (needs `ESTATE_TOKEN`, ticket `ICM-005`).
+  questions about the `k0d0minio` org (via the `ESTATE_TOKEN` secret).
 - **Tickets live next to their logic.** Work on this repo's machinery is an `ICM-*`
   here; dashboard work is a `JN-*` in `k0d0minio/jamienisbet`.
 - **CI is the source of truth** — don't run checks locally.

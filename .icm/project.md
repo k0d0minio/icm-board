@@ -53,7 +53,7 @@ defined, improvable process, and every repo in the estate stays aligned.
 | Canonical Claude asset library + drift report | shipped, unproven | ICM-010 |
 | Four estate scripts — icm-check, tickets-board, ticket-hygiene, pull-all | shipped | ICM-003, ICM-004 |
 | Self-check CI — shellcheck, contract links, ticket lint | shipped | — |
-| Remote conformance CI over the `k0d0minio` org | shipped, unproven | — |
+| Remote conformance CI over the `k0d0minio` org | shipped | ICM-015 |
 | Estate heartbeat — scheduled digest | wanted | ICM-001 |
 | `/day` run log | wanted | ICM-002 |
 

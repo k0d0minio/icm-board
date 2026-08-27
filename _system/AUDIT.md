@@ -20,7 +20,6 @@ doctrine (stable) and audit (decays) stop sharing a file.*
 
 ## Still open — security
 
-- **P0** Sanity token still plaintext in `~/.claude.json.bak-20260715`; needs server-side revocation **and** the backup deleted.
 - **P0** barzinho P&L PDFs are git-tracked — `.gitignore` pattern no longer matches after the move to `shared/profit-and-loss/`. Needs untrack + pattern fix + history scrub if the repo has a remote.
 - **P1** dungeons-dragons: a Linear API key shipped in the public browser bundle via a `NEXT_PUBLIC_` prefix and has never been revoked (ticketed as DND-015).
 - **P2** Over-broad grants: remi-ai `Bash(cat > *)` and home-wide `Read()`; `git push`/`gh pr merge` on allow.
@@ -63,6 +62,12 @@ the run log dates it.
 
 ## Done (don't re-litigate)
 
+- **Sanity token revoked, plaintext backup deleted** (2026-08-27, ICM-007): the token
+  carried in `~/.claude.json.bak-20260715` was revoked in the Sanity management console
+  and the backup file removed from Jamie's machine. Both steps were his and confirmed by
+  him — neither is verifiable from a session, and the token value was never read here.
+  Older backup snapshots (Time Machine et al.) may still hold the string; revocation is
+  what makes that harmless.
 - Old vercel-plugin disabled · global `CLAUDE.md` created · Sanity MCP removed from live config · permissions deduplicated and tightened (2026-07-15).
 - Global skills emptied to `~/.claude/skills-archive-2026-08-10/` · hook double-fire fixed (global defers to repo copy) · `settings.json` allow shrunk 53→9 with a deny-list added (2026-08-10).
 - Client sites are build-once-hand-off — stub configs are fine, by Jamie's July answer.

@@ -31,6 +31,11 @@ the SessionStart hook, prints only the Today group: a morning with 0 today, 3 bl
    runs, where — this machine vs Vercel cron — cadence, and what it may write: tasks and
    digest files only; never tickets, never client email). Register the heartbeat as its
    first row. This keeps "the folders are the orchestration" true once routines exist.
+5. *(folded from ICM-002, 2026-08-27 audit)* Give `/day` a run log the digest can read:
+   edit `.claude/commands/day.md` §5 so every run (plan and wrap) appends one line —
+   `date · mode (plan|wrap) · picked/banked counts · one-line note` — to
+   `.icm/docs/day-log.md` (created with a two-line header on first run). The digest
+   reports the age of the last line as "board not reconciled in N days".
 
 ## Acceptance
 
@@ -38,6 +43,8 @@ the SessionStart hook, prints only the Today group: a morning with 0 today, 3 bl
 - [ ] Read-only: no repo is modified; fixes stay judgment work in /day
 - [ ] Survives reboots (systemd user timer, not a long-running process)
 - [ ] `_system/contracts/ROUTINES.md` exists and registers the heartbeat
+- [ ] Every `/day` run appends exactly one line to `.icm/docs/day-log.md`, and the
+      digest reports days since the last run (ticket-only commit path unchanged)
 
 ## Prompt
 
@@ -46,7 +53,10 @@ Build the estate heartbeat for the Apps estate. Read
 client repos in projects/ are gitignored and local-only. Add _system/scripts/heartbeat.sh
 (digest written outside the repo, recommend ~/.claude/estate/), a daily systemd user
 timer invoking it, upgrade _system/hooks/session-start.sh to print the digest delta, and
-create _system/contracts/ROUTINES.md registering the routine. Keep everything read-only —
+create _system/contracts/ROUTINES.md registering the routine. Also fold in the /day run
+log (absorbed from ICM-002): edit .claude/commands/day.md §5 to append one line per run
+to .icm/docs/day-log.md, and have the digest report the age of its last line. Keep
+everything else read-only —
 report, never fix. Never build an orchestrator: the timer calls the scripts exactly as a
 human would. Repo files go through a PR on a claude/ branch; do not run local checks — CI
 is the source of truth. The systemd units are machine-level: show Jamie the unit files

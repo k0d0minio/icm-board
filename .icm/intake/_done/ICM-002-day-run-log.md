@@ -1,3 +1,6 @@
+> Dropped: folded into ICM-001 (build step 5) in the 2026-08-27 estate ticket audit —
+> the run log's only stated reader is the heartbeat, so it ships with it. 2026-08-27
+
 # ICM-002 · /day leaves a run log
 
 | | |

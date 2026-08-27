@@ -9,9 +9,9 @@
 #   tickets  every ticket in .icm/intake/ meets contracts/TICKETS.md: an `ID · Title` H1,
 #            a Priority row, a standalone `## Prompt`, and a number no other ticket uses.
 #
-# The ticket half is deliberately narrow — it checks *this* repo only. Generalising it
-# across the estate is ticket ICM-003 (ticket-hygiene.sh), which is where it belongs:
-# that script already walks every repo.
+# The ticket half is deliberately narrow — it checks *this* repo only, on every push.
+# The same lint runs across the estate in ticket-hygiene.sh (ICM-003), which already
+# walks every repo but only runs on Jamie's machine.
 #
 # Usage: _system/scripts/self-check.sh [root]
 # Exit:  0 clean · 1 problems found · 2 bad invocation

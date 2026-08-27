@@ -37,7 +37,8 @@ bulk-apply their findings.
 - *Prefix drift:* an intake README using a prefix missing from
   [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) gets reconciled — the spec
   follows reality once tickets exist; before the first ticket, reality follows Jamie.
-- *Active repo, empty intake:* real work happening off-ticket. Distinguish client work
+- *Active repo, empty intake:* real work happening off-ticket — repos carrying an empty
+  `.icm/dormant` are parked and never reported. Distinguish client work
   from sweep/config commits by reading the log; offer to cut tickets from recent
   history. `ticket-scout` proposes per repo — batch, never create unasked.
 

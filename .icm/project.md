@@ -55,7 +55,7 @@ defined, improvable process, and every repo in the estate stays aligned.
 | Self-check CI — shellcheck, contract links, ticket lint | shipped | — |
 | Remote conformance CI over the `k0d0minio` org | shipped | ICM-015 |
 | Estate heartbeat — scheduled digest | wanted | ICM-001 |
-| `/day` run log | wanted | ICM-002 |
+| `/day` run log — folded into the heartbeat | wanted | ICM-001 |
 
 ## Constraints
 
@@ -94,3 +94,4 @@ defined, improvable process, and every repo in the estate stays aligned.
 | 2026-08-26 | — | Seeded at the split. Not a `/project` run; intent taken verbatim from the session that created this repo. |
 | 2026-08-26 | — | The second-brain build (cloud session, interrogation-driven — decisions D3–D9 are Jamie's answers verbatim). Three workspaces created, rituals rehoused, knowledge layer scaffolded, canonical asset library seeded into the template. ICM-006 amended; ICM-009/ICM-010 cut. |
 | 2026-08-26 | — | ICM-009 done in the same session: questionnaire run conversationally, all seven sections. Knowledge layer + target-profile + outreach filled with Jamie's real answers (band €1.000–€2.500 sites, €500 floor, method-not-band for apps/AI, scoped retainers €200–€4.000/mo, 50/50 default, two revision rounds, both ownership patterns, stack confirmed as policy, profile weighted to AI). Deliberate remaining gaps: voice/outreach example pastes, app/AI standing inclusions, the AI-SME channel. |
+| 2026-08-28 | — | Estate ticket audit (Jamie-directed, 27–28 Aug): every open ticket checked against its codebase; board 85 → 54 open. Here: ICM-002 folded into ICM-001 (row above updated on Jamie's instruction), ICM-004 trimmed to its two live items. New: AGORA-020 (tracked credential PDFs) and REMI-038 (patient Stripe subscriptions) cut on his answers. Not a `/project` run — a directed register correction. |

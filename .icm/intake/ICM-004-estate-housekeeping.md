@@ -12,6 +12,19 @@
 > `icm-template` / `/onboard` / `PROCESS.md` finds nothing left outside historical notes
 > in `AUDIT.md`. Two items remain.
 
+> Amended 2026-08-27 (cloud session): **item 1 is done** — `icm-check.sh` now prepends
+> the root repo to its discovery list, the same way `pull-all.sh` and `tickets-board.sh`
+> already do. **Item 2 stays open and can only close on Jamie's machine**: `projects/` is
+> gitignored and simply absent in a cloud container, so `projects/the-library` cannot be
+> seeded from a session like this one.
+>
+> Widening the check has a consequence worth knowing before the next `/icm-check`:
+> `icm-board` itself now reports as a gap. It carries none of the four canonical
+> `.claude/` assets, and its session-start hook lives at `_system/hooks/session-start.sh`
+> — the estate-wide board — rather than `.claude/hooks/session-start.sh`, which prints a
+> repo's own board. That is a deliberate divergence to rule on, not rot, and it is
+> ICM-010's per-repo call now that the root is one of the repos.
+
 ## Problem
 
 The audit names the estate's failure mode: "aspirational docs are richer than the running
@@ -29,7 +42,7 @@ left:
 
 ## Acceptance
 
-- [ ] `icm-check.sh` checks this repo too
+- [x] `icm-check.sh` checks this repo too
 - [ ] `the-library` passes `icm-check.sh`
 - [ ] CI green
 

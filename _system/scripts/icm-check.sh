@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # icm-check.sh — verify (and with --fix, populate) the estate-wide .icm/.claude baseline.
 #
-# Discovers git repos the same way pull-all.sh does (up to 2 levels below Apps/),
-# skips sustentus (its .icm/ carries its own pipeline semantics, not the ticket spec),
-# and checks each repo against _system/template/:
+# Discovers git repos the same way pull-all.sh does — the root repo itself (icm-board,
+# .git at the Apps root) plus every repo up to 2 levels below Apps/ — skips sustentus
+# (its .icm/ carries its own pipeline semantics, not the ticket spec), and checks each
+# repo against _system/template/:
 #
 #   .icm/intake/README.md    micro-copy of the ticket contract ({{PREFIX}} substituted)
 #   .icm/intake/_done/       finished-ticket folder
@@ -102,12 +103,17 @@ mapfile -t repos < <(
     -not -path '*/.*/.*/.git' \
     -printf '%h\n' | sort
 )
+# The root repo itself (icm-board, .git at the Apps root), checked like any other. It
+# holds the baseline, so it is measured against it — a rule this repo exempts itself
+# from is a rule it should delete (CLAUDE.md, standing rules).
+[[ -e "$APPS_ROOT/.git" ]] && repos=("$APPS_ROOT" "${repos[@]}")
 
 total=0; conformant=0; fixed=0; warnings=0; gaps=0
 
 for repo in "${repos[@]}"; do
   name="${repo#"$APPS_ROOT"/}"
   base="$(basename "$repo")"
+  [[ "$repo" == "$APPS_ROOT" ]] && name="$base"
 
   skip=0
   for e in "${EXEMPT[@]}"; do [[ "$base" == "$e" ]] && skip=1; done

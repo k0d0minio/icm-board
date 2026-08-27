@@ -34,7 +34,7 @@ process**; there is deliberately no second narrative describing them.
 |---|---|---|
 | **`/client <name>`** | [`workspaces/sell/`](../workspaces/sell/CONTEXT.md) · [`workspaces/start/`](../workspaces/start/CONTEXT.md) | A lead, a quote, a proposal, an onboarding — any one relationship, any stage. Idempotent. |
 | **`/project <repo>`** | [`workspaces/deliver/stages/project/`](../workspaces/deliver/stages/project/CONTEXT.md) | Adopting · before a sprint · whenever direction may have moved. Idempotent. |
-| **`/day [wrap]`** | [`workspaces/deliver/stages/day/`](../workspaces/deliver/stages/day/CONTEXT.md) | Evening: pick tomorrow's ≤3. Session end: bank what shipped, cut what's left. |
+| **`/day [wrap]`** | [`workspaces/deliver/stages/day/`](../workspaces/deliver/stages/day/CONTEXT.md) | Evening: pick tomorrow's ≤10. Session end: bank what shipped, cut what's left. |
 | **`/icm-check`** | [`workspaces/deliver/stages/conformance/`](../workspaces/deliver/stages/conformance/CONTEXT.md) | Does every repo carry the baseline + canonical assets. |
 
 Two agents back deliver, in [`../.claude/agents/`](../.claude/agents/): `project-lens`

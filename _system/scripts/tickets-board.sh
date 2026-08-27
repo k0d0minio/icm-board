@@ -111,7 +111,7 @@ if (( TODAY_ONLY )); then
     echo "No tickets flagged 'today'. Plan the day with /day."
   else
     print_group today "Today ($n_today)"
-    (( n_today > 3 )) && echo "warn: $n_today tickets flagged today — spec cap is 3 (see _system/contracts/TICKETS.md)"
+    (( n_today > 10 )) && echo "warn: $n_today tickets flagged today — spec cap is 10 (see _system/contracts/TICKETS.md)"
   fi
   echo "RESULT: $n_today today · $n_open open across $n_repos repos"
   exit 0

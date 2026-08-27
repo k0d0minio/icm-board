@@ -72,9 +72,9 @@ checks — CI is the source of truth.
 - A missing `Status` row means `ready` — legacy tickets need no edit.
 - **Done is not a status**: `git mv` the file into `_done/`. The folder move is the
   state change; there is no field to forget.
-- `today` is the pick-up flag: flip 2–3 tickets to `today` the evening before (`/day`'s
+- `today` is the pick-up flag: flip tickets to `today` the evening before (`/day`'s
   job), and the board's Today group is tomorrow's worklist. **Hard cap:
-  3 `today` tickets across the whole estate** — a diluted flag is no flag.
+  10 `today` tickets across the whole estate** — a diluted flag is no flag.
 - **Abandoned is also `_done/`.** A ticket that no longer fits the project's intent is
   `git mv`'d there with a `> Dropped: <reason, date>` line prepended. Never delete a
   ticket file; never reuse a number.

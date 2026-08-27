@@ -46,7 +46,7 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
 |---|---|
 | A lead, a quote, a proposal, an onboarding — anything about one relationship | **`/client <name>`** → [`workspaces/sell/`](workspaces/sell/CONTEXT.md) · [`workspaces/start/`](workspaces/start/CONTEXT.md) |
 | Adopt a repo · work out what to build · cut a sprint's tickets | **`/project <repo>`** |
-| Pick today's ≤3 · reconcile the board · end a session | **`/day [wrap]`** |
+| Pick today's ≤10 · reconcile the board · end a session | **`/day [wrap]`** |
 | Does every repo carry the baseline + canonical assets | **`/icm-check`** |
 | What the business sells, charges, sounds like, promises | [`_system/knowledge/`](_system/knowledge/README.md) |
 | The specs — tickets, register, lenses, clients, workspace grammar | [`_system/contracts/`](_system/README.md) |

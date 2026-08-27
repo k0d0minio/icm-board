@@ -11,7 +11,7 @@ process**, and there is no second narrative describing them.*
 | Stage | Command | Scope | When |
 |---|---|---|---|
 | [`stages/project/`](stages/project/CONTEXT.md) | `/project <repo>` | one repo, deep | Adopting · before a sprint · whenever direction may have moved. Idempotent. |
-| [`stages/day/`](stages/day/CONTEXT.md) | `/day [wrap]` | the estate, shallow | Evening: pick tomorrow's ≤3. Session end: bank and cut. |
+| [`stages/day/`](stages/day/CONTEXT.md) | `/day [wrap]` | the estate, shallow | Evening: pick tomorrow's ≤10. Session end: bank and cut. |
 | [`stages/conformance/`](stages/conformance/CONTEXT.md) | `/icm-check` | the estate, structural | Does every repo carry the baseline. |
 
 Two agents back them ([`.claude/agents/`](../../.claude/agents/)): `project-lens` (one

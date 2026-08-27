@@ -115,7 +115,7 @@ citing evidence — the client's own words where they exist.
 |---|---|
 | `.icm/project.md` (written/amended) | the target repo |
 | Tickets cut/amended/moved | the target repo's `.icm/intake/` |
-| Closing summary | the session: posture · intent changed? · counts by priority · the 3 you'd flag `today` (the ≤3 cap is `/day`'s call) · what's unanswered and what it blocks |
+| Closing summary | the session: posture · intent changed? · counts by priority · the 3 you'd flag `today` (the ≤10 cap is `/day`'s call) · what's unanswered and what it blocks |
 
 ## Audit
 

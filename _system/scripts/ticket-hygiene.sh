@@ -3,7 +3,7 @@
 #
 # For every repo with .icm/intake/ (sustentus exempt), reports:
 #   possibly-done   open ticket whose ID appears in commits on the default branch
-#   today-dilution  more than 3 tickets flagged `today` (spec cap, estate-wide)
+#   today-dilution  more than 10 tickets flagged `today` (spec cap, estate-wide)
 #   off-ticket      repo committed to in the last 14 days but has zero open tickets
 #   no-status       count of open tickets with no Status row (spec: means `ready`)
 #
@@ -75,7 +75,7 @@ for repo in "${repos[@]}"; do
     done
   fi
 
-  (( today_n > 3 )) && issues+=("today-dilution: $today_n tickets flagged today (cap is 3 estate-wide)")
+  (( today_n > 10 )) && issues+=("today-dilution: $today_n tickets flagged today (cap is 10 estate-wide)")
 
   # off-ticket work: recent commits, zero open tickets
   if (( ${#open_ids[@]} == 0 )); then
@@ -97,6 +97,6 @@ for repo in "${repos[@]}"; do
 done
 
 echo
-(( total_today > 3 )) && { echo "${yellow}estate-wide: $total_today tickets flagged today — cap is 3 total${off}"; findings=$((findings + 1)); }
+(( total_today > 10 )) && { echo "${yellow}estate-wide: $total_today tickets flagged today — cap is 10 total${off}"; findings=$((findings + 1)); }
 echo "RESULT: $findings findings$( (( findings == 0 )) && echo ' — clean')"
 (( findings == 0 ))

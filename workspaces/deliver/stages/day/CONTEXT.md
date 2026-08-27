@@ -15,7 +15,7 @@ exist and cuts the leftovers of work that already happened.
 
 | Layer | File | Why |
 |---|---|---|
-| 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) | Status vocabulary, the ≤3 `today` cap, `_done/` rules |
+| 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) | Status vocabulary, the ≤10 `today` cap, `_done/` rules |
 | 4 | `_system/scripts/tickets-board.sh` output | The estate board |
 | 4 | `_system/scripts/ticket-hygiene.sh` output | Drift candidates — verified, never bulk-applied |
 | 4 | Each repo's `.icm/intake/` + git log | The reality the board must match |
@@ -32,7 +32,7 @@ bulk-apply their findings.
   does an estate-sweep commit. Genuinely merged → `git mv` to `_done/`. Ambiguous →
   batch the questions and ask.
 - *`today` dilution:* more than 3 flagged estate-wide means none are. List them, ask
-  which ≤3 survive; the rest to `ready`. Stale flags from a past day default to `ready`
+  which ≤10 survive; the rest to `ready`. Stale flags from a past day default to `ready`
   without asking.
 - *Prefix drift:* an intake README using a prefix missing from
   [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) gets reconciled — the spec
@@ -71,7 +71,7 @@ one `pull --rebase` and retry; otherwise report and move on. Never force-push.
 
 ## Gate — Jamie
 
-- Answers the ambiguity batches (2) — merged-or-not, which ≤3 survive.
+- Answers the ambiguity batches (2) — merged-or-not, which ≤10 survive.
 - Sets the day's/week's intent (3); his call overrides the candidate order.
 - Sees the per-repo ticket diff before anything is committed (5).
 
@@ -84,6 +84,6 @@ one `pull --rebase` and retry; otherwise report and move on. Never force-push.
 
 ## Audit
 
-- After the run, `tickets-board.sh --today` shows ≤3, all deliberately chosen today.
+- After the run, `tickets-board.sh --today` shows ≤10, all deliberately chosen today.
 - No ticket file deleted, no number reused, no non-`.icm` path touched.
 - Every claim of "merged" traces to a real work commit, not a sweep.

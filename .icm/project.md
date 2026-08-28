@@ -84,6 +84,7 @@ defined, improvable process, and every repo in the estate stays aligned.
 | D12 | Gen-3 **is** a template product: the estate pipeline is extracted from sustentus into `_system/template/` as tiered profiles (`intake` default · `pipeline` · `pipeline-full` deliberately unextracted). Sustentus stays exempt as the source; remi-ai's zero-run `pipeline/` tree is superseded pending its migration decision. Answers AUDIT open question 2 | 2026-08-28 | — |
 | D13 | The dashboard board stays **read-only** and reads both ticket shapes over the GitHub API, sustentus included — no sync, no second store | 2026-08-28 | — |
 | D14 | **Clean slate**: every legacy `PREFIX-NNN` ticket — open and archived, estate-wide — is purged rather than re-cut ("they were getting very noisy"); fresh backlogs come from gated `/project` runs per repo, on demand. The "nothing is deleted" rule governs the new model's ongoing operation from this founding reset onward. Facts worth keeping (security lines, the hook-wiring history) were carried into AUDIT.md and the seeding stub before the purge | 2026-08-28 | the per-repo re-cut rollout in D10's plan |
+| D15 | **Conformance exit codes**: gaps exit 0 (the report's content), unreachable stays exit 2 (the report lying) — in both `icm-check.sh` and `estate-conformance.sh`, commented at the exit lines. A always-red schedule teaches you to stop reading it | 2026-08-28 | the inherited `(( gaps == 0 ))` convention |
 
 ## Open questions
 

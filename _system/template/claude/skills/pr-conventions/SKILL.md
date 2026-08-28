@@ -33,5 +33,8 @@ working knowledge.
 ## Finishing
 
 - The PR that finishes a ticket's work moves the ticket file to `.icm/intake/_done/`.
+  The `wrap-reminder` Stop hook asks about this at session end when a branch shipped
+  work naming a ticket it never touched — it asks, it never moves the file. Partial
+  work is a legitimate answer: flip `Status` to `in-progress` and carry on.
 - Work discovered mid-PR that doesn't belong in it becomes a new ticket, not scope
   creep — cut it and reference it in the PR description.

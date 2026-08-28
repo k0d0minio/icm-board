@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | ready |
+| Status | in-progress |
 | Type | automation |
 | Priority | P2 |
 | Size | M |
@@ -37,10 +37,12 @@ example — it did the work, never touched `ICM-003`, and merged green.
   `Status` to `in-progress` has engaged with the ticket and is not nagged.
 - Give icm-board its own copy at `_system/hooks/wrap-reminder.sh` and register the
   `Stop` hook in its `.claude/settings.json`. This repo is held to its own baseline.
-- Hand-merge the `hooks` block into the 21 repos that carry the file and do not
-  register it — **one commit per repo, Jamie approves the list first.** Not a bulk sync:
-  `--fix` correctly refuses to overwrite an existing `settings.json`, and that contract
-  stays as it is.
+- Hand-merge into the 21 repos that carry the file and do not register it — **one commit
+  per repo, Jamie approves the list first.** Each commit is two files, because wiring
+  alone would only activate the *old* hook: the updated `.claude/hooks/wrap-reminder.sh`
+  (which `icm-check` now reports as drift in all 22 repos, correctly) and the `hooks`
+  block in `.claude/settings.json`. Not a bulk sync: `--fix` still refuses to overwrite
+  an existing file, and that contract stays exactly as it is.
 
 The hook **asks**; it never moves a ticket. Gates are human checkboxes.
 

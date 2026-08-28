@@ -4,7 +4,9 @@
 # For every repo with .icm/intake/ (sustentus exempt), reports:
 #
 #   board drift
-#     possibly-done   open ticket whose ID appears in commits on the default branch
+#     possibly-done   open ticket whose ID appears in a commit that changed something
+#                     outside .icm/ — the work, not the ticket admin that cut or
+#                     audited it. Reports the commit, so /day judges in one line.
 #     today-dilution  more than 10 tickets flagged `today` (spec cap, estate-wide)
 #     stale-today     a `today` flag whose ticket file hasn't been touched in over a day
 #     off-ticket      repo committed to in the last 14 days but has zero open tickets
@@ -44,7 +46,7 @@ mapfile -t repos < <(
     -not -path '*/.*/.*/.git' \
     -printf '%h\n' | sort
 )
-# The root repo (jamienisbet, .git at the root) carries the JN-* tickets.
+# The root repo (icm-board, .git at the root) carries the ICM-* tickets.
 [[ -e "$APPS_ROOT/.git" ]] && repos=("$APPS_ROOT" "${repos[@]}")
 
 findings=0
@@ -60,7 +62,7 @@ for repo in "${repos[@]}"; do
   intake="$repo/.icm/intake"
   [[ -d "$intake" ]] || continue
   name="${repo#"$APPS_ROOT"/}"
-  [[ "$repo" == "$APPS_ROOT" ]] && name="jamienisbet"
+  [[ "$repo" == "$APPS_ROOT" ]] && name="icm-board"
 
   # An empty .icm/dormant marks a repo as parked — see the header.
   dormant=0
@@ -116,13 +118,25 @@ for repo in "${repos[@]}"; do
   done
   total_today=$((total_today + today_n))
 
-  # possibly-done: open ticket IDs referenced by commits already on the default branch
+  # possibly-done: an open ticket whose ID appears in a commit that changed something
+  # OUTSIDE .icm/ — the work itself, not the ticket admin that cut or audited it.
+  #
+  # Matching the subject alone cannot tell "Cut JN-035" from "feat(admin): JN-035 …".
+  # Every ticket names itself in its own birth commit and in every audit that touches
+  # it, so the unfiltered check reported the estate's good discipline as drift: 17 of 17
+  # findings were false positives on 2026-08-28, which buried the two that were real.
+  # A commit touching only .icm/ is ticket administration by definition — that one rule
+  # is the whole filter, and it is what day/CONTEXT.md already tells the human to do.
   if (( ${#open_ids[@]} > 0 )); then
-    log="$(git -C "$repo" log --oneline -300 2>/dev/null || true)"
+    log="$(git -C "$repo" log --format='%H %s' -300 2>/dev/null || true)"
     for id in "${open_ids[@]}"; do
-      if grep -qF "$id" <<<"$log"; then
-        issues+=("possibly-done: $id appears in merged commits but the ticket is still open")
-      fi
+      while read -r sha subject; do
+        [[ -n "$sha" ]] || continue
+        git -C "$repo" show --pretty=format: --name-only "$sha" 2>/dev/null \
+          | grep -qvE '^(\.icm/|$)' || continue
+        issues+=("possibly-done: $id — work merged in ${sha:0:7} \"$subject\"")
+        break
+      done < <(grep -F "$id" <<<"$log")
     done
   fi
 

@@ -14,6 +14,7 @@ them. Tickets are never created or edited from the dashboard.
 
 ```
 .icm/
+  dormant                ← optional, empty: this repo is parked (see Dormant repos)
   intake/
     README.md            ← micro-copy of this contract
     <PREFIX>-NNN-slug.md ← one open ticket per file
@@ -100,6 +101,25 @@ session to read the ticket file for the rest.
 **Optional, free-form:** `Type`, `Size`, `Depends on`, `Sources`, `Client`, acceptance
 detail, any other rows or sections. The board displays what it finds and never requires
 them.
+
+## Dormant repos
+
+Some repos are finished rather than neglected — a build-once-hand-off client site with
+no backlog and no next sprint, settled as fine in [AUDIT.md](../AUDIT.md). An empty
+`.icm/dormant` file marks one:
+
+```bash
+mkdir -p .icm && touch .icm/dormant && git add .icm/dormant
+```
+
+`ticket-hygiene.sh` then stops reporting `off-ticket` against that repo — a repo with no
+board cannot have work go missing from one. Every other check still runs, including the
+contract lint on any ticket the repo does have, so dormancy hides noise and never
+evidence.
+
+The file is empty by design: its presence is the whole signal, and `git rm .icm/dormant`
+wakes the repo back up. It marks a **repo**, never a ticket — a dormant repo that gets a
+new ticket drops the marker in the same commit.
 
 ## Working rules
 

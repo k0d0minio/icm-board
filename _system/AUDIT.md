@@ -13,7 +13,7 @@ doctrine (stable) and audit (decays) stop sharing a file.*
 
 | Generation | Pattern | Repos |
 |---|---|---|
-| Gen 3 — ICM engineering pipeline | thin routing `CLAUDE.md` + 6-stage `.icm/` with contracts, gates, runs | **sustentus** (reference impl, 11 runs) · **remi-ai** (specified, 0 runs) |
+| Gen 3 — ICM engineering pipeline | thin routing `CLAUDE.md` + staged `.icm/` with contracts, gates, runs | **sustentus** (reference impl — and, since 2026-08-28, the source of the estate template, decision D12) · **remi-ai** (specified, 0 runs — superseded pending its migration decision) |
 | Gen 2 — ICM business workspaces | 5-layer folder-is-the-architecture, no orchestration code | jamienisbet, barzinho, agorasim |
 | Gen 1 — monolithic | one big always-loaded `CLAUDE.md` + copied skill library | courseday, tenderdesk |
 | Gen 0 — stubs | `@AGENTS.md` one-liner or nothing | ~15 client sites (fine — build-once-hand-off) |
@@ -49,7 +49,11 @@ the run log dates it.
 
 1. ~~**Skills layering**~~ — decided 2026-08-26 (see Done): canonical library in
    `_system/template/claude/`, seeded + drift-reported, repo wins.
-2. **Pipeline upstream** — is Gen-3 a template product? If so, sustentus or remi-ai is canonical, and is remi-ai worth maintaining at zero runs?
+2. ~~**Pipeline upstream**~~ — answered 2026-08-28 (decision D12, `.icm/project.md`):
+   Gen-3 **is** a template product, extracted from sustentus into `_system/template/`
+   as tiered profiles (`contracts/PIPELINE.md`). Sustentus stays exempt as the source;
+   remi-ai's zero-run `pipeline/` is superseded — its keep-or-retire call happens in
+   its migration (`estate-migration/migrate-remi-ai`).
 3. ~~**Hook strategy**~~ — decided 2026-08-26 (see Done): same canonical library; seeded
    hooks stay inert until a repo's `settings.json` wires them, and `icm-check` reports that.
 4. ~~**Is merging a PR**~~ — answered 2026-08-27 (see Done): Claude may merge, cautiously.

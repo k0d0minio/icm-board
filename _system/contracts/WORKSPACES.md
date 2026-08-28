@@ -88,4 +88,8 @@ earlier stages' artifacts, not just this stage's inputs.
   facts are Stripe's, always.
 - **Nothing runs itself.** No stage triggers another; no script advances a deal; the
   scheduled workflows report and never write. The moment something here drives rather
-  than describes, it has broken the house rule that outranks this contract.
+  than describes, it has broken the house rule that outranks this contract. (What that
+  rule does and does not exclude in a *project repo's own* pipeline — deterministic
+  one-job scripts, post-merge CI — is decision D11, recorded in
+  [`.icm/project.md`](../../.icm/project.md) and specified in
+  [PIPELINE.md](PIPELINE.md). This workspace layer keeps the strict reading.)

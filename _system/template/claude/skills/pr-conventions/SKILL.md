@@ -32,9 +32,10 @@ working knowledge.
 
 ## Finishing
 
-- The PR that finishes a ticket's work moves the ticket file to `.icm/intake/_done/`.
-  The `wrap-reminder` Stop hook asks about this at session end when a branch shipped
-  work naming a ticket it never touched — it asks, it never moves the file. Partial
-  work is a legitimate answer: flip `Status` to `in-progress` and carry on.
-- Work discovered mid-PR that doesn't belong in it becomes a new ticket, not scope
-  creep — cut it and reference it in the PR description.
+- The PR that finishes a stub's work `git mv`s the stub to its epic's (or triage's)
+  `_done/`. The `wrap-reminder` Stop hook asks about this at session end when a branch
+  shipped work matching an open stub it never touched — it asks, it never moves the
+  file. Partial work is a legitimate answer: say so and carry on (status is positional;
+  there is no field to flip).
+- Work discovered mid-PR that doesn't belong in it becomes a new stub, not scope creep —
+  park it in `.icm/intake/triage/` (or its epic) and reference it in the PR description.

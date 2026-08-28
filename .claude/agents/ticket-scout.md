@@ -10,23 +10,27 @@ commit anything, and never run non-read git commands.
 
 Given a repo path, read:
 
-1. `.icm/intake/` — open tickets and `_done/` (IDs, statuses, titles).
+1. `.icm/intake/` — every epic (its `breakdown.md`, open stubs, `_done/`), the `triage/`
+   backlog, any legacy flat `PREFIX-NNN` tickets still unmigrated, and `.icm/runs/` if
+   the repo carries the pipeline profile.
 2. `.icm/docs/` — client requests, proposals, discovery reports, questionnaires,
    instruction docs. Note unanswered `[BLOCKER]`s, `TODO(jamie)` / `PLACEHOLDER`
    markers, and promises made in proposals.
 3. `README.md` / `CLAUDE.md` — what the repo claims to be.
 4. `git log --oneline -40` and recent branches — what actually happened, and whether
-   commits reference ticket IDs.
+   branch names / commit subjects carry stub slugs (or legacy ticket IDs).
 
 Report in this structure, with file paths:
 
-- **Ticket state** — open/done counts, prefix in use, anything malformed.
-- **Shipped but still open** — tickets whose work is visibly merged (cite the commit).
-  Distinguish the commit that *created* the ticket from the one that *did* the work.
-- **Off-ticket work** — meaningful commits with no corresponding ticket.
-- **Dormant promises** — things the docs commit to that no ticket or commit covers.
-- **Ticket candidates** — for each: a one-line title, the problem in ≤2 sentences, and
-  the source (file or commit) it came from. Propose, never create. Honest sizing hints
-  (S/M/L) welcome.
+- **Ticket state** — per epic: open stubs vs `_done/`, the next stub by sequence;
+  the triage backlog (count + lane split); legacy-unmigrated count; anything malformed
+  (slug/filename mismatch, broken sequences, missing lane lines).
+- **Shipped but still open** — stubs whose work is visibly merged (cite the commit).
+  Distinguish the commit that *created* the stub from the one that *did* the work.
+- **Off-ticket work** — meaningful commits with no corresponding stub.
+- **Dormant promises** — things the docs commit to that no stub or commit covers.
+- **Ticket candidates** — stub-shaped proposals: a one-line title, the problem in ≤2
+  sentences, the source (file or commit), whether it belongs to an existing epic, a new
+  epic, or `triage/` (with its lane), and an honest S/M/L hint. Propose, never create.
 
 Keep it tight — the caller synthesizes across repos; give conclusions, not file dumps.

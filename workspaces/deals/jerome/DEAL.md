@@ -27,7 +27,7 @@
 
 `proposal.pdf` (138 KB, 2026-07-15) lives in the client repo and is **referenced, not
 copied**. It is the only record of what was proposed, and it is a binary: copying it into
-this repo would repeat the pattern [`ICM-008`](../../../.icm/intake/ICM-008-untrack-barzinho-pnl-pdfs.md)
+this repo would repeat the pattern [`triage/untrack-barzinho-pnl-pdfs`](../../../.icm/intake/triage/untrack-barzinho-pnl-pdfs.md)
 exists to undo. If the deal ever reopens, convert it to markdown here first.
 
 Built alongside it, and still the best description of what was on the table: a Next.js

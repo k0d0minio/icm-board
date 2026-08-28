@@ -1,3 +1,5 @@
+> Recut as estate-migration/seed-estate-baseline (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-010 · Seed the canonical Claude assets across the estate
 
 | | |

@@ -52,12 +52,15 @@ derived from, so it earns the most interrogation time.
 ## Features
 | Feature | State | Tickets |
 |---|---|---|
-| Character sheet — combat core | ticketed | DND-009, DND-041, DND-042 |
-| Fast reference lookup | shipped | DND-003 |
+| Character sheet — combat core | ticketed | combat-core/ (3 stubs) |
+| Fast reference lookup | shipped | reference-lookup/fast-lookup |
 | Dice roller | out | — killed 2026-08-13, physical dice are the point |
 
 State is one of: **shipped** · **ticketed** · **wanted** (agreed, not yet cut) ·
-**out** (deliberately excluded — always say why).
+**out** (deliberately excluded — always say why). Tickets are `intake/` paths
+(TICKETS.md): a whole epic (`<epic-slug>/`), a stub (`<epic>/<slug>`), or a triage stub
+(`triage/<slug>`). A feature and an epic often coincide — then the row names the epic
+and the breakdown carries the detail; the table never duplicates it.
 
 ## Constraints
 - **Technical** — stack, data source ceilings, platform limits.

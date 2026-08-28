@@ -46,7 +46,8 @@ knows about).
 | Doc | Owns |
 |---|---|
 | [contracts/WORKSPACES.md](contracts/WORKSPACES.md) | The workspace grammar — five layers, stage contracts, deal folders, the rules. |
-| [contracts/TICKETS.md](contracts/TICKETS.md) | The ticket format, estate-wide, and exactly what the dashboard parses. |
+| [contracts/TICKETS.md](contracts/TICKETS.md) | The intake layer — epics, stubs, triage, positional status, what the dashboard parses. |
+| [contracts/PIPELINE.md](contracts/PIPELINE.md) | The per-repo pipeline — profiles, the run spine, gates, the scripts contract. |
 | [contracts/PROJECT.md](contracts/PROJECT.md) | `.icm/project.md` — a project's intent, business logic, features, constraints, decisions. |
 | [contracts/LENSES.md](contracts/LENSES.md) | The seven analysis lenses deliver/project fans over a repo. |
 | [contracts/CLIENTS.md](contracts/CLIENTS.md) | The client lifecycle — `new → talking → client` (+ `lost`) — which sell and start walk. |
@@ -80,10 +81,13 @@ Every estate repo looks like this:
 
 ```
 .icm/
+  CONTEXT.md         ← the repo's .icm map + profile  → contracts/PIPELINE.md
   project.md         ← what this is for, and why      → contracts/PROJECT.md
   intake/            ← the work                       → contracts/TICKETS.md
-    <PREFIX>-NNN-slug.md
-    _done/           ← finished AND abandoned tickets; nothing is deleted
+    <epic-slug>/       breakdown.md + stubs + _done/
+    triage/            parked one-off bug/tweak/chore stubs
+    _done/             completed epics + the legacy archive; nothing is deleted
+  runs/ stages/ …    ← pipeline profile only          → contracts/PIPELINE.md
   docs/              ← ad hoc reports, client words, runbooks
   onboarding/        ← client questionnaires, when there's a client
 .claude/
@@ -99,11 +103,12 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
 - **The folders are the orchestration.** Never build an orchestrator — no scripts or
   frameworks to "drive" a pipeline; a workspace stage runs when Jamie enters it.
 - **Tickets ARE the plan.** No sprint field, no plan file, never a loose `TODO.md` or
-  `BACKLOG.md`. A week's plan is the `Priority` rows; a day's plan is `Status: today` on
-  at most **3 tickets estate-wide**.
-- **Done is a folder, not a field.** `git mv` to `_done/`; abandoned work too, with a
-  `> Dropped:` line — nothing is deleted, no number is reused. Deals follow the same
-  spirit: a lost deal keeps its folder and its log.
+  `BACKLOG.md`. A week's plan is the priorities and build orders; a day's plan is
+  `.icm/today.md` here — at most **10 entries estate-wide**, written by `/day`.
+- **Status is positional; done is a folder, not a field.** Where a stub sits is its
+  state; `git mv` to `_done/` is the change. Abandoned work moves the same way with a
+  `> Dropped:` line — nothing is deleted, no slug reused in its epic. Deals follow the
+  same spirit: a lost deal keeps its folder and its log.
 - **No outbound action without Jamie.** Sessions draft; he sends, invoices, and flips
   ladder rungs. Business state lives in Neon/Stripe, never mirrored into git.
 - **CI is the source of truth.** The agent never runs `build`/`lint`/`typecheck`/`test`
@@ -123,4 +128,6 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
   folders record that access exists, never its value.
 - **`settings.local.json` is the accretion layer**; `settings.json` stays clean policy.
 - **Sustentus is exempt** from all of this — its `.icm/` carries its own pipeline
-  semantics.
+  semantics, and is the source the estate pipeline was extracted from
+  ([contracts/PIPELINE.md](contracts/PIPELINE.md)). The board reads it; the tooling
+  never touches it.

@@ -30,6 +30,7 @@ itself — the table is for orientation, not dispatch.
 | What do we sell, at what price, on what terms | [`_system/knowledge/`](_system/knowledge/README.md) |
 | How is a workspace/stage/deal structured | [`WORKSPACES.md`](_system/contracts/WORKSPACES.md) · [`deals/README.md`](workspaces/deals/README.md) |
 | Ticket format, estate-wide | [`TICKETS.md`](_system/contracts/TICKETS.md) |
+| The per-repo pipeline — profiles, spine, gates | [`PIPELINE.md`](_system/contracts/PIPELINE.md) |
 | What a project register holds | [`PROJECT.md`](_system/contracts/PROJECT.md) |
 | The seven analysis lenses | [`LENSES.md`](_system/contracts/LENSES.md) |
 | The client ladder and its flags | [`CLIENTS.md`](_system/contracts/CLIENTS.md) |

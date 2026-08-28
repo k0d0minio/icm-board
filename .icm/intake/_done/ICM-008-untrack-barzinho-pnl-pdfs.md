@@ -1,3 +1,5 @@
+> Recut as triage/untrack-barzinho-pnl-pdfs (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-008 · Untrack barzinho's P&L PDFs
 
 | | |

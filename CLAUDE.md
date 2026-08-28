@@ -24,8 +24,9 @@ canonical Claude assets seeded across the estate.
 - **[`.claude/`](.claude/)** — four thin commands (`/client`, `/project`, `/day`,
   `/icm-check`) that route into stage contracts, and two agents. *The stage contracts are
   the process* — the commands only route.
-- **[`.icm/`](.icm/)** — this repo's own register and backlog (`ICM-NNN-slug.md`). It is
-  held to the same baseline it enforces.
+- **[`.icm/`](.icm/)** — this repo's own register and backlog (epics + stubs per
+  [`TICKETS.md`](_system/contracts/TICKETS.md)). It is held to the same baseline it
+  enforces.
 - **`projects/`** — every repo in the estate, one folder each. Separate git repos,
   **gitignored here**, present only on Jamie's machine — deliberately not a link.
 
@@ -63,7 +64,7 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
   cloud sessions need it) — but never a credential, token, or identity document. Business
   *state* stays in Neon/Stripe; the folders hold words and documents.
 - **Tickets live next to the logic they describe.** A ticket about this repo's machinery
-  is `ICM-*` here; a dashboard ticket is `JN-*` in `jamienisbet`. Planning is tickets in
+  is cut here; a dashboard ticket is cut in `jamienisbet`. Planning is epics and stubs in
   `.icm/intake/` — never a loose `TODO.md`. Ticket-only commits go straight to `main`;
   everything else through a PR on a `claude/` branch.
 - **This repo is held to its own baseline**, and to its own workspace grammar. A rule it

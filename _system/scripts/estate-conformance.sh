@@ -10,9 +10,11 @@
 #
 # It mirrors icm-check.sh's severity model exactly, because two tools disagreeing about
 # what "conformant" means is worse than one tool:
-#   GAP   what --fix would seed — intake/, intake/README.md, _done/, docs/,
-#         .claude/, .claude/settings.json, and the canonical Claude assets
-#         (hooks + skills from _system/template/claude/). These fail the run.
+#   GAP   what --fix would seed — .icm/CONTEXT.md, intake/, intake/README.md, triage/,
+#         _done/, docs/, .claude/, .claude/settings.json, and the canonical Claude
+#         assets (hooks + skills from _system/template/claude/). These fail the run.
+#         (Pipeline-profile completeness is the local script's job — reading each
+#         repo's CONTEXT.md content over the API would cost a request per repo.)
 #   warn  agent/human territory, never auto-fixed — no CLAUDE.md, no project.md,
 #         a tracked settings.local.json, a loose TODO.md. Reported, never fatal.
 #         (Canonical *drift* is icm-check.sh's warn alone — content comparison over
@@ -105,12 +107,14 @@ for repo in "${repos[@]}"; do
   missing=(); warns=()
 
   icm=$(ls_path "$repo" .icm)
+  [[ "$icm" == *" CONTEXT.md "* ]] || missing+=(".icm/CONTEXT.md")
   if [[ "$icm" == *" intake "* ]]; then
     intake=$(ls_path "$repo" .icm/intake)
     [[ "$intake" == *" README.md "* ]] || missing+=(".icm/intake/README.md")
+    [[ "$intake" == *" triage "*    ]] || missing+=(".icm/intake/triage/")
     [[ "$intake" == *" _done "*     ]] || missing+=(".icm/intake/_done/")
   else
-    missing+=(".icm/intake/" ".icm/intake/README.md" ".icm/intake/_done/")
+    missing+=(".icm/intake/" ".icm/intake/README.md" ".icm/intake/triage/" ".icm/intake/_done/")
   fi
   [[ "$icm" == *" docs "* ]] || missing+=(".icm/docs/")
 

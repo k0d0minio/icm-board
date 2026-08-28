@@ -1,3 +1,5 @@
+> Recut as estate-automation/conformance-exit-code (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-015 · Decide what a red conformance run should mean
 
 | | |

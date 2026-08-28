@@ -1,3 +1,5 @@
+> Recut as estate-automation/estate-heartbeat (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-001 · Estate heartbeat — daily timer, digest, session-start delta
 
 | | |

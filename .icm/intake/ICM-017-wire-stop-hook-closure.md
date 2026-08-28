@@ -52,8 +52,38 @@ The hook **asks**; it never moves a ticket. Gates are human checkboxes.
       file, is asked about it once at session end
 - [ ] A session that touched the ticket file, or that only changed `.icm/`, is not asked
 - [ ] `wrap-reminder.sh` still honours `stop_hook_active` and stays silent on any error
-- [ ] The 21 unwired repos register the hook, one reviewed commit each
-- [ ] `icm-check.sh` reports zero `inert` warnings for `wrap-reminder.sh`
+- [ ] The repos in scope register the hook, one reviewed commit each
+- [ ] `icm-check.sh` reports no `inert` or hook-drift warning for any repo in scope
+
+## Scope decision — 2026-08-28
+
+Jamie chose **the nine active repos only**: `agorasim`, `barzinho`, `berceo`,
+`casey-hebbel`, `dungeons-dragons`, `jamienisbet`, `kau-american-bbq`, `remi-ai`,
+`vinecliff`. All nine are wired and pushed, one commit each. `icm-check` inert warnings
+fell 42 → 24.
+
+The reasoning: the closure question can only fire on a repo with an open ticket, and a
+dormant repo has none by definition — so wiring the other thirteen would be churn with
+no signal.
+
+`remi-ai` was merged rather than overwritten; it carries its own `PreToolUse`
+(`block-local-checks`) and a 38-entry allow-list, all preserved.
+
+## Remaining
+
+Thirteen repos still carry the hook file unwired or stale, and this is deliberate:
+
+- **Twelve dormant repos** — `boystomenretreat`, `cafe-jardim`, `collabimmo`,
+  `firedough`, `garmani`, `grafitala`, `le-pavillon-vert`, `little-grass-shack`,
+  `lourenco-botelho`, `messy-play`, `miriamfridman`, `simnao`. Each still shows two
+  `inert` warnings and one hook-drift warning in `icm-check`, which is the standing
+  signal — no further machinery is needed to remember them. **The trigger is waking
+  up:** per the dormancy rule in [`TICKETS.md`](../../_system/contracts/TICKETS.md), a
+  dormant repo that gets a new ticket drops the marker, and it should take the hook in
+  the same commit.
+- **`the-library`** is the odd one: already wired, but running the *old* hook, so it
+  asks the uncommitted-`.icm/` question and not the closure one. Not broken, just not
+  current. One file, whenever it is next touched.
 
 ## Prompt
 

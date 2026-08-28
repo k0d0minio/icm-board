@@ -6,7 +6,7 @@
 - size: M
 - depends-on: none
 - sequence: 1 of 3
-- blocked: JN-028 in jamienisbet (the token-authed mutations API) must merge and deploy first
+- blocked: jamienisbet's token-authed client-mutations API must ship first (was JN-028 — purged, D14; re-cut it there when picked up)
 - sources: recut from ICM-012 (original purged, D14) · decided 2026-08-27
 
 ## Problem
@@ -48,6 +48,6 @@ Give sessions a way to write Neon at the moment a stage gate is ticked, so the
 authoritative store stops learning last. Read
 .icm/intake/business-state/neon-at-the-gate.md for full context, then
 _system/contracts/CLIENTS.md and _system/contracts/WORKSPACES.md — both stay true and
-constrain this. JN-028 in k0d0minio/jamienisbet must be merged and deployed first. The
+constrain this. jamienisbet's token-authed client-mutations API (was JN-028, purged in D14 — re-cut it there) must be merged and deployed first. The
 line that must not be crossed: this records decisions, it never makes them. Open a PR on
 a claude/ branch; do not run local checks — CI is the source of truth.

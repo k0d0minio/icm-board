@@ -47,7 +47,7 @@ bulk-apply their findings.
 candidates in this order: P0s · stalled in-progress · blocked that may have unblocked ·
 P1s longest waiting · active repos with nothing ticketed.
 - *Day:* clear every leftover `today` first (to `ready` unless Jamie says otherwise),
-  then flip tomorrow's picks — **at most 3 across the whole estate.** If Jamie wants
+  then flip tomorrow's picks — **at most 10 across the whole estate.** If Jamie wants
   more, push back once (a diluted flag is no flag), then obey.
 - *Week:* walk the Priority rows — what is genuinely P0/P1 now, what demotes, what
   dies. Dead tickets to `_done/` with `> Dropped: <reason, date>`, or deleted, per

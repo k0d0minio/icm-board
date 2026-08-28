@@ -64,7 +64,7 @@ Each prints a single `RESULT:` line and takes config from the environment, never
 
 | Script | Does |
 |---|---|
-| [scripts/icm-check.sh](scripts/icm-check.sh) | Checks every repo **on disk** against the baseline + canonical assets. `--fix` seeds gaps from [template/](template/README.md), **never overwrites**; drift from canonical is reported, never repaired. |
+| [scripts/icm-check.sh](scripts/icm-check.sh) | Checks every repo **on disk** — this one included — against the baseline + canonical assets. `--fix` seeds gaps from [template/](template/README.md), **never overwrites**; drift from canonical is reported, never repaired. |
 | [scripts/estate-conformance.sh](scripts/estate-conformance.sh) | The same question **over the GitHub API** — so it runs in CI, where `projects/` does not exist. Reports only; never writes. |
 | [scripts/tickets-board.sh](scripts/tickets-board.sh) | The estate board. `--today` powers the SessionStart hook. |
 | [scripts/ticket-hygiene.sh](scripts/ticket-hygiene.sh) | Read-only drift report, plus contract lint over every ticket; `/day` applies the fixes with judgment. An empty `.icm/dormant` parks a repo ([TICKETS.md](contracts/TICKETS.md)). |

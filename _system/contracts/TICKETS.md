@@ -22,12 +22,13 @@ them. Tickets are never created or edited from the dashboard.
 ```
 
 - **Sustentus-v2 is exempt** — its `pipeline/intake/` is authoritative and untouched.
-- Prefixes: `REMI`, `AGORA`, `BERC`, `KAU`, `VINE`, `JN` (jamienisbet), `BARZ` (barzinho),
-  `BTM` (boystomenretreat), `COLL` (collabimmo), `CASEY` (casey-hebbel), `CAFE`
-  (cafe-jardim), `MESSY` (messy-play), `DND` (dungeons-dragons); new repos pick a short
-  unique prefix. Repos seeded
-  by `icm-check.sh --fix` carry an auto-derived prefix in their intake README — confirm
-  it (and register it here + in `icm-check.sh`'s map) before cutting the first ticket.
+- Prefixes: `ICM` (icm-board), `REMI`, `AGORA`, `BERC`, `KAU`, `VINE`, `JN`
+  (jamienisbet), `BARZ` (barzinho), `BTM` (boystomenretreat), `COLL` (collabimmo),
+  `CASEY` (casey-hebbel), `CAFE` (cafe-jardim), `MESSY` (messy-play), `DND`
+  (dungeons-dragons), `LIB` (the-library); new repos pick a short unique prefix. Repos
+  seeded by `icm-check.sh --fix` carry an auto-derived prefix in their intake README —
+  confirm it (and register it here + in `icm-check.sh`'s map) before cutting the first
+  ticket.
 - `NNN` is zero-padded and never reused, even for dropped tickets.
 
 ## Ticket format

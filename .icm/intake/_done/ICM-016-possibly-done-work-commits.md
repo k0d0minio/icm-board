@@ -23,7 +23,7 @@ A check that cannot separate the two is worse than no check: it trains the reade
 skip the whole section, which is how the board drifted out of sync in the first place.
 
 The distinction is already written down for the human.
-[`day/CONTEXT.md`](../../workspaces/deliver/stages/day/CONTEXT.md) § Reconcile says:
+[`day/CONTEXT.md`](../../../workspaces/deliver/stages/day/CONTEXT.md) § Reconcile says:
 "find the actual work commit — the commit that created the ticket doesn't count, nor
 does an estate-sweep commit." The script has simply never encoded it.
 

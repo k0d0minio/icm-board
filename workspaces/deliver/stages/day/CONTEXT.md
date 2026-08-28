@@ -27,10 +27,11 @@ show what it found. The scripts report; **you verify and fix with judgment** —
 bulk-apply their findings.
 
 **2. Reconcile — the board must be true before it's useful.**
-- *Merged but still open:* for each open ticket whose ID appears in merged commits,
-  find the actual work commit — the commit that created the ticket doesn't count, nor
-  does an estate-sweep commit. Genuinely merged → `git mv` to `_done/`. Ambiguous →
-  batch the questions and ask.
+- *Merged but still open:* `possibly-done` now names the commit it found, and only counts
+  commits that changed something outside `.icm/` — so the ticket's own `Cut …` and
+  `Ticket audit: …` commits no longer match. Read the subject it prints: a `feat…` that
+  matches the ticket is genuinely merged → `git mv` to `_done/`. A register or docs
+  commit that merely names the ticket is still noise. Ambiguous → batch and ask.
 - *`today` dilution:* more than 3 flagged estate-wide means none are. List them, ask
   which ≤10 survive; the rest to `ready`. Stale flags from a past day default to `ready`
   without asking.

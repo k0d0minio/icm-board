@@ -51,7 +51,7 @@ defined, improvable process, and every repo in the estate stays aligned.
 | Deliver workspace — the three rituals as stage contracts | shipped | — |
 | Knowledge layer — services, pricing, voice, terms, stack | shipped | — |
 | Canonical Claude asset library + drift report | shipped, unproven | estate-migration/seed-estate-baseline |
-| Four estate scripts — icm-check, tickets-board, ticket-hygiene, pull-all | shipped | — (history: _done/ICM-003, ICM-004) |
+| Four estate scripts — icm-check, tickets-board, ticket-hygiene, pull-all | shipped | — |
 | Self-check CI — shellcheck, contract links, ticket lint | shipped | — |
 | Remote conformance CI over the `k0d0minio` org | shipped | estate-automation/conformance-exit-code |
 | Estate pipeline — intake epics + tiered profiles, extracted from sustentus | shipped | estate-migration/ (rollout) |
@@ -83,6 +83,7 @@ defined, improvable process, and every repo in the estate stays aligned.
 | D11 | D3 narrowed: a *project repo's own* deterministic one-job scripts, and CI acting only after a human-authorised merge, are **factory, not orchestrator**. The line that never moves: nothing advances work across a human gate, and icm-board itself drives nothing | 2026-08-28 | D3, narrowly |
 | D12 | Gen-3 **is** a template product: the estate pipeline is extracted from sustentus into `_system/template/` as tiered profiles (`intake` default · `pipeline` · `pipeline-full` deliberately unextracted). Sustentus stays exempt as the source; remi-ai's zero-run `pipeline/` tree is superseded pending its migration decision. Answers AUDIT open question 2 | 2026-08-28 | — |
 | D13 | The dashboard board stays **read-only** and reads both ticket shapes over the GitHub API, sustentus included — no sync, no second store | 2026-08-28 | — |
+| D14 | **Clean slate**: every legacy `PREFIX-NNN` ticket — open and archived, estate-wide — is purged rather than re-cut ("they were getting very noisy"); fresh backlogs come from gated `/project` runs per repo, on demand. The "nothing is deleted" rule governs the new model's ongoing operation from this founding reset onward. Facts worth keeping (security lines, the hook-wiring history) were carried into AUDIT.md and the seeding stub before the purge | 2026-08-28 | the per-repo re-cut rollout in D10's plan |
 
 ## Open questions
 
@@ -101,3 +102,4 @@ defined, improvable process, and every repo in the estate stays aligned.
 | 2026-08-26 | — | ICM-009 done in the same session: questionnaire run conversationally, all seven sections. Knowledge layer + target-profile + outreach filled with Jamie's real answers (band €1.000–€2.500 sites, €500 floor, method-not-band for apps/AI, scoped retainers €200–€4.000/mo, 50/50 default, two revision rounds, both ownership patterns, stack confirmed as policy, profile weighted to AI). Deliberate remaining gaps: voice/outreach example pastes, app/AI standing inclusions, the AI-SME channel. |
 | 2026-08-28 | — | Estate ticket audit (Jamie-directed, 27–28 Aug): every open ticket checked against its codebase; board 85 → 54 open. Here: ICM-002 folded into ICM-001 (row above updated on Jamie's instruction), ICM-004 trimmed to its two live items. New: AGORA-020 (tracked credential PDFs) and REMI-038 (patient Stripe subscriptions) cut on his answers. Not a `/project` run — a directed register correction. |
 | 2026-08-28 | — | **The pipeline rework** (Jamie-directed; four-agent analysis + two interrogation rounds — decisions D10–D13 are his answers). TICKETS.md rewritten, PIPELINE.md cut, the template rebuilt with the `pipeline` profile, all five scripts reworked, `/day`/`/project`/`/icm-check` contracts redesigned, own intake migrated (9 flat tickets → 4 epics + 1 triage stub; rollout cut as the estate-migration epic). Design record: `.icm/docs/pipeline-rework-design.md`. Dashboard counterpart in jamienisbet's own PR. |
+| 2026-08-28 | — | **The D14 clean slate** (Jamie's call, same day): ~39 open + ~130 archived legacy tickets purged across the estate; this repo's recut archives removed from the rework branch and every archived-original reference swept; the estate-migration epic re-cut to the single seeding stub. `JN-036` left on jamienisbet `main` deliberately — PR #78 moves that file, so it is purged after that merge. |

@@ -6,7 +6,7 @@
 - size: S
 - depends-on: deal-folder-drift-check
 - sequence: 3 of 3
-- sources: recut from ICM-014 (intake/_done/ICM-014-decide-git-as-write-model.md — both sides of the argument live there)
+- sources: recut from ICM-014 (original purged, D14 — the Problem above carries both sides)
 
 ## Problem
 
@@ -37,8 +37,7 @@ the folders and Neon actually disagree.
 ## Prompt
 
 Decide whether the deal folder becomes authoritative for business state, with Neon as a
-read model. Read .icm/intake/business-state/decide-git-as-write-model.md and the
-archived original .icm/intake/_done/ICM-014-decide-git-as-write-model.md for both sides,
+read model. Read .icm/intake/business-state/decide-git-as-write-model.md for both sides,
 then _system/contracts/CLIENTS.md, _system/contracts/WORKSPACES.md and the standing
 rules in CLAUDE.md. This is a decision stub, not a build. Do not decide it alone — put
 the argument to Jamie and record what he decides in .icm/project.md. Do not tick a gate

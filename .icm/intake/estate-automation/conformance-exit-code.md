@@ -6,7 +6,7 @@
 - size: S
 - depends-on: none
 - sequence: 1 of 2
-- sources: recut from ICM-015 (intake/_done/ICM-015-conformance-exit-code.md) · first token-backed estate-conformance.yml run, 2026-08-27
+- sources: recut from ICM-015 (original purged, D14) · first token-backed estate-conformance.yml run, 2026-08-27
 
 ## Problem
 
@@ -38,8 +38,8 @@ comment the exit line in each with the reasoning, record the decision in
 ## Prompt
 
 Decide what a red estate-conformance run should mean, then make the scripts agree. Read
-.icm/intake/estate-automation/conformance-exit-code.md and the archived original
-.icm/intake/_done/ICM-015-conformance-exit-code.md for the three options. This is a
+.icm/intake/estate-automation/conformance-exit-code.md for the options (the
+Proposed change above carries the recommended one). This is a
 judgement call — put the options to Jamie rather than picking for him. Once he picks,
 change _system/scripts/estate-conformance.sh and _system/scripts/icm-check.sh, comment
 the exit lines, and record the decision in .icm/project.md. Open a PR on a claude/

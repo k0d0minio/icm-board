@@ -1,8 +1,8 @@
 # Breakdown: Estate automation — the heartbeat and its semantics
 
 - epic-slug: estate-automation
-- sources: recut 2026-08-28 from ICM-015 · ICM-001 (intake/_done/) — the exit-code
-  decision shapes what the daily digest's colour means, so it goes first
+- sources: recut 2026-08-28 from ICM-015 · ICM-001 (originals purged, D14) — the
+  exit-code decision shapes what the daily digest's colour means, so it goes first
 
 ## What I understood
 

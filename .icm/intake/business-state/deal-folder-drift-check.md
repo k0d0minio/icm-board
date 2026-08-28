@@ -6,7 +6,7 @@
 - size: S
 - depends-on: neon-at-the-gate
 - sequence: 2 of 3
-- sources: recut from ICM-013 (intake/_done/ICM-013-deal-folder-drift-check.md)
+- sources: recut from ICM-013 (original purged, D14)
 
 ## Problem
 
@@ -39,8 +39,7 @@ Wire into `/day`'s reconcile step.
 
 Add a read-only drift check between workspaces/deals/*/DEAL.md and the Neon client
 rows, and surface it in /day's reconcile step. Read
-.icm/intake/business-state/deal-folder-drift-check.md and the archived original
-.icm/intake/_done/ICM-013-deal-folder-drift-check.md, then
+.icm/intake/business-state/deal-folder-drift-check.md, then
 _system/contracts/WORKSPACES.md for what the folder mirror is for. It depends on the
 read half of neon-at-the-gate. Match the shape of the existing scripts in
 _system/scripts/. Open a PR on a claude/ branch; do not run local checks — CI is the

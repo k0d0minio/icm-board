@@ -137,6 +137,15 @@ exemption's "Sustentus-v2" naming normalised to sustentus.
 
 ## Migration plan (per repo, after the two PRs merge)
 
+> **Superseded same-day by decision D14 (the clean slate).** Jamie chose to purge every
+> legacy ticket — open and archived, estate-wide — rather than re-cut ("I don't mind
+> losing them all; they were getting very noisy"). The purge ran in the same session:
+> per-repo `Wrap:` commits straight to each `main`, security facts carried into
+> `AUDIT.md`, the ICM-017 hook-wiring history carried into the seeding stub, and the
+> estate-migration epic re-cut to `seed-estate-baseline` alone. Fresh backlogs arrive
+> per repo from gated `/project` runs on demand. The plan below is kept as the record
+> of what the re-cut path would have been.
+
 Order matters only in that **the jamienisbet parser PR merges before any repo's tickets
 migrate** — the parser is dual-shape, so migrated and unmigrated repos coexist
 indefinitely. Per repo, migration is `/project`-shaped work at Jamie's gate: re-cut from

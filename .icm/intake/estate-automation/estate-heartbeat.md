@@ -6,7 +6,7 @@
 - size: M
 - depends-on: conformance-exit-code
 - sequence: 2 of 2
-- sources: recut from ICM-001 (intake/_done/ICM-001-estate-heartbeat.md; ICM-002's /day run log folded in 2026-08-27) · audit open decision #8
+- sources: recut from ICM-001 (original purged, D14; ICM-002's /day run log folded in 2026-08-27) · audit open decision #8
 
 ## Problem
 
@@ -48,8 +48,7 @@ picks: a morning with an empty today.md, 3 blocked stubs and 17 hygiene findings
 ## Prompt
 
 Build the estate heartbeat for the Apps estate. Read
-.icm/intake/estate-automation/estate-heartbeat.md and the archived original
-.icm/intake/_done/ICM-001-estate-heartbeat.md for full context. It must run on Jamie's
+.icm/intake/estate-automation/estate-heartbeat.md for full context. It must run on Jamie's
 machine — client repos in projects/ are gitignored and local-only. Never build an
 orchestrator: the timer calls the scripts exactly as a human would, and everything stays
 read-only — report, never fix. Repo files go through a PR on a claude/ branch; do not

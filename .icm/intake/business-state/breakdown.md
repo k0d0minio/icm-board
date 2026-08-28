@@ -1,8 +1,8 @@
 # Breakdown: Business state writes at the gate
 
 - epic-slug: business-state
-- sources: recut 2026-08-28 from ICM-012 · ICM-013 · ICM-014 (intake/_done/) — the
-  chain was already explicit in their cross-references
+- sources: recut 2026-08-28 from ICM-012 · ICM-013 · ICM-014 (originals purged in
+  the D14 clean slate) — the chain was already explicit in their cross-references
 
 ## What I understood
 

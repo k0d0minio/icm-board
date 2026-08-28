@@ -21,8 +21,7 @@ whether a remote exists (scrub urgency); update AUDIT.md here.
 ## Prompt
 
 Untrack the git-tracked P&L PDFs in the barzinho client repo. Read
-.icm/intake/triage/untrack-barzinho-pnl-pdfs.md (and the archived original
-.icm/intake/_done/ICM-008-untrack-barzinho-pnl-pdfs.md) for full context. Work in
+.icm/intake/triage/untrack-barzinho-pnl-pdfs.md for full context. Work in
 projects/barzinho (local machine only): git rm --cached the PDFs under
 shared/profit-and-loss/, fix the .gitignore pattern, commit in that repo, and report
 whether the repo has a remote so Jamie can decide on a history scrub — do not rewrite

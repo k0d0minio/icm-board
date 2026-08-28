@@ -6,7 +6,7 @@
 - size: M
 - depends-on: none
 - sequence: 1 of 1
-- sources: recut from ICM-006 (intake/_done/ICM-006-house-discovery-templates.md) · berceo .icm/docs/{QUESTIONS,REPORT}.md · messy-play DISCOVERY-PROMPT.md
+- sources: recut from ICM-006 (original purged, D14) · berceo .icm/docs/{QUESTIONS,REPORT}.md · messy-play DISCOVERY-PROMPT.md
 
 ## Problem
 

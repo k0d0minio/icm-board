@@ -1,8 +1,8 @@
 # Breakdown: Discovery references — fold in the real artifacts
 
 - epic-slug: discovery-references
-- sources: recut 2026-08-28 from ICM-006 (intake/_done/) — a single-stub epic; the
-  skeletons already exist, only the local-machine half remains
+- sources: recut 2026-08-28 from ICM-006 (original purged, D14) — a single-stub
+  epic; the skeletons already exist, only the local-machine half remains
 
 ## What I understood
 

@@ -21,7 +21,7 @@ doctrine (stable) and audit (decays) stop sharing a file.*
 ## Still open — security
 
 - **P0** barzinho P&L PDFs are git-tracked — `.gitignore` pattern no longer matches after the move to `shared/profit-and-loss/`. Needs untrack + pattern fix + history scrub if the repo has a remote.
-- **P1** dungeons-dragons: a Linear API key shipped in the public browser bundle via a `NEXT_PUBLIC_` prefix and has never been revoked (ticketed as DND-015).
+- **P1** dungeons-dragons: a Linear API key shipped in the public browser bundle via a `NEXT_PUBLIC_` prefix and has never been revoked. (Its ticket went in the D14 clean-slate purge — this line is the record until a fresh `/project` run re-cuts it.)
 - **P2** Over-broad grants: remi-ai `Bash(cat > *)` and home-wide `Read()`; `git push`/`gh pr merge` on allow.
 - **P3** Orphaned vercel-plugin OAuth material in `~/.claude/.credentials.json`; `garmani/.env` is tracked.
 - ✅ Global secrets deny-list now in place machine-wide (`.env*`, `*.pem`, `*.key`, `secrets/**`).

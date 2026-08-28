@@ -40,7 +40,7 @@ That is the standard you measure against — not your own view of what the proje
 Read whatever your lens needs — code, config, content, git history. `.icm/docs/` carries
 the client's own words; `.icm/intake/` (including `_done/`) tells you what is already
 known. **Anything already covered by an open ticket is not a finding** — say "already
-ticketed as `<ID>`" and move on.
+ticketed as `<epic>/<slug>`" and move on.
 
 If your prompt gives you a commit range, the changes in it are where to look hardest — but
 say so if the real problem is older than the range.

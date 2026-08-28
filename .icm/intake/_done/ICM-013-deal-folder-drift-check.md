@@ -1,3 +1,5 @@
+> Recut as business-state/deal-folder-drift-check (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-013 · Report where deal folders and Neon disagree
 
 | | |
@@ -26,7 +28,7 @@ for every folder in `workspaces/deals/`, compare its `Ladder`, `Value` and `Shap
 against the Neon row, and print the disagreements.
 
 **It reports and never repairs** — the house rule for conformance
-([CLAUDE.md](../../CLAUDE.md)) and the reason all six existing scripts touch no database
+([CLAUDE.md](../../../CLAUDE.md)) and the reason all six existing scripts touch no database
 and POST nowhere. Neon wins by definition, so a disagreement is a folder to regenerate,
 but the regeneration is a human's call and a separate action.
 

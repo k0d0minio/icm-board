@@ -29,7 +29,7 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
 │   └── AUDIT.md               what's broken or undecided across the estate
 │
 ├── .claude/                   /client · /project · /day · /icm-check (thin routers)
-├── .icm/                      this repo's own register + ICM-NNN backlog
+├── .icm/                      this repo's own register + intake epics (+ today.md)
 ├── .github/workflows/         self-check · estate-conformance
 │
 └── projects/                  the estate — gitignored, on this machine only
@@ -50,8 +50,9 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
   `icm-check.sh` reads it directly — and now also seeds and drift-checks the canonical
   Claude assets. In CI it isn't, so `estate-conformance.sh` asks the GitHub API the same
   questions about the `k0d0minio` org (via the `ESTATE_TOKEN` secret).
-- **Tickets live next to their logic.** Work on this repo's machinery is an `ICM-*`
-  here; dashboard work is a `JN-*` in `k0d0minio/jamienisbet`.
+- **Tickets live next to their logic.** Work on this repo's machinery is cut here;
+  dashboard work is cut in `k0d0minio/jamienisbet` — epics and stubs per
+  `_system/contracts/TICKETS.md`.
 - **CI is the source of truth** — don't run checks locally.
 
 ## History

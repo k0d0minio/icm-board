@@ -1,3 +1,5 @@
+> Recut as estate-migration/seed-estate-baseline (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-017 · Wire the estate Stop hook and give it a closure question
 
 | | |
@@ -78,7 +80,7 @@ Thirteen repos still carry the hook file unwired or stale, and this is deliberat
   `lourenco-botelho`, `messy-play`, `miriamfridman`, `simnao`. Each still shows two
   `inert` warnings and one hook-drift warning in `icm-check`, which is the standing
   signal — no further machinery is needed to remember them. **The trigger is waking
-  up:** per the dormancy rule in [`TICKETS.md`](../../_system/contracts/TICKETS.md), a
+  up:** per the dormancy rule in [`TICKETS.md`](../../../_system/contracts/TICKETS.md), a
   dormant repo that gets a new ticket drops the marker, and it should take the hook in
   the same commit.
 - **`the-library`** is the odd one: already wired, but running the *old* hook, so it

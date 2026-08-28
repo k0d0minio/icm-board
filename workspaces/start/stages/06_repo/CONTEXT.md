@@ -9,7 +9,7 @@ outranks this stage.
 | Layer | File | Why |
 |---|---|---|
 | 3 | [`_system/knowledge/stack.md`](../../../../_system/knowledge/stack.md) | What a delivery repo defaults to |
-| 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) | Prefix rules — short, unique, never reused |
+| 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) | The intake shape the seeded baseline carries |
 | 4 | `05-onboarding.md` | Confirms onboarding didn't leave gaps that block setup |
 
 ## Process
@@ -19,18 +19,14 @@ outranks this stage.
 2. After Jamie creates it from the profile (gate below): clone under `projects/<name>`
    (local sessions), run `_system/scripts/icm-check.sh --fix`, and confirm what it
    seeded.
-3. Choose the ticket prefix with Jamie; register it in
-   [`TICKETS.md`](../../../../_system/contracts/TICKETS.md)'s list **and**
-   `icm-check.sh`'s known-prefix map — a prefix that exists in only one place is drift
-   on day one.
-4. Write `06-repo.md`: repo URL, prefix, what was seeded, what the stack will be where
-   it deviates from default.
+3. Write `06-repo.md`: repo URL, what was seeded, what the stack will be where it
+   deviates from default. (Ticket identity is the `epic/slug` path — there is no prefix
+   to choose or register.)
 
 ## Gate — Jamie
 
 - Creates the repo via the dashboard profile (**Connect / create repo** — this also sets
   `github_repo`, clearing that conversion gap and putting the repo on the tickets board).
-- Confirms the prefix before any ticket is cut.
 
 ## Outputs
 
@@ -43,5 +39,4 @@ outranks this stage.
 
 - `github_repo` is set on the profile — a null there means the work is invisible to the
   board, which is the exact failure this stage exists to prevent.
-- Prefix appears in both registries, spelled identically.
 - Nothing was created by hand that the dashboard or the template owns.

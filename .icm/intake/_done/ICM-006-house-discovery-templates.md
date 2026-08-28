@@ -1,3 +1,5 @@
+> Recut as discovery-references/distill-discovery-artifacts (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-006 · Distill the real discovery artifacts into the sell references
 
 | | |

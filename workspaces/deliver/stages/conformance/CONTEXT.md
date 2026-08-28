@@ -1,7 +1,7 @@
 # deliver/conformance — check, populate, review
 
-Entered by `/icm-check`. Work from the Apps root. Sustentus-v2 is exempt throughout
-(its `pipeline/` is authoritative). Never commit or push anything — leave created files
+Entered by `/icm-check`. Work from the Apps root. Sustentus is exempt throughout (its
+`.icm/` is authoritative). Never commit or push anything — leave created files
 uncommitted for Jamie to review per repo.
 
 ## Inputs
@@ -9,7 +9,7 @@ uncommitted for Jamie to review per repo.
 | Layer | File | Why |
 |---|---|---|
 | 3 | [`_system/template/`](../../../../_system/template/) | The canonical baseline + asset library being checked against |
-| 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) | Prefix rules for anything the fix seeds |
+| 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) · [`PIPELINE.md`](../../../../_system/contracts/PIPELINE.md) | The intake shape and the profiles the fix seeds against |
 | 4 | `_system/scripts/icm-check.sh` output | The report this ritual acts on |
 | 4 | Each repo's `CLAUDE.md` + `.claude/` | What the per-repo review reads |
 
@@ -23,10 +23,11 @@ from [`_system/template/claude/`](../../../../_system/template/README.md).
 created.
 - The script only creates missing files from the template; it never overwrites. Trust
   it — do not hand-create `.icm` or `.claude` files alongside it.
-- Any prefix flagged *suggested* (auto-derived): list prominently. Prefixes must be
-  short, unique across the estate, never reused — if a suggestion collides or reads
-  badly, tell Jamie which README to edit before the first ticket is cut. Do not invent
-  tickets.
+- A repo declaring `- profile: pipeline` in its `.icm/CONTEXT.md` is checked (and, with
+  `--fix`, seeded) against the pipeline profile too — report profile gaps in their own
+  group. Declaring a profile is Jamie's act; the fix never upgrades one.
+- Legacy flat `PREFIX-NNN` tickets are reported as *unmigrated*, never converted —
+  migration is `/project`'s judgment work.
 - Drift is **reported, never repaired** — repos own their copies. Where a drifted copy
   looks deliberate, propose registering the divergence in the repo's own docs; where it
   looks like rot, propose updating from canonical — Jamie decides per repo.
@@ -56,7 +57,8 @@ asks.
 
 - Reviews and commits (or discards) what `--fix` seeded, per repo.
 - Rules on each drift line: deliberate divergence or rot.
-- Confirms suggested prefixes before first tickets.
+- Declares (or declines) profile upgrades; decides when an unmigrated repo gets its
+  `/project` re-cut.
 
 ## Outputs
 

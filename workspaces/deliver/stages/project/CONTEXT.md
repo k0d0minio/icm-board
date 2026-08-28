@@ -53,8 +53,9 @@ drift) · *expansion* (stable; new features). Posture decides where interrogatio
 lenses aim. Do not guess silently.
 
 **2. Scan — cheap, structural, no fan-out.** Enough to ask good questions: the stack,
-routes/entry points, ticket state (every ID in `intake/` **and** `_done/`, and the
-prefix), what shipped since last run, whether the Features table still matches reality.
+routes/entry points, ticket state (every epic's stubs, `_done/` and build order; the
+`triage/` backlog; any legacy flat tickets still unmigrated), what shipped since last
+run, whether the Features table still matches reality.
 **Reconcile the board first** — a ticket whose work visibly merged goes to `_done/` now;
 distinguish the commit that *created* a ticket from the one that *did the work*; where
 ambiguous, ask. Spawn `ticket-scout` if the repo has real git history.
@@ -88,24 +89,32 @@ Dedupe (merge, keep strongest evidence) · drop what open tickets or shipped wor
 cover · rank by what moves the project (blocks launch/revenue · harms users now ·
 explicitly asked · rest — if a third is P0, none of it is) · reconcile against the
 Features table (every finding maps to a *wanted* feature or a breached constraint;
-matching nothing = new feature row or noise, say which). Then each existing ticket vs
+matching nothing = new feature row or noise, say which). Then each existing stub vs
 intent: still fits → untouched · wrong priority/scope → amend in place with why · no
-longer fits → `git mv` to `_done/` with `> Dropped: <reason, date>` · missing → cut.
-**Never delete a ticket file, never reuse a number.**
+longer fits → `git mv` to its epic's `_done/` with `> Dropped: <reason, date>` ·
+missing → cut. **Never delete a stub file, never reuse a slug within an epic.**
+A repo still carrying legacy flat `PREFIX-NNN` tickets gets its migration here: re-cut
+the survivors into epics/triage from the evidence (drop bias applies), and `git mv` the
+old files to `intake/_done/` with a `> Recut as <epic>/<slug>` (or `> Dropped:`) line.
 
-**6. Write — register, then tickets.** `.icm/project.md` per
+**6. Write — register, then the cut.** `.icm/project.md` per
 [`PROJECT.md`](../../../../_system/contracts/PROJECT.md): decisions appended with stable
-IDs (supersede, never edit away), Features table brought current, open questions carried
-forward, run-log row with date and `HEAD`. Then tickets per
-[`TICKETS.md`](../../../../_system/contracts/TICKETS.md): next `NNN` = highest across
-`intake/` **and** `_done/` + 1; each with a standalone `## Prompt` and a `Sources` row
-citing evidence — the client's own words where they exist.
+IDs (supersede, never edit away), Features table brought current (rows point at epic
+paths), open questions carried forward, run-log row with date and `HEAD`. Then the cut
+per [`TICKETS.md`](../../../../_system/contracts/TICKETS.md): related work becomes an
+epic — `intake/<epic-slug>/` with a `breakdown.md` (what I understood + build order) and
+one stub per unit of work, sequenced `1..m` in dependency order; one-offs become
+`triage/` stubs with their lane. Every stub carries a `- sources:` line citing evidence —
+the client's own words where they exist — and, in `intake`-profile repos, a standalone
+`## Prompt`.
 
 ## Gate — Jamie
 
 - Corrects the stated posture (1b) before the run aims itself.
-- **Sees the plan before anything is written** (between 5 and 6): the ticket list
-  (ID · title · priority · size · lens), amendments, drops with reasons. His yes gates 6.
+- **Sees the plan before anything is written** (between 5 and 6): the proposed cut —
+  epics with their build orders (sequence · slug · title · priority · size · lens),
+  triage stubs, amendments, drops with reasons. The breakdown is the review surface:
+  after 6, editing `breakdown.md` and asking for a re-cut steers it. His yes gates 6.
 - Decides push: everything stays **uncommitted** unless he says otherwise (ticket-only
   commits straight to `main`, staged explicitly).
 
@@ -114,13 +123,16 @@ citing evidence — the client's own words where they exist.
 | Artifact | Lands in |
 |---|---|
 | `.icm/project.md` (written/amended) | the target repo |
-| Tickets cut/amended/moved | the target repo's `.icm/intake/` |
-| Closing summary | the session: posture · intent changed? · counts by priority · the 3 you'd flag `today` (the ≤10 cap is `/day`'s call) · what's unanswered and what it blocks |
+| Epics + stubs cut/amended/moved | the target repo's `.icm/intake/` |
+| Closing summary | the session: posture · intent changed? · epics and counts by priority · the picks you'd put in `today.md` (the ≤10 cap is `/day`'s call) · what's unanswered and what it blocks |
 
 ## Audit
 
 - Register and board agree with each other and with the code — no feature row without
-  its tickets, no ticket contradicting a decision.
+  its epic or stubs, no stub contradicting a decision.
+- Every epic's bookkeeping holds: sequences contiguous, depends-on ordered, build order
+  agreeing with the stubs (`validate-intake.sh` where the repo carries it).
 - Nothing was asked that a document already answered; nothing fabricated that no one
   stated.
-- Every new ticket's Prompt stands alone pasted into a fresh session.
+- In `intake`-profile repos, every new stub's Prompt stands alone pasted into a fresh
+  session.

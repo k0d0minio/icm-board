@@ -50,12 +50,13 @@ defined, improvable process, and every repo in the estate stays aligned.
 | Start workspace — onboarding → repo → kickoff | shipped, unproven | — |
 | Deliver workspace — the three rituals as stage contracts | shipped | — |
 | Knowledge layer — services, pricing, voice, terms, stack | shipped | — |
-| Canonical Claude asset library + drift report | shipped, unproven | ICM-010 |
-| Four estate scripts — icm-check, tickets-board, ticket-hygiene, pull-all | shipped | ICM-003, ICM-004 |
+| Canonical Claude asset library + drift report | shipped, unproven | estate-migration/seed-estate-baseline |
+| Four estate scripts — icm-check, tickets-board, ticket-hygiene, pull-all | shipped | — (history: _done/ICM-003, ICM-004) |
 | Self-check CI — shellcheck, contract links, ticket lint | shipped | — |
-| Remote conformance CI over the `k0d0minio` org | shipped | ICM-015 |
-| Estate heartbeat — scheduled digest | wanted | ICM-001 |
-| `/day` run log — folded into the heartbeat | wanted | ICM-001 |
+| Remote conformance CI over the `k0d0minio` org | shipped | estate-automation/conformance-exit-code |
+| Estate pipeline — intake epics + tiered profiles, extracted from sustentus | shipped | estate-migration/ (rollout) |
+| Estate heartbeat — scheduled digest | wanted | estate-automation/estate-heartbeat |
+| `/day` run log — folded into the heartbeat | wanted | estate-automation/estate-heartbeat |
 
 ## Constraints
 
@@ -78,6 +79,10 @@ defined, improvable process, and every repo in the estate stays aligned.
 | D7 | Estate Claude assets: **canonical library** in `_system/template/claude/` (session-start + wrap-reminder hooks, ticket-craft + pr-conventions skills); `icm-check.sh` seeds what's missing and reports drift, never overwrites — the repo's copy wins | 2026-08-26 | AUDIT open decisions #1 (skills layering) and #3 (hook strategy) |
 | D8 | Client acquisition covers **inbound + outbound** (qualification, target profile, outreach playbook) — marketing/content stays with `jamienisbet` | 2026-08-26 | — |
 | D9 | Proposals are **markdown → PDF** in the deal folder; markdown canonical, PDF a build artifact | 2026-08-26 | — |
+| D10 | Tickets re-founded on the sustentus intake model: **epics + stubs + triage**, path identity (`epic/slug`), positional status. The `PREFIX-NNN` series and its dual registry are retired (legacy IDs live on in the archives); the today flag moves to `.icm/today.md` here, ≤10 entries estate-wide | 2026-08-28 | the 2026-08-12 TICKETS.md shape |
+| D11 | D3 narrowed: a *project repo's own* deterministic one-job scripts, and CI acting only after a human-authorised merge, are **factory, not orchestrator**. The line that never moves: nothing advances work across a human gate, and icm-board itself drives nothing | 2026-08-28 | D3, narrowly |
+| D12 | Gen-3 **is** a template product: the estate pipeline is extracted from sustentus into `_system/template/` as tiered profiles (`intake` default · `pipeline` · `pipeline-full` deliberately unextracted). Sustentus stays exempt as the source; remi-ai's zero-run `pipeline/` tree is superseded pending its migration decision. Answers AUDIT open question 2 | 2026-08-28 | — |
+| D13 | The dashboard board stays **read-only** and reads both ticket shapes over the GitHub API, sustentus included — no sync, no second store | 2026-08-28 | — |
 
 ## Open questions
 
@@ -95,3 +100,4 @@ defined, improvable process, and every repo in the estate stays aligned.
 | 2026-08-26 | — | The second-brain build (cloud session, interrogation-driven — decisions D3–D9 are Jamie's answers verbatim). Three workspaces created, rituals rehoused, knowledge layer scaffolded, canonical asset library seeded into the template. ICM-006 amended; ICM-009/ICM-010 cut. |
 | 2026-08-26 | — | ICM-009 done in the same session: questionnaire run conversationally, all seven sections. Knowledge layer + target-profile + outreach filled with Jamie's real answers (band €1.000–€2.500 sites, €500 floor, method-not-band for apps/AI, scoped retainers €200–€4.000/mo, 50/50 default, two revision rounds, both ownership patterns, stack confirmed as policy, profile weighted to AI). Deliberate remaining gaps: voice/outreach example pastes, app/AI standing inclusions, the AI-SME channel. |
 | 2026-08-28 | — | Estate ticket audit (Jamie-directed, 27–28 Aug): every open ticket checked against its codebase; board 85 → 54 open. Here: ICM-002 folded into ICM-001 (row above updated on Jamie's instruction), ICM-004 trimmed to its two live items. New: AGORA-020 (tracked credential PDFs) and REMI-038 (patient Stripe subscriptions) cut on his answers. Not a `/project` run — a directed register correction. |
+| 2026-08-28 | — | **The pipeline rework** (Jamie-directed; four-agent analysis + two interrogation rounds — decisions D10–D13 are his answers). TICKETS.md rewritten, PIPELINE.md cut, the template rebuilt with the `pipeline` profile, all five scripts reworked, `/day`/`/project`/`/icm-check` contracts redesigned, own intake migrated (9 flat tickets → 4 epics + 1 triage stub; rollout cut as the estate-migration epic). Design record: `.icm/docs/pipeline-rework-design.md`. Dashboard counterpart in jamienisbet's own PR. |

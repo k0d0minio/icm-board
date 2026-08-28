@@ -3,11 +3,13 @@
 #
 # Discovers git repos the same way pull-all.sh does — the root repo itself (icm-board,
 # .git at the Apps root) plus every repo up to 2 levels below Apps/ — skips sustentus
-# (its .icm/ carries its own pipeline semantics, not the ticket spec), and checks each
-# repo against _system/template/:
+# (its .icm/ carries its own pipeline semantics; it is the source the template was
+# extracted from), and checks each repo against _system/template/:
 #
-#   .icm/intake/README.md    micro-copy of the ticket contract ({{PREFIX}} substituted)
-#   .icm/intake/_done/       finished-ticket folder
+#   .icm/CONTEXT.md          the repo's .icm map; carries the `- profile:` line
+#   .icm/intake/README.md    micro-copy of the intake contract (epics + stubs + triage)
+#   .icm/intake/triage/      the parking lane
+#   .icm/intake/_done/       the archive (completed epics + legacy tickets)
 #   .icm/docs/               ad hoc reports
 #   .claude/settings.json    clean policy baseline
 #   .claude/hooks/*          canonical estate hooks (session-start, wrap-reminder)
@@ -15,11 +17,16 @@
 #   CLAUDE.md                reported only — never templated (each repo writes its own)
 #   .icm/project.md          reported only — /project writes it from an interrogation
 #
+# A repo whose .icm/CONTEXT.md declares `- profile: pipeline` (contracts/PIPELINE.md) is
+# additionally checked — and with --fix, seeded — against the pipeline profile:
+# template/icm-pipeline/ → .icm/, template/claude-pipeline/ → .claude/,
+# template/github-pipeline/ → .github/. Declaring the profile is Jamie's act; the fix
+# never upgrades one.
+#
 # --fix creates ONLY what is missing, from the template; existing files are never
 # touched. A repo's copy of a canonical asset that has diverged from the template is
 # reported as drift and never repaired — repos own their copies (template/README.md).
-# Prefix resolution: existing tickets → known map → derived from repo name
-# (flagged "suggested" — confirm before cutting the first ticket).
+# Legacy flat PREFIX-NNN tickets are reported as unmigrated, never converted.
 #
 # Usage: _system/scripts/icm-check.sh [--fix] [root]
 # Exit:  0 all conformant (warnings allowed) · 1 gaps remain · 2 bad invocation
@@ -54,45 +61,26 @@ CANONICAL=(
   "skills/pr-conventions/SKILL.md"
 )
 
-# Known ticket prefixes (contracts/TICKETS.md); anything else is derived + flagged.
-prefix_for() {
-  case "$1" in
-    icm-board)        echo ICM ;;
-    jamienisbet)      echo JN ;;
-    remi-ai)          echo REMI ;;
-    agorasim)         echo AGORA ;;
-    berceo)           echo BERC ;;
-    kau-american-bbq) echo KAU ;;
-    vinecliff)        echo VINE ;;
-    barzinho)         echo BARZ ;;
-    boystomenretreat) echo BTM ;;
-    collabimmo)       echo COLL ;;
-    casey-hebbel)     echo CASEY ;;
-    cafe-jardim)      echo CAFE ;;
-    messy-play)       echo MESSY ;;
-    dungeons-dragons) echo DND ;;
-    the-library)      echo LIB ;;
-    *)                echo "" ;;
-  esac
-}
-
-# Derive a prefix from the repo directory name: first hyphen-segment, A–Z only, ≤5 chars.
-derive_prefix() {
-  local seg="${1%%-*}"
-  seg="$(printf '%s' "$seg" | tr '[:lower:]' '[:upper:]' | tr -cd 'A-Z')"
-  printf '%s' "${seg:0:5}"
-}
-
-# Prefix already in use by tickets inside the repo (open or done), if any.
-existing_prefix() {
-  local f
-  for f in "$1"/.icm/intake/[A-Z]*-[0-9]*.md "$1"/.icm/intake/_done/[A-Z]*-[0-9]*.md; do
-    [[ -e "$f" ]] || continue
-    basename "$f" | sed -E 's/^([A-Z]+)-[0-9].*/\1/'
-    return 0
-  done
-  return 1
-}
+# Pipeline profile (template/icm-pipeline/…): paths relative to <repo>/.icm/.
+PIPELINE_ICM=(
+  "stages/01_define/CONTEXT.md"
+  "stages/02_build/CONTEXT.md"
+  "stages/03_release/CONTEXT.md"
+  "lanes/bug/CONTEXT.md"
+  "lanes/tweak/CONTEXT.md"
+  "lanes/chore/CONTEXT.md"
+  "_shared/github.md"
+  "_shared/ci.md"
+  "_shared/stage-preamble.md"
+  "runs/README.md"
+  "scripts/resolve-run.sh"
+  "scripts/validate-spec.sh"
+  "scripts/validate-intake.sh"
+  "scripts/new-run.sh"
+  "scripts/ci-status.sh"
+)
+PIPELINE_CLAUDE=( "skills/pipeline/SKILL.md" )
+PIPELINE_GITHUB=( "pull_request_template.md" )
 
 bold=$'\033[1m'; red=$'\033[31m'; green=$'\033[32m'; yellow=$'\033[33m'; dim=$'\033[2m'; off=$'\033[0m'
 [[ -t 1 ]] || { bold=; red=; green=; yellow=; dim=; off=; }
@@ -126,11 +114,16 @@ for repo in "${repos[@]}"; do
   total=$((total + 1))
   missing=(); warns=(); actions=()
 
+  pipeline=0
+  grep -qE '^- *profile: *pipeline' "$repo/.icm/CONTEXT.md" 2>/dev/null && pipeline=1
+
   # --- .icm baseline ---
-  [[ -d "$repo/.icm/intake" ]]           || missing+=(".icm/intake/")
-  [[ -f "$repo/.icm/intake/README.md" ]] || missing+=(".icm/intake/README.md")
-  [[ -d "$repo/.icm/intake/_done" ]]     || missing+=(".icm/intake/_done/")
-  [[ -d "$repo/.icm/docs" ]]             || missing+=(".icm/docs/")
+  [[ -f "$repo/.icm/CONTEXT.md" ]]        || missing+=(".icm/CONTEXT.md")
+  [[ -d "$repo/.icm/intake" ]]            || missing+=(".icm/intake/")
+  [[ -f "$repo/.icm/intake/README.md" ]]  || missing+=(".icm/intake/README.md")
+  [[ -d "$repo/.icm/intake/triage" ]]     || missing+=(".icm/intake/triage/")
+  [[ -d "$repo/.icm/intake/_done" ]]      || missing+=(".icm/intake/_done/")
+  [[ -d "$repo/.icm/docs" ]]              || missing+=(".icm/docs/")
 
   # --- .claude baseline ---
   [[ -d "$repo/.claude" ]]               || missing+=(".claude/")
@@ -138,6 +131,13 @@ for repo in "${repos[@]}"; do
   for asset in "${CANONICAL[@]}"; do
     [[ -f "$repo/.claude/$asset" ]] || missing+=(".claude/$asset")
   done
+
+  # --- pipeline profile (only when the repo declares it) ---
+  if (( pipeline )); then
+    for p in "${PIPELINE_ICM[@]}";    do [[ -f "$repo/.icm/$p"     ]] || missing+=(".icm/$p"); done
+    for p in "${PIPELINE_CLAUDE[@]}"; do [[ -f "$repo/.claude/$p"  ]] || missing+=(".claude/$p"); done
+    for p in "${PIPELINE_GITHUB[@]}"; do [[ -f "$repo/.github/$p"  ]] || missing+=(".github/$p"); done
+  fi
 
   # --- canonical drift (report-only, never repaired — repos own their copies) ---
   for asset in "${CANONICAL[@]}"; do
@@ -160,6 +160,13 @@ for repo in "${repos[@]}"; do
   # Deliberately never templated: an empty register is worse than none, because it
   # reads as established intent. /project writes it from a real interrogation.
   [[ -f "$repo/.icm/project.md" ]] || warns+=("no .icm/project.md — /project has never run here")
+  legacy=0
+  for f in "$repo/.icm/intake"/*.md; do
+    [[ -e "$f" ]] || continue
+    case "$(basename "$f" | tr '[:upper:]' '[:lower:]')" in readme.md|context.md) continue ;; esac
+    legacy=$((legacy + 1))
+  done
+  (( legacy > 0 )) && warns+=("$legacy legacy flat ticket(s) in .icm/intake/ — unmigrated to the epic layout (/project re-cuts them; never converted here)")
   if git -C "$repo" check-ignore -q .icm 2>/dev/null; then
     warns+=(".gitignore excludes .icm — tickets would never reach the board")
   fi
@@ -171,27 +178,25 @@ for repo in "${repos[@]}"; do
     warns+=(".claude/settings.local.json is not gitignored (accretion layer should stay local)")
   fi
   for loose in TODO.md BACKLOG.md; do
-    [[ -f "$repo/$loose" ]] && warns+=("loose $loose at root — should be tickets in .icm/intake/")
+    [[ -f "$repo/$loose" ]] && warns+=("loose $loose at root — should be stubs in .icm/intake/")
   done
 
   # --- fix ---
   if (( FIX )) && (( ${#missing[@]} > 0 )); then
-    mkdir -p "$repo/.icm/intake/_done" "$repo/.icm/docs" "$repo/.claude"
+    mkdir -p "$repo/.icm/intake/_done" "$repo/.icm/intake/triage/_done" "$repo/.icm/docs" "$repo/.claude"
     [[ -f "$repo/.icm/intake/_done/.gitkeep" ]] || : > "$repo/.icm/intake/_done/.gitkeep"
+    [[ -f "$repo/.icm/intake/triage/_done/.gitkeep" ]] || : > "$repo/.icm/intake/triage/_done/.gitkeep"
     # .gitkeep only if docs/ is empty, so it can be dropped once real docs land
     if [[ -z "$(ls -A "$repo/.icm/docs" 2>/dev/null)" ]]; then
       : > "$repo/.icm/docs/.gitkeep"
     fi
+    if [[ ! -f "$repo/.icm/CONTEXT.md" ]]; then
+      cp "$TEMPLATE/icm/CONTEXT.md" "$repo/.icm/CONTEXT.md"
+      actions+=("created .icm/CONTEXT.md (profile: intake)")
+    fi
     if [[ ! -f "$repo/.icm/intake/README.md" ]]; then
-      prefix="$(existing_prefix "$repo" || true)"
-      src="tickets"
-      if [[ -z "$prefix" ]]; then prefix="$(prefix_for "$base")"; src="map"; fi
-      if [[ -z "$prefix" ]]; then prefix="$(derive_prefix "$base")"; src="suggested"; fi
-      sed "s/{{PREFIX}}/$prefix/g" "$TEMPLATE/icm/intake/README.md" \
-        > "$repo/.icm/intake/README.md"
-      actions+=("created .icm/intake/README.md (prefix $prefix, $src)")
-      [[ "$src" == "suggested" ]] && \
-        warns+=("prefix $prefix is auto-derived — confirm it before cutting the first ticket")
+      cp "$TEMPLATE/icm/intake/README.md" "$repo/.icm/intake/README.md"
+      actions+=("created .icm/intake/README.md")
     fi
     if [[ ! -f "$repo/.claude/settings.json" ]]; then
       cp "$TEMPLATE/claude/settings.json" "$repo/.claude/settings.json"
@@ -205,27 +210,58 @@ for repo in "${repos[@]}"; do
         actions+=("created .claude/$asset")
       fi
     done
+    if (( pipeline )); then
+      for p in "${PIPELINE_ICM[@]}"; do
+        if [[ ! -f "$repo/.icm/$p" ]]; then
+          mkdir -p "$(dirname "$repo/.icm/$p")"
+          cp "$TEMPLATE/icm-pipeline/$p" "$repo/.icm/$p"
+          case "$p" in scripts/*) chmod +x "$repo/.icm/$p" ;; esac
+          actions+=("created .icm/$p")
+        fi
+      done
+      for p in "${PIPELINE_CLAUDE[@]}"; do
+        if [[ ! -f "$repo/.claude/$p" ]]; then
+          mkdir -p "$(dirname "$repo/.claude/$p")"
+          cp "$TEMPLATE/claude-pipeline/$p" "$repo/.claude/$p"
+          actions+=("created .claude/$p")
+        fi
+      done
+      for p in "${PIPELINE_GITHUB[@]}"; do
+        if [[ ! -f "$repo/.github/$p" ]]; then
+          mkdir -p "$repo/.github"
+          cp "$TEMPLATE/github-pipeline/$p" "$repo/.github/$p"
+          actions+=("created .github/$p")
+        fi
+      done
+    fi
     fixed=$((fixed + 1))
     missing=()
     # re-verify what we just created
-    for p in .icm/intake/README.md .icm/intake/_done .icm/docs .claude/settings.json; do
+    for p in .icm/CONTEXT.md .icm/intake/README.md .icm/intake/triage .icm/intake/_done .icm/docs .claude/settings.json; do
       [[ -e "$repo/$p" ]] || missing+=("$p (fix failed)")
     done
     for asset in "${CANONICAL[@]}"; do
       [[ -f "$repo/.claude/$asset" ]] || missing+=(".claude/$asset (fix failed)")
     done
+    if (( pipeline )); then
+      for p in "${PIPELINE_ICM[@]}";    do [[ -f "$repo/.icm/$p"    ]] || missing+=(".icm/$p (fix failed)"); done
+      for p in "${PIPELINE_CLAUDE[@]}"; do [[ -f "$repo/.claude/$p" ]] || missing+=(".claude/$p (fix failed)"); done
+      for p in "${PIPELINE_GITHUB[@]}"; do [[ -f "$repo/.github/$p" ]] || missing+=(".github/$p (fix failed)"); done
+    fi
   fi
 
   # --- report ---
+  label="$name"
+  (( pipeline )) && label="$name ${dim}(pipeline)${off}"
   if (( ${#missing[@]} == 0 && ${#warns[@]} == 0 && ${#actions[@]} == 0 )); then
-    echo "${green}ok${off}   $name"
+    echo "${green}ok${off}   $label"
     conformant=$((conformant + 1))
   else
     if (( ${#missing[@]} > 0 )); then
-      echo "${red}GAP${off}  ${bold}$name${off}"
+      echo "${red}GAP${off}  ${bold}$label${off}"
       gaps=$((gaps + 1))
     else
-      echo "${green}ok${off}   ${bold}$name${off}"
+      echo "${green}ok${off}   ${bold}$label${off}"
       conformant=$((conformant + 1))
     fi
     for a in "${actions[@]}"; do echo "       ${green}+${off} $a"; done

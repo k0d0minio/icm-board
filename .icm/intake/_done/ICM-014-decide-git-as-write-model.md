@@ -1,3 +1,5 @@
+> Recut as business-state/decide-git-as-write-model (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-014 · Decide whether git becomes the write model for business state
 
 | | |
@@ -41,7 +43,7 @@ accident, halfway, while shipping something else.
 ## Build
 
 Not code. A decision, argued once and recorded in
-[`.icm/project.md`](../project.md) alongside D3, with either:
+[`.icm/project.md`](../../project.md) alongside D3, with either:
 
 - **Yes** — the amendments to `CLIENTS.md` and `WORKSPACES.md` drafted, the never-writes
   rule explicitly narrowed or deleted, and follow-on tickets cut for the projector and the

@@ -1,13 +1,20 @@
-# Intake — the ticket backlog for this repo
+# Intake — the work, as epics and stubs
 
-> This folder follows the estate-wide ticket standard (`.icm/intake/`, canonical spec:
-> `_system/contracts/TICKETS.md` in the Apps estate). One markdown ticket per unit of work,
-> named `ICM-NNN-slug.md`; numbers are never reused. Each ticket carries an H1
-> (`# ICM-NNN · Title`), a `Priority` row (`P0`/`P1`/`P2`), and a `## Prompt` section
-> that stands alone when pasted into a fresh Claude session at the repo root. Optional
-> `Status` row: `ready` → `today` → `in-progress` → `blocked` (missing = `ready`). Finished
-> tickets are `git mv`'d to `_done/` — the folder move is the state change. The admin
-> dashboard's Tickets board reads this folder from `main`.
+> This folder follows the estate-wide intake standard (canonical spec:
+> `_system/contracts/TICKETS.md` in the icm-board estate). Tickets are **stubs** that
+> never live alone: related work is an **epic** — `intake/<epic-slug>/` with a
+> `breakdown.md` (what was understood + the build order) and one stub per unit of work,
+> each `- sequence: <n> of <m>` with `- depends-on:` naming any in-epic prerequisite —
+> and one-off findings are **triage** stubs in `intake/triage/` tagged
+> `- lane: bug | tweak | chore`. Identity is the path (`<epic>/<slug>`, feature-slug
+> matching the filename); there are no ticket numbers.
+>
+> **Status is positional.** Open = the stub is here; done = `git mv` into the epic's
+> `_done/` (dropped work too, with a `> Dropped: <reason, date>` line — nothing is
+> deleted). A completed epic moves whole into `intake/_done/`. Priority is an optional
+> `- priority: P0|P1|P2` line; external blockage an optional `- blocked: <reason>` line.
+> Each stub's `## Prompt` must stand alone pasted into a fresh Claude session at the
+> repo root. The admin dashboard's Tickets board reads this folder from `main`.
 
-Any plan, backlog, or task list for this repo becomes tickets here — never a loose
+Any plan, backlog, or task list for this repo becomes stubs here — never a loose
 `TODO.md` or `BACKLOG.md` at the root.

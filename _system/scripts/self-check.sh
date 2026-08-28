@@ -6,8 +6,10 @@
 #            The estate's named failure mode is "aspirational docs are richer than the
 #            running system" (_system/AUDIT.md); a dead link is that failure in miniature,
 #            and this repo is almost entirely docs.
-#   tickets  every ticket in .icm/intake/ meets contracts/TICKETS.md: an `ID · Title` H1,
-#            a Priority row, a standalone `## Prompt`, and a number no other ticket uses.
+#   tickets  every ticket in .icm/intake/ meets contracts/TICKETS.md: stubs live in an
+#            epic (feature-slug matching the filename, a sequence, a breakdown.md) or in
+#            triage/ (lane-tagged), each with a standalone `## Prompt`; nothing loose;
+#            .icm/today.md entries resolve and respect the ≤10 cap.
 #
 # The ticket half is deliberately narrow — it checks *this* repo only, on every push.
 # The same lint runs across the estate in ticket-hygiene.sh (ICM-003), which already
@@ -51,37 +53,85 @@ for f in "${docs[@]}"; do
 done
 (( problems == 0 )) && echo "  ${green}every relative link resolves${off}"
 
-# ── tickets ──────────────────────────────────────────────────────────────────────────
+# ── tickets (contracts/TICKETS.md — epics, stubs, triage, today.md) ──────────────────
 before=$problems
 echo
 echo "${bold}Tickets${off}"
-declare -A seen_id
-for f in .icm/intake/*.md .icm/intake/_done/*.md; do
+n_stubs=0
+
+dash_field() {
+  grep -m1 -iE "^- *${2}:" "$1" 2>/dev/null \
+    | sed -E "s/^- *[A-Za-z-]+:[[:space:]]*//; s/[[:space:]]*\$//" || true
+}
+
+# Nothing lives loose in intake/ — a flat ticket here is unmigrated (this repo migrated
+# with the spec change, so any reappearance is a regression).
+for f in .icm/intake/*.md; do
   [[ -e "$f" ]] || continue
   fn="$(basename "$f")"
   [[ "${fn,,}" == "readme.md" ]] && continue
+  report "loose file" "$f — tickets are stubs in an epic or triage/ (contracts/TICKETS.md)"
+done
 
-  [[ "$fn" =~ ^ICM-[0-9]+-.+\.md$ ]] || report "filename" "$f — expected ICM-NNN-slug.md"
+for d in .icm/intake/*/; do
+  [[ -d "$d" ]] || continue
+  epic="$(basename "$d")"
+  [[ "$epic" == "_done" ]] && continue
 
-  id="$(grep -oE '^ICM-[0-9]+' <<<"$fn" || true)"
-  if [[ -n "$id" ]]; then
-    if [[ -n "${seen_id[$id]:-}" ]]; then
-      report "duplicate id" "$id used by both ${seen_id[$id]} and $f"
-    else
-      seen_id[$id]="$f"
-    fi
+  if [[ "$epic" == "triage" ]]; then
+    for f in "$d"*.md; do
+      [[ -e "$f" ]] || continue
+      n_stubs=$((n_stubs + 1))
+      lane="$(dash_field "$f" lane)"
+      case "$lane" in
+        bug|tweak|chore) ;;
+        *) report "lane" "$f — '- lane: bug|tweak|chore' required" ;;
+      esac
+      grep -qE '^## Prompt *$' "$f" || report "prompt" "$f — no standalone '## Prompt' section"
+    done
+    continue
   fi
 
-  grep -qE "^# ${id} · .+" "$f"       || report "h1"       "$f — expected '# $id · Title'"
-  grep -qiE '^\| *\**priority\** *\|' "$f" || report "priority" "$f — no Priority row"
-  grep -qE '^## Prompt *$' "$f"       || report "prompt"   "$f — no standalone '## Prompt' section"
+  stubs=0
+  for f in "$d"*.md; do
+    [[ -e "$f" ]] || continue
+    fn="$(basename "$f")"
+    [[ "$fn" == "breakdown.md" ]] && continue
+    stubs=$((stubs + 1)); n_stubs=$((n_stubs + 1))
+    slug="${fn%.md}"
+    fslug="$(dash_field "$f" feature-slug)"
+    [[ "$fslug" == "$slug" ]] || report "feature-slug" "$f — '- feature-slug:' must match the filename"
+    seq="$(dash_field "$f" sequence)"
+    [[ "$seq" =~ ^[0-9]+[[:space:]]+of[[:space:]]+[0-9]+ ]] \
+      || report "sequence" "$f — missing or malformed '- sequence: <n> of <m>'"
+    grep -qE '^## Prompt *$' "$f" || report "prompt" "$f — no standalone '## Prompt' section"
+  done
+  (( stubs == 0 )) || [[ -f "${d}breakdown.md" ]] \
+    || report "breakdown" "${d} — $stubs stub(s) but no breakdown.md"
 done
+
+# today.md: the one home of the today flag — ≤10 entries; this repo's entries resolve.
+if [[ -f .icm/today.md ]]; then
+  n_today=0
+  while IFS= read -r line; do
+    [[ "$line" =~ ^-[[:space:]] ]] || continue
+    n_today=$((n_today + 1))
+    t_repo="$(sed -E 's/^- *([^·]+) ·.*/\1/; s/[[:space:]]*$//' <<<"$line")"
+    t_path="$(sed -E 's/^- *[^·]+ · *([^[:space:]]+).*/\1/' <<<"$line")"
+    if [[ "$t_repo" == "icm-board" ]]; then
+      [[ -f ".icm/intake/$t_path.md" || -f ".icm/intake/$t_path" ]] \
+        || report "today" ".icm/today.md → '$t_path' — no such open stub in this repo"
+    fi
+  done < .icm/today.md
+  (( n_today <= 10 )) || report "today cap" ".icm/today.md has $n_today entries — the estate cap is 10"
+fi
+
 (( problems == before )) && echo "  ${green}every ticket meets the contract${off}"
 
 echo
 if (( problems == 0 )); then
-  echo "RESULT: clean — ${#docs[@]} docs, ${#seen_id[@]} tickets"
+  echo "RESULT: clean — ${#docs[@]} docs, $n_stubs open stubs"
 else
-  echo "RESULT: $problems problem(s) across ${#docs[@]} docs and ${#seen_id[@]} tickets"
+  echo "RESULT: $problems problem(s) across ${#docs[@]} docs and $n_stubs open stubs"
 fi
 (( problems == 0 ))

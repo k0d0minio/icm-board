@@ -1,3 +1,5 @@
+> Recut as business-state/neon-at-the-gate (2026-08-28 pipeline rework, decision D10 — path identity)
+
 # ICM-012 · Write Neon at the gate, from the session
 
 | | |
@@ -19,8 +21,8 @@ written down. On 2026-08-27 `workspaces/deals/alix-hahusseau/` was quoted at €
 fixed-price, committed, and merged — and the Neon row still says the deal is unpriced.
 
 Neon is authoritative for business state
-([CLIENTS.md](../../_system/contracts/CLIENTS.md)) and the deal folder mirrors the rung
-*for legibility* ([WORKSPACES.md](../../_system/contracts/WORKSPACES.md)). That contract
+([CLIENTS.md](../../../_system/contracts/CLIENTS.md)) and the deal folder mirrors the rung
+*for legibility* ([WORKSPACES.md](../../../_system/contracts/WORKSPACES.md)). That contract
 is right and stays. What is broken is only the *latency*: the authoritative store learns
 last, or never.
 

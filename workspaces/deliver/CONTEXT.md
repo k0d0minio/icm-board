@@ -20,6 +20,7 @@ analysis lens per invocation) and `ticket-scout` (work in flight no ticket knows
 ## Layers, for this workspace
 
 - **Layer 3** — the contracts: [TICKETS.md](../../_system/contracts/TICKETS.md) ·
+  [PIPELINE.md](../../_system/contracts/PIPELINE.md) ·
   [PROJECT.md](../../_system/contracts/PROJECT.md) ·
   [LENSES.md](../../_system/contracts/LENSES.md) ·
   [CLIENTS.md](../../_system/contracts/CLIENTS.md).
@@ -34,4 +35,6 @@ in a new client repo — that is the only doorway between a deal and the machine
 in deliver reads a deal folder except that first run's imported documents, and nothing
 in sell/start touches a repo's tickets.
 
-**Sustentus is exempt** from all three stages — its `.icm/` owns its own semantics.
+**Sustentus is exempt** from all three stages — its `.icm/` owns its own semantics (and
+is the source the estate pipeline template was extracted from). The board still reads
+it; nothing here ever writes to it.

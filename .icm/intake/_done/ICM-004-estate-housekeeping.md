@@ -68,8 +68,8 @@ left:
 ## Acceptance
 
 - [x] `icm-check.sh` checks this repo too
-- [x] `the-library` passes `icm-check.sh`
-- [x] CI green
+- [ ] `the-library` passes `icm-check.sh`
+- [ ] CI green
 
 ## Prompt
 

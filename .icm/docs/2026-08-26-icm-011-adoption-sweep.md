@@ -1,7 +1,7 @@
 # ICM-011 — the adoption sweep, run 2026-08-26
 
 *The one-time record of walking the ladder with Jamie. Ticket:
-[`ICM-011`](../intake/_done/ICM-011-adopt-inflight-relationships.md). Source of truth for the
+`ICM-011` (purged in the D14 clean slate). Source of truth for the
 rungs: the admin dashboard (`app.jamienisbet.com`), read live during the sweep.*
 
 ## What the ladder held

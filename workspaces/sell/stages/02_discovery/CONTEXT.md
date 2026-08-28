@@ -20,9 +20,13 @@ being reinvented per deal (née ICM-006).
    we only get one meeting" first. Flag every `[BLOCKER]` still open.
 2. **After it:** Jamie drops his raw notes (or a transcript) into the deal folder; turn
    them into `02-discovery-notes.md`: what they need in their words · what done looks
-   like to them · constraints (deadline, budget signals, tech ceilings) · answered
-   questions by ID · still-open `[BLOCKER]`s · anything `[LAWYER]`.
-3. If a `[BLOCKER]` stays open, say so at the top — `03_quote` must not run past one.
+   like to them · constraints (deadline, budget signals, tech ceilings, third-party
+   gates with lead times) · answered questions by ID · **assumptions taken**
+   (recommended and nodded-to, not decided — flagged so they can be challenged) ·
+   still-open `[BLOCKER]`s · anything `[LAWYER]`.
+3. For a complex or spec-shaped deal, open the notes with a TL;DR verdict and key
+   risks (the berceo assessment's shape) — the paragraph `03_quote` reads first.
+4. If a `[BLOCKER]` stays open, say so at the top — `03_quote` must not run past one.
 
 ## Gate — Jamie
 

@@ -24,7 +24,7 @@ Canonical spec: `_system/contracts/TICKETS.md` in the icm-board repo; this repo'
 ## Status and done
 
 - Vocabulary: `ready` → `today` → `in-progress` → `blocked`. Missing row = `ready`.
-- `today` is the pick-up flag — **at most 3 across the whole estate**, flipped by `/day`.
+- `today` is the pick-up flag — **at most 10 across the whole estate**, flipped by `/day`.
 - **Done is a folder, not a field**: `git mv` the file to `.icm/intake/_done/` in the PR
   that finishes the work. Abandoned work goes there too, with a
   `> Dropped: <reason, date>` line prepended. Never delete; never reuse a number.

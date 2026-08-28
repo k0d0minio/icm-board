@@ -50,11 +50,11 @@ defined, improvable process, and every repo in the estate stays aligned.
 | Start workspace — onboarding → repo → kickoff | shipped, unproven | — |
 | Deliver workspace — the three rituals as stage contracts | shipped | — |
 | Knowledge layer — services, pricing, voice, terms, stack | shipped | — |
-| Canonical Claude asset library + drift report | shipped, unproven | estate-migration/seed-estate-baseline |
+| Canonical Claude asset library + drift report | shipped | — |
 | Four estate scripts — icm-check, tickets-board, ticket-hygiene, pull-all | shipped | — |
 | Self-check CI — shellcheck, contract links, ticket lint | shipped | — |
 | Remote conformance CI over the `k0d0minio` org | shipped | estate-automation/conformance-exit-code |
-| Estate pipeline — intake epics + tiered profiles, extracted from sustentus | shipped | estate-migration/ (rollout) |
+| Estate pipeline — intake epics + tiered profiles, extracted from sustentus | shipped | — (rollout banked: _done/estate-migration/) |
 | Estate heartbeat — scheduled digest | wanted | estate-automation/estate-heartbeat |
 | `/day` run log — folded into the heartbeat | wanted | estate-automation/estate-heartbeat |
 

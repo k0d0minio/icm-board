@@ -1,3 +1,5 @@
+> Dropped: Jamie, 2026-08-28 — the whole business-state epic went in the fresh-footing sweep: not worth building the jamienisbet API chain right now. Re-cut from evidence if the recording gap starts hurting again.
+
 # Stub: Write Neon at the gate, from the session
 
 - feature-slug: neon-at-the-gate

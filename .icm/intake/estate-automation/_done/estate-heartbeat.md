@@ -1,3 +1,5 @@
+> Dropped: Jamie, 2026-08-28 — dropped in the fresh-footing sweep; audit open decision #8 (scheduled routines) stays the record of the underlying want.
+
 # Stub: Estate heartbeat — daily timer, digest, session-start delta
 
 - feature-slug: estate-heartbeat

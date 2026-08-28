@@ -55,8 +55,8 @@ defined, improvable process, and every repo in the estate stays aligned.
 | Self-check CI — shellcheck, contract links, ticket lint | shipped | — |
 | Remote conformance CI over the `k0d0minio` org | shipped | estate-automation/conformance-exit-code |
 | Estate pipeline — intake epics + tiered profiles, extracted from sustentus | shipped | — (rollout banked: _done/estate-migration/) |
-| Estate heartbeat — scheduled digest | wanted | estate-automation/estate-heartbeat |
-| `/day` run log — folded into the heartbeat | wanted | estate-automation/estate-heartbeat |
+| Estate heartbeat — scheduled digest | out | — dropped 2026-08-28 (fresh-footing sweep); AUDIT #8 keeps the want |
+| `/day` run log — folded into the heartbeat | out | — dropped with the heartbeat |
 
 ## Constraints
 

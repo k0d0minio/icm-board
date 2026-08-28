@@ -1,3 +1,5 @@
+> Dropped: Jamie, 2026-08-28 — dropped with the business-state epic (fresh-footing sweep).
+
 # Stub: Report where deal folders and Neon disagree
 
 - feature-slug: deal-folder-drift-check

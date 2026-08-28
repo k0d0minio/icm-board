@@ -1,3 +1,5 @@
+> Dropped: Jamie, 2026-08-28 — dropped without a ruling; Neon stays authoritative by default (CLIENTS.md unchanged). Re-ask only if real drift data ever argues.
+
 # Stub: Decide whether git becomes the write model for business state
 
 - feature-slug: decide-git-as-write-model

@@ -130,7 +130,6 @@ for repo in "${repos[@]}"; do
 
     # An epic: find the next open stub (lowest sequence) then classify the rest.
     next_seq=999999; next_slug=""
-    declare -A seq_of=()
     for f in "$d"*.md; do
       [[ -e "$f" ]] || continue
       fn="$(basename "$f")"
@@ -138,7 +137,6 @@ for repo in "${repos[@]}"; do
       slug="${fn%.md}"
       seq="$(dash_field "$f" sequence | grep -oE '^[0-9]+' || true)"
       [[ -n "$seq" ]] || seq=999998
-      seq_of[$slug]=$seq
       if [[ -z "$(dash_field "$f" blocked)" ]] && (( seq < next_seq )); then
         next_seq=$seq; next_slug="$slug"
       fi
@@ -162,7 +160,6 @@ for repo in "${repos[@]}"; do
       rows+="$group|$prio|$name|$path|$title"$'\n'
       n_open=$((n_open + 1)); repo_has=1
     done
-    unset seq_of
     if [[ -d "${d}_done" ]]; then
       c=$(find "${d}_done" -maxdepth 1 -name '*.md' | wc -l); n_done=$((n_done + c))
     fi

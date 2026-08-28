@@ -44,10 +44,16 @@ repo's settings are updated by hand (never overwritten by the script, by design)
 > and ICM-017 wired it as a `Stop` hook in #9. So the root needs a ruling on one hook,
 > not four assets — this ticket's acceptance box 3, for one repo.
 >
-> Jamie's call on 2026-08-28 was to leave all three untracked and take them in this
-> ticket's per-repo pass rather than ICM-004's. Note for whoever runs it: the estate
-> currently reports 23/23 conformant, exit 0 — but only because those three untracked
-> files exist. Removing them puts the root back to a gap and the run back to exit 1.
+> Jamie's call on 2026-08-28 was to take these in this ticket's per-repo pass rather than
+> ICM-004's, and the three files have since been **removed** rather than left sitting
+> untracked — they were byte-identical to `_system/template/`, so `--fix` regenerates
+> them exactly and nothing is lost. Deferring the ruling did not require keeping the
+> artifacts around; committing them would have pre-empted box 3 for this repo.
+>
+> Note for whoever runs this ticket: with them gone the root reports as a **gap** again
+> and the estate run exits **1** (it read 23/23 conformant, exit 0, only while they
+> existed). That is the expected pre-pass state, not a regression. Re-seed with `--fix`,
+> then rule on the one hook.
 
 ## Prompt
 

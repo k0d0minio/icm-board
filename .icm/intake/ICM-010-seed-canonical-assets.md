@@ -27,6 +27,28 @@ repo's settings are updated by hand (never overwritten by the script, by design)
 - [ ] Drift report is clean or every drift line is a recorded Jamie decision
 - [ ] Seeded files committed per repo by Jamie's call (the script leaves them uncommitted)
 
+> Amended 2026-08-28 (ICM-004 close, Jamie's machine): the **root repo's** share of this
+> ticket is now scoped, because #7 made `icm-board` a discovered repo and `icm-check.sh
+> --fix` seeded it for the first time. Three files, all byte-identical to
+> `_system/template/`, currently **untracked** in the root working tree:
+>
+> - `.claude/skills/ticket-craft/SKILL.md` and `.claude/skills/pr-conventions/SKILL.md` —
+>   passive. Skills are auto-discovered, so these are already live and need no wiring.
+> - `.claude/hooks/session-start.sh` — **inert, and the real decision.** `settings.json`
+>   points `SessionStart` at `_system/hooks/session-start.sh`, which prints the
+>   *estate-wide* board via `tickets-board.sh --today`. The canonical hook prints a
+>   *repo's own* board off `.icm/intake/`. Wiring both would print icm-board's own
+>   today-tickets twice per session — they overlap rather than compose.
+>
+> `.claude/hooks/wrap-reminder.sh` is **not** part of this: the root already carries it
+> and ICM-017 wired it as a `Stop` hook in #9. So the root needs a ruling on one hook,
+> not four assets — this ticket's acceptance box 3, for one repo.
+>
+> Jamie's call on 2026-08-28 was to leave all three untracked and take them in this
+> ticket's per-repo pass rather than ICM-004's. Note for whoever runs it: the estate
+> currently reports 23/23 conformant, exit 0 — but only because those three untracked
+> files exist. Removing them puts the root back to a gap and the run back to exit 1.
+
 ## Prompt
 
 Run the canonical-asset seeding across the estate from the Apps root on Jamie's

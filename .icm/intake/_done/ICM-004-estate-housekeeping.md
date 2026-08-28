@@ -25,6 +25,31 @@
 > repo's own board. That is a deliberate divergence to rule on, not rot, and it is
 > ICM-010's per-repo call now that the root is one of the repos.
 
+> Amended 2026-08-28 (Jamie's machine, closing): **item 2 is done, and it was not what
+> the ticket assumed.** `projects/the-library` needed no seeding — an earlier session had
+> already run `--fix` there *and committed it* (`a1574ab`, before `ca35331` marked the
+> repo dormant). It reports `ok` with no `missing` lines. The only gap the widened check
+> found was the icm-board root itself.
+>
+> What was actually wrong is the **prefix**, already committed in that repo as the
+> auto-derived `THE` — `derive_prefix` takes the first hyphen-segment of `the-library`,
+> which is the article. Confirmed as `LIB`. Zero tickets had been cut there, so nothing
+> needed renaming.
+>
+> Two threads are deliberately left open at close, neither of them blocking:
+>
+> - **PR #10** registers `LIB` in both prefix homes (`icm-check.sh`'s `prefix_for` map and
+>   `contracts/TICKETS.md`) — a prefix in one place only is drift. It also adds `ICM`
+>   (icm-board) to the TICKETS.md registry, where it was missing while present in the map:
+>   the same defect, one line up, found while fixing this one. CI green, **unmerged**.
+> - **`projects/the-library/.icm/intake/README.md`** carries the `LIB` fix as an
+>   *uncommitted* working-tree change, per `workspaces/deliver/stages/conformance/
+>   CONTEXT.md`. Client repos are never committed from a session — that commit is Jamie's.
+>
+> The root's three seeded `.claude/` files went to **ICM-010**, whose acceptance box 3 is
+> verbatim that decision; the specifics are recorded there. Estate now reads 23/23
+> conformant, exit 0 — but only while those three untracked files exist.
+
 ## Problem
 
 The audit names the estate's failure mode: "aspirational docs are richer than the running
@@ -43,8 +68,8 @@ left:
 ## Acceptance
 
 - [x] `icm-check.sh` checks this repo too
-- [ ] `the-library` passes `icm-check.sh`
-- [ ] CI green
+- [x] `the-library` passes `icm-check.sh`
+- [x] CI green
 
 ## Prompt
 

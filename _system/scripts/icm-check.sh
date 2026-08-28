@@ -71,6 +71,7 @@ prefix_for() {
     cafe-jardim)      echo CAFE ;;
     messy-play)       echo MESSY ;;
     dungeons-dragons) echo DND ;;
+    the-library)      echo LIB ;;
     *)                echo "" ;;
   esac
 }

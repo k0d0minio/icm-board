@@ -46,29 +46,3 @@ build-once-hand-off client repos listed as settled in _system/AUDIT.md. Client r
 live in projects/ on this machine only. Estate script + contract changes go through a PR
 on a claude/ branch; the dormant markers are per-client-repo commits. Do not run local
 checks — CI is the source of truth.
-
-## Remaining
-
-The script + contract half is done (PR on `claude/ticket-lint-dormancy-ylwrak`). The
-markers themselves are per-client-repo commits and `projects/` is gitignored and absent
-from cloud containers, so they have to be made on Jamie's machine:
-
-```bash
-cd ~/Apps
-# candidates: a repo with no open tickets, that isn't a control-layer or Gen-1/2/3 repo
-for r in berceo kau-american-bbq vinecliff boystomenretreat collabimmo \
-         casey-hebbel cafe-jardim messy-play; do
-  mkdir -p "projects/$r/.icm" && touch "projects/$r/.icm/dormant"
-  git -C "projects/$r" add .icm/dormant
-  git -C "projects/$r" commit -m "Mark repo dormant: build-once-hand-off, no board to be off (ICM-003)"
-  git -C "projects/$r" push
-done
-_system/scripts/ticket-hygiene.sh      # spot-check: off-ticket noise should be gone
-```
-
-Confirm the list against what's actually in `projects/` first — the audit says "~15
-client sites" without naming them, and the list above is the prefix map in
-`icm-check.sh` minus the control layer (icm-board, jamienisbet), the Gen-3 pipelines
-(sustentus, remi-ai), the Gen-2 workspaces (agorasim, barzinho), the undecided Gen-1
-repos (courseday, tenderdesk — audit question 9) and dungeons-dragons (open P1,
-DND-015). Then `git mv` this ticket to `_done/`.

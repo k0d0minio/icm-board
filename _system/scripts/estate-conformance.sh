@@ -34,7 +34,9 @@
 #                  built-in GITHUB_TOKEN can only see the repo it runs in.
 #
 # Usage: _system/scripts/estate-conformance.sh [--quiet]
-# Exit:  0 no gaps (warnings allowed) · 1 gaps found · 2 bad invocation or unreachable
+# Exit:  0 report delivered — gaps are the report's content, not a failure (D15) ·
+#        2 bad invocation, or unreachable (no token / no repos: the report would be
+#        lying rather than reporting — that stays red)
 
 set -uo pipefail
 
@@ -226,4 +228,8 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
 fi
 
 echo "RESULT: $n_ok conformant · $n_gap with gaps · $n_warn warnings · ${#unadopted[@]} not adopted (of ${#repos[@]} repos)"
-(( n_gap == 0 ))
+# Exit convention (decision D15, 2026-08-28): gaps exit 0 — a scheduled report that is
+# always red teaches you to stop reading it, and conformance reports rather than
+# repairs. Unreachable (no token / no repos) stays exit 2 above: that is the report
+# lying, not reporting. icm-check.sh follows the same convention.
+exit 0

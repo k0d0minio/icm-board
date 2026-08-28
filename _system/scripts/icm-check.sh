@@ -29,7 +29,8 @@
 # Legacy flat PREFIX-NNN tickets are reported as unmigrated, never converted.
 #
 # Usage: _system/scripts/icm-check.sh [--fix] [root]
-# Exit:  0 all conformant (warnings allowed) · 1 gaps remain · 2 bad invocation
+# Exit:  0 report delivered — gaps are the report's content, not a failure (D15) ·
+#        2 bad invocation
 
 set -uo pipefail
 
@@ -272,4 +273,7 @@ done
 
 echo
 echo "RESULT: $total repos checked, $conformant conformant, $gaps with gaps, $fixed fixed, $warnings warnings$( (( FIX )) || echo ' (check only — rerun with --fix to populate)')"
-(( gaps == 0 ))
+# Exit convention (decision D15, 2026-08-28): gaps exit 0 — conformance REPORTS, it does
+# not repair, so a gap is the report's content, not the report failing. Only a bad
+# invocation (2) is a failure. estate-conformance.sh follows the same convention.
+exit 0

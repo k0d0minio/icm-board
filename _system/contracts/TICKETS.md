@@ -79,7 +79,7 @@ the source of truth.
 **Required:** H1 `# Stub: <title>` · `- feature-slug:` matching the filename ·
 `- sequence: <n> of <m>` · `- depends-on:` (write `none` when there are none).
 
-**`## Prompt`** — everything under it must stand alone when pasted into a fresh Claude
+**`## Prompt`** — everything under it must stand alone when pasted into a fresh agent
 session at the repo root; the board's "Copy prompt" and one-tap deep link send *only*
 that section. Required in `intake`-profile repos (it is the whole pick-up contract);
 optional where the `pipeline` profile's `/pipeline new` does the picking up.

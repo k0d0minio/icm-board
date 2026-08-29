@@ -13,7 +13,7 @@
 > `_done/` (dropped work too, with a `> Dropped: <reason, date>` line — nothing is
 > deleted). A completed epic moves whole into `intake/_done/`. Priority is an optional
 > `- priority: P0|P1|P2` line; external blockage an optional `- blocked: <reason>` line.
-> Each stub's `## Prompt` must stand alone pasted into a fresh Claude session at the
+> Each stub's `## Prompt` must stand alone pasted into a fresh agent session at the
 > repo root. The admin dashboard's Tickets board reads this folder from `main`.
 
 Any plan, backlog, or task list for this repo becomes stubs here — never a loose

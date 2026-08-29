@@ -15,11 +15,21 @@
 #         assets (hooks + skills from _system/template/claude/). These fail the run.
 #         (Pipeline-profile completeness is the local script's job — reading each
 #         repo's CONTEXT.md content over the API would cost a request per repo.)
-#   warn  agent/human territory, never auto-fixed — no CLAUDE.md, no project.md,
-#         a tracked settings.local.json, a loose TODO.md. Reported, never fatal.
-#         (Canonical *drift* is icm-check.sh's warn alone — content comparison over
-#         the API would cost a request per file per repo for a question the local
+#   warn  agent/human territory, never auto-fixed — no Layer-0 identity file, no
+#         project.md, a tracked settings.local.json, a loose TODO.md. Reported, never
+#         fatal. (Canonical *drift* is icm-check.sh's warn alone — content comparison
+#         over the API would cost a request per file per repo for a question the local
 #         run answers better.)
+#
+# Layer 0 is moving from a full CLAUDE.md to AGENTS.md plus a one-line `@AGENTS.md`
+# importer (epic opencode-sidecar), and this run must stay honest through a rollout it
+# does not control. So the identity check is shape-tolerant: a repo satisfies it with
+# EITHER a legacy CLAUDE.md OR AGENTS.md, and only a repo with neither warns. The
+# new-shape root assets from _system/template/root/ — the CLAUDE.md importer and
+# opencode.json — are GAPs only in a repo that already carries AGENTS.md, so no
+# un-migrated repo goes red for a shape it has not been moved to yet. Whether an
+# existing CLAUDE.md is the importer or a full legacy Layer 0 is a content question and
+# so the local script's; here presence is the whole answer.
 #
 # Membership is the one thing the API cannot tell us: on disk, "in projects/" means
 # "in the estate". Here, a repo carrying no .icm/ at all is reported as **not adopted**
@@ -146,7 +156,15 @@ for repo in "${repos[@]}"; do
     missing+=(".claude/" ".claude/settings.json")
   fi
 
-  [[ "$root" == *" CLAUDE.md "* ]] || warns+=("no CLAUDE.md (Layer-0 identity/routing file)")
+  # Layer-0 identity, shape-tolerant (see the header): AGENTS.md or CLAUDE.md satisfies
+  # it; neither warns. Once a repo has migrated, the importer and opencode.json are the
+  # new-shape bundle --fix would seed, so they are GAPs there and invisible everywhere else.
+  if [[ "$root" == *" AGENTS.md "* ]]; then
+    [[ "$root" == *" CLAUDE.md "*    ]] || missing+=("CLAUDE.md (the one-line \`@AGENTS.md\` importer)")
+    [[ "$root" == *" opencode.json "* ]] || missing+=("opencode.json")
+  elif [[ "$root" != *" CLAUDE.md "* ]]; then
+    warns+=("no Layer-0 identity file — expected AGENTS.md (+ the CLAUDE.md importer) or a legacy CLAUDE.md")
+  fi
   [[ "$icm" == *" project.md "*  ]] || warns+=("no .icm/project.md — /project has never run here")
   for loose in TODO.md BACKLOG.md; do
     [[ "$root" == *" $loose "* ]] && warns+=("loose $loose at root — should be tickets in .icm/intake/")

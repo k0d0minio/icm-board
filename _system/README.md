@@ -94,9 +94,11 @@ Every estate repo looks like this:
   settings.json      ← clean policy + hook wiring     → template/README.md
   hooks/ · skills/   ← canonical estate assets; drift reported, repo wins
 AGENTS.md            ← Layer 0: identity + routing only
-CLAUDE.md            ← one-line `@AGENTS.md` import (Claude Code)
-                       icm-board pilots this pair; the rest of the estate still
-                       carries Layer 0 as a full CLAUDE.md
+CLAUDE.md            ← one-line `@AGENTS.md` import (Claude Code)  → template/README.md
+opencode.json        ← OpenCode rails, seeded beside the importer  → template/README.md
+                       icm-board pilots this set; the rest of the estate still carries
+                       Layer 0 as a full CLAUDE.md, and the conformance scripts accept
+                       either shape until the rollout completes
 ```
 
 ## House doctrine
@@ -122,7 +124,8 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
 - **Edit the source, not just the output.** A correction made twice at the same stage is
   a Layer-3 bug; fix the reference file so every future run inherits it.
 - **Thin Layer-0 identity file** that routes rather than teaches — `AGENTS.md` here,
-  still `CLAUDE.md` across the rest of the estate.
+  still `CLAUDE.md` across the rest of the estate. Never templated either way: each repo
+  writes its own. Only the one-line importer beside it is canonical.
 - **Redirect files, not copies**, for cross-layer references — except where a repo must
   stand alone in a cloud session, which is why `.icm/intake/README.md` is a deliberate
   micro-copy.

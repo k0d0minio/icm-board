@@ -15,10 +15,10 @@ direction.
 
 ## What it is not
 
-- **Not `CLAUDE.md`.** That is Layer 0: identity and routing — *where to go*. This is
-  *what we are building and why*. A session reads `CLAUDE.md` to navigate and
+- **Not `AGENTS.md`.** That is Layer 0: identity and routing — *where to go*. This is
+  *what we are building and why*. A session reads `AGENTS.md` to navigate and
   `project.md` to understand. Neither should restate the other; when they overlap,
-  `CLAUDE.md` links here.
+  `AGENTS.md` links here.
 - **Not a backlog.** Anything actionable is a ticket in `.icm/intake/`. The Features table
   below *points at* tickets; it never replaces them.
 - **Not a status report.** No progress percentages, no burn-down. Feature state is four

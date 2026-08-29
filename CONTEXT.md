@@ -1,6 +1,6 @@
 # CONTEXT.md — Layer 1: where do I go?
 
-*Task routing for the whole repo. Layer 0 ([`CLAUDE.md`](CLAUDE.md)) says where you are;
+*Task routing for the whole repo. Layer 0 ([`AGENTS.md`](AGENTS.md)) says where you are;
 this file says where to go; each stage's `CONTEXT.md` says what to do. Grammar:
 [`_system/contracts/WORKSPACES.md`](_system/contracts/WORKSPACES.md). Load down only as
 far as the task needs.*

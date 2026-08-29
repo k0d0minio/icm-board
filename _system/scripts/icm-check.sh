@@ -14,8 +14,17 @@
 #   .claude/settings.json    clean policy baseline
 #   .claude/hooks/*          canonical estate hooks (session-start, wrap-reminder)
 #   .claude/skills/*         canonical estate skills (ticket-craft, pr-conventions)
-#   CLAUDE.md                reported only — never templated (each repo writes its own)
+#   AGENTS.md                reported only — never templated (each repo writes its own)
+#   CLAUDE.md                the one-line `@AGENTS.md` importer — seeded, but only into
+#                            a repo that already carries AGENTS.md
+#   opencode.json            the estate's OpenCode rails — same gate as the importer
 #   .icm/project.md          reported only — /project writes it from an interrogation
+#
+# Layer 0 is moving from a full CLAUDE.md to AGENTS.md plus a one-line `@AGENTS.md`
+# importer (epic opencode-sidecar). Both shapes are accepted for as long as the rollout
+# takes: a repo satisfies the identity check with EITHER a legacy CLAUDE.md OR the
+# AGENTS.md + importer pair, and only a repo carrying neither warns. AGENTS.md itself is
+# never templated — each repo writes its own Layer 0, exactly as CLAUDE.md was.
 #
 # A repo whose .icm/CONTEXT.md declares `- profile: pipeline` (contracts/PIPELINE.md) is
 # additionally checked — and with --fix, seeded — against the pipeline profile:
@@ -47,7 +56,7 @@ done
 TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/template"
 
 if [[ ! -d "$APPS_ROOT" ]]; then echo "Not a directory: $APPS_ROOT" >&2; exit 2; fi
-if [[ ! -d "$TEMPLATE/icm" || ! -d "$TEMPLATE/claude" ]]; then
+if [[ ! -d "$TEMPLATE/icm" || ! -d "$TEMPLATE/claude" || ! -d "$TEMPLATE/root" ]]; then
   echo "Template missing or incomplete: $TEMPLATE" >&2; exit 2
 fi
 
@@ -82,6 +91,17 @@ PIPELINE_ICM=(
 )
 PIPELINE_CLAUDE=( "skills/pipeline/SKILL.md" )
 PIPELINE_GITHUB=( "pull_request_template.md" )
+
+# Canonical root assets (template/root/…): the new-shape bundle. Seeded — and required —
+# ONLY in a repo that has already migrated its Layer 0 to AGENTS.md, so an un-migrated
+# repo never goes red for a shape it has not been moved to yet (the rollout is
+# estate-rollout's work, not this script's). Paths relative to <repo>/.
+#   CLAUDE.md      the one-line `@AGENTS.md` importer. Seed-only and NEVER drift-checked:
+#                  a legacy CLAUDE.md diverges from it by design, and that is the whole
+#                  point of the transition tolerance.
+#   opencode.json  the estate's OpenCode rails; drift-reported like any other canonical
+#                  asset once a repo carries one.
+CANONICAL_ROOT=( "opencode.json" )
 
 bold=$'\033[1m'; red=$'\033[31m'; green=$'\033[32m'; yellow=$'\033[33m'; dim=$'\033[2m'; off=$'\033[0m'
 [[ -t 1 ]] || { bold=; red=; green=; yellow=; dim=; off=; }
@@ -118,6 +138,11 @@ for repo in "${repos[@]}"; do
   pipeline=0
   grep -qE '^- *profile: *pipeline' "$repo/.icm/CONTEXT.md" 2>/dev/null && pipeline=1
 
+  # Has this repo's Layer 0 moved to AGENTS.md yet? Everything new-shape hangs off this
+  # one fact, so an un-migrated repo is measured exactly as it was before the move.
+  migrated=0
+  [[ -f "$repo/AGENTS.md" ]] && migrated=1
+
   # --- .icm baseline ---
   [[ -f "$repo/.icm/CONTEXT.md" ]]        || missing+=(".icm/CONTEXT.md")
   [[ -d "$repo/.icm/intake" ]]            || missing+=(".icm/intake/")
@@ -133,6 +158,14 @@ for repo in "${repos[@]}"; do
     [[ -f "$repo/.claude/$asset" ]] || missing+=(".claude/$asset")
   done
 
+  # --- new-shape root assets (only once the repo carries AGENTS.md) ---
+  if (( migrated )); then
+    [[ -f "$repo/CLAUDE.md" ]] || missing+=("CLAUDE.md (the one-line \`@AGENTS.md\` importer)")
+    for asset in "${CANONICAL_ROOT[@]}"; do
+      [[ -f "$repo/$asset" ]] || missing+=("$asset")
+    done
+  fi
+
   # --- pipeline profile (only when the repo declares it) ---
   if (( pipeline )); then
     for p in "${PIPELINE_ICM[@]}";    do [[ -f "$repo/.icm/$p"     ]] || missing+=(".icm/$p"); done
@@ -146,6 +179,11 @@ for repo in "${repos[@]}"; do
       warns+=("drift from canonical: .claude/$asset differs from _system/template/claude/$asset")
     fi
   done
+  for asset in "${CANONICAL_ROOT[@]}"; do
+    if [[ -f "$repo/$asset" ]] && ! cmp -s "$TEMPLATE/root/$asset" "$repo/$asset"; then
+      warns+=("drift from canonical: $asset differs from _system/template/root/$asset")
+    fi
+  done
   # Hooks seeded into a repo whose settings.json predates the wiring are inert; say so.
   if [[ -f "$repo/.claude/settings.json" ]]; then
     for hook in session-start.sh wrap-reminder.sh; do
@@ -157,7 +195,19 @@ for repo in "${repos[@]}"; do
   fi
 
   # --- report-only checks (agent/human territory, never auto-fixed) ---
-  [[ -f "$repo/CLAUDE.md" ]] || warns+=("no CLAUDE.md (Layer-0 identity/routing file)")
+  # Layer-0 identity, shape-tolerant for the length of the AGENTS.md rollout: either the
+  # legacy full CLAUDE.md or the AGENTS.md + importer pair satisfies it, and only a repo
+  # with neither warns. Neither file is ever written from the template here — AGENTS.md
+  # is each repo's own Layer 0, and the importer is only seeded once AGENTS.md exists.
+  if (( ! migrated )) && [[ ! -f "$repo/CLAUDE.md" ]]; then
+    warns+=("no Layer-0 identity file — expected AGENTS.md (+ the CLAUDE.md importer) or a legacy CLAUDE.md")
+  fi
+  # An importer pointing at nothing is worse than no importer; it can only appear if a
+  # migration half-landed.
+  if (( ! migrated )) && [[ -f "$repo/CLAUDE.md" ]] && \
+     grep -qE '^[[:space:]]*@AGENTS\.md[[:space:]]*$' "$repo/CLAUDE.md" 2>/dev/null; then
+    warns+=("CLAUDE.md imports @AGENTS.md but no AGENTS.md exists — Layer 0 resolves to nothing")
+  fi
   # Deliberately never templated: an empty register is worse than none, because it
   # reads as established intent. /project writes it from a real interrogation.
   [[ -f "$repo/.icm/project.md" ]] || warns+=("no .icm/project.md — /project has never run here")
@@ -211,6 +261,20 @@ for repo in "${repos[@]}"; do
         actions+=("created .claude/$asset")
       fi
     done
+    # New-shape root assets, seeded only into a repo that already carries AGENTS.md —
+    # never overwritten, so a repo with a full legacy CLAUDE.md is left entirely alone.
+    if (( migrated )); then
+      if [[ ! -f "$repo/CLAUDE.md" ]]; then
+        cp "$TEMPLATE/root/CLAUDE.md" "$repo/CLAUDE.md"
+        actions+=("created CLAUDE.md (one-line \`@AGENTS.md\` importer)")
+      fi
+      for asset in "${CANONICAL_ROOT[@]}"; do
+        if [[ ! -f "$repo/$asset" ]]; then
+          cp "$TEMPLATE/root/$asset" "$repo/$asset"
+          actions+=("created $asset")
+        fi
+      done
+    fi
     if (( pipeline )); then
       for p in "${PIPELINE_ICM[@]}"; do
         if [[ ! -f "$repo/.icm/$p" ]]; then
@@ -244,6 +308,12 @@ for repo in "${repos[@]}"; do
     for asset in "${CANONICAL[@]}"; do
       [[ -f "$repo/.claude/$asset" ]] || missing+=(".claude/$asset (fix failed)")
     done
+    if (( migrated )); then
+      [[ -f "$repo/CLAUDE.md" ]] || missing+=("CLAUDE.md (fix failed)")
+      for asset in "${CANONICAL_ROOT[@]}"; do
+        [[ -f "$repo/$asset" ]] || missing+=("$asset (fix failed)")
+      done
+    fi
     if (( pipeline )); then
       for p in "${PIPELINE_ICM[@]}";    do [[ -f "$repo/.icm/$p"    ]] || missing+=(".icm/$p (fix failed)"); done
       for p in "${PIPELINE_CLAUDE[@]}"; do [[ -f "$repo/.claude/$p" ]] || missing+=(".claude/$p (fix failed)"); done

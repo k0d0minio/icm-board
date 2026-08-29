@@ -9,11 +9,17 @@ Consumed by `_system/scripts/icm-check.sh`:
 3. **The pipeline profile** — seeded *only* into repos whose `.icm/CONTEXT.md` declares
    `- profile: pipeline` ([contracts/PIPELINE.md](../contracts/PIPELINE.md)). Declaring
    the profile is Jamie's act; the fix never upgrades one.
+4. **The new-shape root assets** — seeded *only* into repos that already carry an
+   `AGENTS.md` (epic `opencode-sidecar`). Migrating a repo's Layer 0 is Jamie's act; the
+   fix never performs the move.
 
 Sustentus is exempt (its `.icm/` is authoritative — it is the source this template was
 extracted from, decision D12).
 
 ```
+root/                            → copied to <repo>/                (migrated repos only)
+  CLAUDE.md                      ← the one-line `@AGENTS.md` importer
+  opencode.json                  ← the estate's OpenCode rails (deny local checks, ask on push)
 icm/                             → copied to <repo>/.icm/           (every live repo)
   CONTEXT.md                     ← the repo's .icm map; carries the `- profile:` line
   intake/
@@ -39,12 +45,22 @@ github-pipeline/                 → copied to <repo>/.github/        (pipeline 
   pull_request_template.md       ← carries both gate anchors
 ```
 
+Layer 0 itself — `AGENTS.md`, or a legacy full `CLAUDE.md` — is **never templated**.
+Each repo writes its own identity and routing; an empty one would read as established
+intent. Only the importer is canonical, because it is identical everywhere.
+
 Rules:
 
 - **Never overwrite.** The script only creates what's missing; existing files win. In a
   repo whose `settings.json` predates the hook wiring, the hook files are seeded but
   inert — the drift report says so, and wiring them is Jamie's per-repo call
   (`/icm-check` step 3 proposes it).
+- **Both Layer-0 shapes are legal while the rollout runs.** A repo satisfies the
+  identity check with *either* a legacy `CLAUDE.md` *or* `AGENTS.md`; only a repo with
+  neither warns. `root/` is gated on `AGENTS.md` being present precisely so that an
+  un-migrated repo gains no gap and no warning from a move it has not made yet — the
+  moment its Layer 0 lands, `--fix` seeds the importer and `opencode.json` beside it.
+  Retiring the legacy tolerance is a decision for after the rollout, with evidence.
 - **Drift is a report line, not a repair.** `icm-check.sh` compares each repo's copy of
   a canonical asset against this folder and warns on divergence. Deliberate divergence
   is fine — the repo wins — but it should be visible, not silent.

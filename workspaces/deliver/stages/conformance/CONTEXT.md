@@ -11,7 +11,7 @@ uncommitted for Jamie to review per repo.
 | 3 | [`_system/template/`](../../../../_system/template/) | The canonical baseline + asset library being checked against |
 | 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) · [`PIPELINE.md`](../../../../_system/contracts/PIPELINE.md) | The intake shape and the profiles the fix seeds against |
 | 4 | `_system/scripts/icm-check.sh` output | The report this ritual acts on |
-| 4 | Each repo's `CLAUDE.md` + `.claude/` | What the per-repo review reads |
+| 4 | Each repo's Layer 0 (`AGENTS.md` or `CLAUDE.md`) + `.claude/` | What the per-repo review reads |
 
 ## Process
 
@@ -35,8 +35,13 @@ created.
 **3. Review each repo's `.claude` and Layer 0.** For every non-exempt repo listed,
 assess how well its Claude setup serves *that* project — the estate deliberately does
 not enforce cross-project consistency beyond the baseline:
-- `CLAUDE.md` — exists? Thin Layer-0 that routes rather than teaches (~30–90 lines,
-  identity + routing)? Points at `.icm/intake/` for planning?
+- Layer 0 — exists in *either* shape? A repo satisfies the check with a legacy full
+  `CLAUDE.md` or with `AGENTS.md` plus the one-line `@AGENTS.md` importer; both are
+  legal until the rollout completes, and only a repo with neither warns. Thin, routing
+  rather than teaching (~30–90 lines, identity + routing)? Points at `.icm/intake/` for
+  planning? A migrated repo also carries the canonical `opencode.json`, which `--fix`
+  seeds beside the importer — never propose migrating a repo's Layer 0 as part of this
+  ritual; that is `estate-rollout`'s per-repo PR work.
 - `.claude/settings.json` — clean policy only? Anything that belongs in
   `settings.local.json` (the accretion layer)? Over-broad allows?
 - Skills/hooks/agents — do the ones present still match the repo (dead references,

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Ladder | talking |
-| Stage | 02_discovery — sit-down with Billy is the next move |
+| Stage | 02_discovery — async: merge vinecliff PR #11, send the two questionnaires |
 | Adopted | 2026-08-26, at 01_intake |
 | Shape | fixed-price build — decided 2026-08-29 (retainer considered, dropped) |
 | Value | — not yet priced |

@@ -5,7 +5,7 @@
 - priority: P1
 - size: M
 - depends-on: none
-- sequence: 1 of 3
+- sequence: 1 of 6
 - sources: research session 2026-08-29 — AGENTS.md is the vendor-neutral standard
   (~28 tools, Linux Foundation-stewarded); Anthropic documents the `@AGENTS.md` import
   bridge in the Claude Code memory docs
@@ -37,7 +37,8 @@ warn on a *missing* CLAUDE.md and it stays present, so no script change.
 
 ## Out of scope (this feature)
 
-- The estate template (`_system/template/`) and other repos — later epic.
+- The estate template (`_system/template/`) and other repos — template-and-checks and
+  estate-rollout, later in this epic.
 - `~/.claude/CLAUDE.md` (Jamie's global layer) — machine-level, not this repo's.
 
 ## Prompt

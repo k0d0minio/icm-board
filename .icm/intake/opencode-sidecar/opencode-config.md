@@ -5,7 +5,7 @@
 - priority: P1
 - size: S
 - depends-on: none
-- sequence: 2 of 3
+- sequence: 2 of 6
 - sources: research session 2026-08-29 — OpenCode reads AGENTS.md/CLAUDE.md and
   `.claude/skills/` natively; permissions are allow/ask/deny per tool with bash-pattern
   granularity (opencode.ai/docs)

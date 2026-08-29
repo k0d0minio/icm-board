@@ -5,7 +5,7 @@
 - priority: P2
 - size: S
 - depends-on: none
-- sequence: 3 of 3
+- sequence: 3 of 6
 - sources: research session 2026-08-29 · grep for "Claude session" across the contract,
   intake micro-copies and both ticket-craft skill copies (the phrase wraps across lines
   in TICKETS.md — grep loosely)

@@ -52,9 +52,21 @@ naming rule should apply strictly.)*
   objective. Weddings deposit terms: **using sensible defaults until confirmed**.
 
 ## Open
-- Send `open-questions.md` (WhatsApp-ready). Answers unblock the availability model
-  (big groups / seat sharing), the weddings deposit terms, the social auto-poster
-  (IG/FB access — Meta review takes weeks), and the privacy policy's draft banner
-  (written legal facts).
+- Send `open-questions.md` (WhatsApp-ready; **amended 2026-08-29** — now 12 items:
+  pricing PAX semantics, Óbidos times, cancellation behaviour, photo re-send and two
+  small checks added). Answers unblock the availability model (big groups / seat
+  sharing), real-money pricing correctness, the weddings deposit terms, the social
+  auto-poster (IG/FB access — Meta review takes weeks), and the privacy + terms
+  draft banners (written legal facts).
+- **Rotate the controlpanel.pro password with Diogo** — it sat in a public repo
+  until 2026-08-29 (repo now private; see agorasim
+  `.icm/intake/secure-client-data/`). Precautionary but mandatory.
+- Sign the Commission & Payments Agreement before Connect fees activate (agorasim
+  register D16).
 - Chase their Stripe account creation when the time comes to go live.
 - Domain recovery status — theirs to drive; ask alongside the pack.
+
+## Log (continued)
+- 2026-08-29 — /project first run on the repo: register written, 11 epics + triage
+  cut (see agorasim `.icm/project.md`); GitHub repo flipped **private** (had been
+  public with the deal documents in it); question pack amended, still unsent.

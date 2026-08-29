@@ -8,7 +8,8 @@ and deliver the work; the knowledge and contracts they cite; and the scripts tha
 
 ```text
 icm-board/                     this repo — k0d0minio/icm-board (private)
-├── CLAUDE.md                  Layer 0 — identity & routing (read first)
+├── AGENTS.md                  Layer 0 — identity & routing (read first)
+├── CLAUDE.md                  one-line `@AGENTS.md` import for Claude Code
 ├── CONTEXT.md                 Layer 1 — where do I go?
 ├── README.md                  you are here
 │
@@ -40,7 +41,7 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
 ## How it runs
 
 - **The folders are the orchestration.** Stage contracts plus human gates; nothing runs
-  itself and no outbound action leaves a session — see `CLAUDE.md` § Never build an
+  itself and no outbound action leaves a session — see `AGENTS.md` § Never build an
   orchestrator. Jamie advances every deal and every ritual himself.
 - **One story per client.** `/client <name>` walks a deal folder through stages 01–07;
   `07_kickoff` hands over to `/project` and the client's own repo. Business *state*
@@ -66,4 +67,4 @@ as ICM workspaces (Van Clief & McDermott's Interpretable Context Methodology,
 2026-08-12 retirement of the "ICM business factory". What returned is contracts and
 gates, not a factory.
 
-— Start at [`CLAUDE.md`](CLAUDE.md), then [`CONTEXT.md`](CONTEXT.md)
+— Start at [`AGENTS.md`](AGENTS.md), then [`CONTEXT.md`](CONTEXT.md)

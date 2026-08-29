@@ -21,7 +21,7 @@ task needs; no session reads everything.
 
 | Layer | File(s) | Answers |
 |---|---|---|
-| 0 | [`/CLAUDE.md`](../../CLAUDE.md) | Where am I? |
+| 0 | [`/AGENTS.md`](../../AGENTS.md) | Where am I? |
 | 1 | [`/CONTEXT.md`](../../CONTEXT.md) + each workspace's `CONTEXT.md` | Where do I go? |
 | 2 | `workspaces/*/stages/*/CONTEXT.md` | What do I do? |
 | 3 | [`knowledge/`](../knowledge/) · [`contracts/`](./) · each workspace's `references/` | What rules apply? |

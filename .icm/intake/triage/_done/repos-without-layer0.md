@@ -6,6 +6,20 @@
 - sources: the AGENTS.md rollout, 2026-08-30 (epic `opencode-sidecar`, stub
   `estate-rollout`) · `_system/scripts/icm-check.sh` identity warn
 
+> **Resolved 2026-08-30 — but not the way this stub proposed.** Jamie's call was that all
+> eleven get a Layer 0, so none was recorded as dormant and `/project` was not run against
+> any of them. Each `AGENTS.md` was written directly from evidence already in the repo —
+> `README.md`, `lib/site.ts`, route structure, schema, migrations — plus, in the repos
+> where the README was stale boilerplate, the code itself. That is a weaker basis than an
+> interrogation: it captures what each repo *is* and what is dangerous about it, not what
+> Jamie *wants* from it. `/project` is still worth running on the live ones, and
+> `.icm/project.md` is still absent everywhere. One PR per repo; see the epic.
+>
+> Two findings came out of the pass and are parked in the repos they belong to:
+> `kau-american-bbq` carries a **plaintext temporary admin password** in a migration
+> comment (P0, `rotate-seeded-admin-password`), and `jamienisbet`'s `createClientRepo`
+> still scaffolds `.icm/` only (`scaffold-root-rails`).
+
 ## What this is
 
 The rollout migrated every repo that *had* a Layer 0. Eleven did not, and still do not:

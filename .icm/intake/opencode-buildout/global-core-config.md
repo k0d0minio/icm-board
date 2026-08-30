@@ -6,6 +6,9 @@
 - size: S
 - depends-on: none
 - sequence: 1 of 5
+- blocked: OpenRouter not connected — step 2 is Jamie's to do (keys are out of
+  session scope). Everything else shipped 2026-08-30; opencode Zen was already
+  connected. Remove this line once `opencode models` lists openrouter/ models.
 - sources: report artifact §Phase 1
   https://claude.ai/code/artifact/806e3001-9c27-40a3-be2f-851c050086f8
 

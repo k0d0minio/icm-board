@@ -1,5 +1,14 @@
 # Stub: Plugins — quota tracking, context pruning, hand-rolled notify
 
+> Completed 2026-08-30 with one deviation: step 1's `opencode-quota` was dropped, not
+> installed. The unscoped npm name is not the plugin the report described — it resolves
+> to 0.0.1-dev, covers only ChatGPT Codex / Google Antigravity / z.ai (no OpenRouter, no
+> Zen) and reads auth.json at startup. Jamie's call: no quota plugin, budget visibility
+> comes from native `opencode stats`. DCP and the notify plugin shipped as specified;
+> the notify snippet needed no event-name fix (`permission.asked` is correct — the
+> bundled SDK types are stale, the runtime is not). Step 3's version pin is deferred by
+> design and carried as triage stub `opencode-pin-plugin-versions`.
+
 - feature-slug: plugins-and-quota
 - epic: opencode-buildout
 - priority: P1

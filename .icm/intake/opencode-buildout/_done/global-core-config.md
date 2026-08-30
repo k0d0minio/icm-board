@@ -1,14 +1,30 @@
 # Stub: Global OpenCode core — install, OpenRouter, config, rules, theme
 
+> Completed 2026-08-30. **OpenRouter was dropped, not connected** — Jamie's call, since
+> the Vercel AI Gateway and opencode Zen already cover the ladder. Step 2 is therefore
+> satisfied by the two providers that were connected (Zen was already there; Vercel came
+> with the box), and no key was ever handled in-session.
+>
+> That made the report's two committed model IDs dead, so both were substituted keeping
+> its intent: `model` → `vercel/zai/glm-5.3-flash`, the peer the report itself named
+> alongside its own pick and at the same price ($0.15/$0.50 per M vs $0.15/$0.47), 1M
+> context; `small_model` → `vercel/alibaba/qwen3.7-flash` at $0.03/$0.13, since it only
+> serves titles, summaries and compaction. The default stays deliberately *paid*: free
+> models are trial/data-collection endpoints and must never drive a client-repo session,
+> so a global default has to be safe everywhere.
+>
+> Verified: a session opens on `zai/glm-5.3-flash` with no model flag, `opencode models`
+> lists the five Zen free models, and the resolved config reports `share: "disabled"`.
+> Steps 1, 3, 4 and 5 shipped as written. One correction to the report: the shipped
+> runtime loads `opencode.jsonc` as well as `opencode.json`, so the pre-existing empty
+> `.jsonc` was moved aside to keep one authoritative config.
+
 - feature-slug: global-core-config
 - epic: opencode-buildout
 - priority: P1
 - size: S
 - depends-on: none
 - sequence: 1 of 5
-- blocked: OpenRouter not connected — step 2 is Jamie's to do (keys are out of
-  session scope). Everything else shipped 2026-08-30; opencode Zen was already
-  connected. Remove this line once `opencode models` lists openrouter/ models.
 - sources: report artifact §Phase 1
   https://claude.ai/code/artifact/806e3001-9c27-40a3-be2f-851c050086f8
 

@@ -1,5 +1,13 @@
 # Stub: Template rails — formatter and share off in estate opencode.json
 
+> Completed 2026-08-30. The two keys were added ahead of the permission block, which is
+> untouched. The stub's warning about ordering landed as predicted: `estate-rollout` had
+> already run, so all 23 repos carry an `opencode.json` and `--fix` never overwrites —
+> the template change reaches none of them. 22 are byte-identical to the old template
+> (sustentus differs and is exempt). That sweep is cut as triage stub
+> `opencode-rails-propagation`; `opencode.json` is a `CANONICAL_ROOT` asset, so
+> `/icm-check` reports each stale repo as drift in the meantime.
+
 - feature-slug: template-opencode-rails
 - epic: opencode-buildout
 - priority: P1

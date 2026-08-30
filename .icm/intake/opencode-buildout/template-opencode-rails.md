@@ -8,7 +8,7 @@
 - sequence: 4 of 5
 - sources: report artifact §Phase 5 (rails audit)
   https://claude.ai/code/artifact/806e3001-9c27-40a3-be2f-851c050086f8 ·
-  builds on `.icm/intake/opencode-sidecar/_done/opencode-config.md`
+  builds on `.icm/intake/_done/opencode-sidecar/_done/opencode-config.md`
 
 ## Problem
 

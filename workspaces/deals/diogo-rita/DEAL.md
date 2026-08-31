@@ -58,9 +58,6 @@ naming rule should apply strictly.)*
   sharing), real-money pricing correctness, the weddings deposit terms, the social
   auto-poster (IG/FB access — Meta review takes weeks), and the privacy + terms
   draft banners (written legal facts).
-- **Rotate the controlpanel.pro password with Diogo** — it sat in a public repo
-  until 2026-08-29 (repo now private; see agorasim
-  `.icm/intake/secure-client-data/`). Precautionary but mandatory.
 - Sign the Commission & Payments Agreement before Connect fees activate (agorasim
   register D16).
 - Chase their Stripe account creation when the time comes to go live.
@@ -70,3 +67,10 @@ naming rule should apply strictly.)*
 - 2026-08-29 — /project first run on the repo: register written, 11 epics + triage
   cut (see agorasim `.icm/project.md`); GitHub repo flipped **private** (had been
   public with the deal documents in it); question pack amended, still unsent.
+- 2026-08-31 — **controlpanel.pro password rotated by Diogo**, confirmed by Jamie.
+  Precautionary: it had been in the info PDF while the client repo was public
+  (until 2026-08-29). Asked over WhatsApp in PT; Diogo changed it himself and the
+  new credential is held by the client only — it is in no repo and no chat log.
+  Closes agorasim `secure-client-data/rotate-registrar-credential`; the paired
+  `untrack-credential-pdfs` (remove the now-dead password from the tracked PDF,
+  decide the history purge) is still open.

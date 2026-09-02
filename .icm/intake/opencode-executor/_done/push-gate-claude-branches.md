@@ -1,5 +1,18 @@
 # Stub: Narrow the push gate — claude/* branches allow, everything else asks
 
+> Verified 2026-09-02 in a live OpenCode session (v1.18.25, `opencode run` with no
+> `--auto`, so an `ask` auto-rejects) inside `~/Apps`, with the narrowed config in
+> place. Four checks, all `--dry-run` so nothing could be pushed:
+>
+> 1. `git push --dry-run origin claude/push-gate-claude-branches` — ran with no
+>    prompt. The allow beat the ask: last-match-wins holds for this pair.
+> 2. `git push --dry-run origin main` — "permission requested: bash
+>    (git push --dry-run origin main); auto-rejecting". The `main` gate survives.
+> 3. `git push --dry-run` (bare) — auto-rejected. The documented caveat, confirmed:
+>    no branch named, so only the `ask` matches.
+> 4. `git push --dry-run -u origin claude/push-gate-claude-branches` — ran with no
+>    prompt, so the `-u origin` form matches the glob too.
+
 - feature-slug: push-gate-claude-branches
 - epic: opencode-executor
 - priority: P1

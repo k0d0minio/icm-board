@@ -23,7 +23,7 @@ doctrine (stable) and audit (decays) stop sharing a file.*
 - **P1** barzinho history scrub: the P&L PDFs were **untracked and the ignore pattern fixed (2026-08-28)** — but both files remain in the pushed GitHub history (`k0d0minio/barzinho` remote confirmed). Rewrite history or accept it: Jamie's call, deliberately not taken in a session.
 - **P1** dungeons-dragons: a Linear API key shipped in the public browser bundle via a `NEXT_PUBLIC_` prefix and has never been revoked. (Its ticket went in the D14 clean-slate purge — this line is the record until a fresh `/project` run re-cuts it.)
 - **P2** Over-broad grants: remi-ai `Bash(cat > *)` and home-wide `Read()`; `git push`/`gh pr merge` on allow.
-- **P3** Orphaned vercel-plugin OAuth material in `~/.claude/.credentials.json`; `garmani/.env` is tracked.
+- **P3** Orphaned vercel-plugin OAuth material in `~/.claude/.credentials.json`.
 - ✅ Global secrets deny-list now in place machine-wide (`.env*`, `*.pem`, `*.key`, `secrets/**`).
 
 ## Still open — broken config (pure fixes, no decision needed)
@@ -66,6 +66,18 @@ the run log dates it.
 
 ## Done (don't re-litigate)
 
+- **garmani `.env` untracked — it was never a secret** (2026-09-03): the estate's only
+  tracked env file held one variable, `NEXT_PUBLIC_SITE_URL` — public by construction
+  (Next.js inlines `NEXT_PUBLIC_*` into the client bundle) and the sole `process.env.*`
+  reference in the repo. Its **value was never read in a session**: the machine-wide
+  `.env` deny-list held, and no workaround was attempted; the identification rests on
+  the code, the repo's `AGENTS.md`, and the 45-byte file. `git rm --cached` plus the
+  estate's env ignore block shipped on `claude/untrack-env` (`.env` stays on disk).
+  The `k0d0minio/garmani` remote exists, so the line is in pushed history — but a public
+  site URL is not a credential, so **no history scrub is warranted**, and nothing here
+  needs rotating. Unlike barzinho, this closes with no P1 left behind. Follow-on parked
+  in garmani's own triage: the `Dockerfile` still `COPY`s `.env`, so a fresh clone
+  cannot build the image.
 - **Sanity token revoked, plaintext backup deleted** (2026-08-27, ICM-007): the token
   carried in `~/.claude.json.bak-20260715` was revoked in the Sanity management console
   and the backup file removed from Jamie's machine. Both steps were his and confirmed by

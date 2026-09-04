@@ -56,7 +56,7 @@ The two options above trade the comment against the lint accommodation. The exte
 buys both. OpenCode reads `opencode.jsonc` natively (project config, same precedence),
 and `.jsonc` declares the dialect to every other tool — Biome 2.x parses it with
 comments allowed, so `**/*` linting stops caring. The comment stays next to the two
-lines it is about, no repo carries an ignore for it, and `collabimmo` stops being a
+lines it is about, no repo needs an ignore to *parse* it, and `collabimmo` stops being a
 latent break the day it switches to `biome check`.
 
 Cost, paid in this pass: the canonical asset renames in `_system/template/root/`,
@@ -64,6 +64,21 @@ Cost, paid in this pass: the canonical asset renames in `_system/template/root/`
 repos; the two `!**/opencode.json` ignores in `escondidinho` and `cafe-jardim` no longer
 match anything and are removed. Both scripts now warn on a leftover `opencode.json` at
 any repo root — a half-finished rename, or a second config OpenCode also reads.
+
+### What the rename did not fix
+
+CI proved one thing the ruling assumed away. Once the file is `.jsonc`, a repo linting
+`**/*` **includes** it — it parses, but it is also format-checked. `cafe-jardim` formats
+with tabs and the canonical file is two-space, so its PR went 12 → 13 errors with a
+single new `opencode.jsonc format`. Reformatting the file in-repo would trade that
+visible error for silent permanent drift (canonical assets are compared byte-for-byte),
+so the exclusion went back in as `!**/opencode.jsonc` — for formatting, not parsing.
+
+This is not new and not specific to the rails file: that repo's `.claude/settings.json`,
+also a canonical estate asset, is already in the same error list (see its
+`triage/lint-red-on-main.md`). The general question — what a repo does when its formatter
+disagrees with an estate canonical asset — is worth cutting a stub for if it reaches a
+second repo. One repo is not yet a pattern.
 
 ## Acceptance criteria (rough)
 

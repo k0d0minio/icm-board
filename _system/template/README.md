@@ -69,6 +69,14 @@ Rules:
   Biome parses a `.json` file as strict JSON and fails on the comment, which is exactly
   what took `escondidinho` and `cafe-jardim` red in September 2026. `icm-check.sh` warns
   on a leftover `opencode.json` at any repo root.
+- **A canonical asset can still lose to a repo's *formatter*, and that is a separate
+  problem.** The `.jsonc` rename ends the parse failures; it does not make a two-space
+  canonical file match a repo that formats with tabs. `cafe-jardim` excludes
+  `opencode.jsonc` from Biome for exactly that reason, and its `.claude/settings.json`
+  is already flagged the same way. Reformatting a canonical asset in-repo is the wrong
+  trade — it swaps a visible CI error for silent permanent drift — so the repo either
+  excludes the asset from formatting or accepts the error. Worth solving estate-wide if
+  it spreads beyond one repo.
 - **Drift is a report line, not a repair.** `icm-check.sh` compares each repo's copy of
   a canonical asset against this folder and warns on divergence. Deliberate divergence
   is fine — the repo wins — but it should be visible, not silent.

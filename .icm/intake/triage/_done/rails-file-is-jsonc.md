@@ -48,6 +48,56 @@ Not obviously one or the other, which is why this is parked rather than patched:
 Whichever way it goes, the change is a template edit plus a re-propagation pass, so
 it wants doing before the next repo adopts the rails.
 
+## The ruling — 2026-09-04, recorded as D16
+
+**Neither. A third option: rename the file to `opencode.jsonc`.**
+
+The two options above trade the comment against the lint accommodation. The extension
+buys both. OpenCode reads `opencode.jsonc` natively (project config, same precedence),
+and `.jsonc` declares the dialect to every other tool — Biome 2.x parses it with
+comments allowed, so `**/*` linting stops caring. The comment stays next to the two
+lines it is about, no repo needs an ignore to *parse* it, and `collabimmo` stops being a
+latent break the day it switches to `biome check`.
+
+Cost, paid in this pass: the canonical asset renames in `_system/template/root/`,
+`icm-check.sh` (`CANONICAL_ROOT`), `estate-conformance.sh`, and all 24 rails-carrying
+repos; the two `!**/opencode.json` ignores in `escondidinho` and `cafe-jardim` no longer
+match anything and are removed. Both scripts now warn on a leftover `opencode.json` at
+any repo root — a half-finished rename, or a second config OpenCode also reads.
+
+### What the rename did not fix
+
+CI proved one thing the ruling assumed away. Once the file is `.jsonc`, a repo linting
+`**/*` **includes** it — it parses, but it is also format-checked. `cafe-jardim` formats
+with tabs and the canonical file is two-space, so its PR went 12 → 13 errors with a
+single new `opencode.jsonc format`. Reformatting the file in-repo would trade that
+visible error for silent permanent drift (canonical assets are compared byte-for-byte),
+so the exclusion went back in as `!**/opencode.jsonc` — for formatting, not parsing.
+
+It reached a second repo: `dungeons-dragons` runs `format:check` over the whole tree, and
+the renamed file came back unformatted and turned a green `main` red. It is now in that
+repo's `.prettierignore` beside the `.icm/` and `.claude/` entries that are there for the
+same reason.
+
+This is not new and not specific to the rails file: cafe-jardim's `.claude/settings.json`,
+also a canonical estate asset, is already in the same error list (see its
+`triage/lint-red-on-main.md`). Two repos is a pattern, so the general question is cut as
+`triage/canonical-assets-vs-repo-formatters.md` rather than answered here.
+
+## What CI proved
+
+24 rails repos, one PR each on `claude/opencode-jsonc`; icm-board #26 alongside.
+
+- **23 green.** Including `escondidinho`, which no longer needs its ignore at all, and
+  `collabimmo`, which was the latent break the ruling was meant to defuse.
+- **`cafe-jardim` red at 12 errors** — byte-identical to its `main`, which has been red
+  since 2026-08-30 (`triage/lint-red-on-main.md`). The rename added one error and the
+  formatter exclusion took it back off.
+- **`sustentus` code check green**, Vercel previews still deploying. It is exempt from
+  the baseline but carries the rails, so it was renamed with the rest.
+
+No repo needed an ignore to parse the file — which was the whole question.
+
 ## Acceptance criteria (rough)
 
 - [ ] Decision recorded on whether the rails file stays JSONC

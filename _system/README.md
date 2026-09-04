@@ -95,7 +95,7 @@ Every estate repo looks like this:
   hooks/ · skills/   ← canonical estate assets; drift reported, repo wins
 AGENTS.md            ← Layer 0: identity + routing only
 CLAUDE.md            ← one-line `@AGENTS.md` import (Claude Code)  → template/README.md
-opencode.json        ← OpenCode rails, seeded beside the importer  → template/README.md
+opencode.jsonc       ← OpenCode rails, seeded beside the importer  → template/README.md
                        icm-board pilots this set; the rest of the estate still carries
                        Layer 0 as a full CLAUDE.md, and the conformance scripts accept
                        either shape until the rollout completes

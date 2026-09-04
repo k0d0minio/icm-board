@@ -74,11 +74,29 @@ single new `opencode.jsonc format`. Reformatting the file in-repo would trade th
 visible error for silent permanent drift (canonical assets are compared byte-for-byte),
 so the exclusion went back in as `!**/opencode.jsonc` — for formatting, not parsing.
 
-This is not new and not specific to the rails file: that repo's `.claude/settings.json`,
+It reached a second repo: `dungeons-dragons` runs `format:check` over the whole tree, and
+the renamed file came back unformatted and turned a green `main` red. It is now in that
+repo's `.prettierignore` beside the `.icm/` and `.claude/` entries that are there for the
+same reason.
+
+This is not new and not specific to the rails file: cafe-jardim's `.claude/settings.json`,
 also a canonical estate asset, is already in the same error list (see its
-`triage/lint-red-on-main.md`). The general question — what a repo does when its formatter
-disagrees with an estate canonical asset — is worth cutting a stub for if it reaches a
-second repo. One repo is not yet a pattern.
+`triage/lint-red-on-main.md`). Two repos is a pattern, so the general question is cut as
+`triage/canonical-assets-vs-repo-formatters.md` rather than answered here.
+
+## What CI proved
+
+24 rails repos, one PR each on `claude/opencode-jsonc`; icm-board #26 alongside.
+
+- **23 green.** Including `escondidinho`, which no longer needs its ignore at all, and
+  `collabimmo`, which was the latent break the ruling was meant to defuse.
+- **`cafe-jardim` red at 12 errors** — byte-identical to its `main`, which has been red
+  since 2026-08-30 (`triage/lint-red-on-main.md`). The rename added one error and the
+  formatter exclusion took it back off.
+- **`sustentus` code check green**, Vercel previews still deploying. It is exempt from
+  the baseline but carries the rails, so it was renamed with the rest.
+
+No repo needed an ignore to parse the file — which was the whole question.
 
 ## Acceptance criteria (rough)
 

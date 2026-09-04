@@ -33,6 +33,7 @@ and **must run on the local disk** — `projects/` is invisible to cloud session
 3. push-gate-claude-branches — template + this repo: `claude/*` pushes allow, rest ask — depends-on: none
 4. push-gate-propagation — the narrowed gate rolled to every estate repo, per-repo PRs — depends-on: push-gate-claude-branches
 5. wrap-parity-proof — an OpenCode session picks this stub up and wraps it itself — depends-on: push-gate-claude-branches
+6. wrap-parity-proof-native — the same proof run under OpenCode for real; 5 was wrapped by Claude Code, leaving its two OpenCode criteria unmet — depends-on: push-gate-claude-branches
 
 ## Out of scope (whole epic)
 

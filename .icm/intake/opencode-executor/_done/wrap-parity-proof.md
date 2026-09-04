@@ -1,5 +1,11 @@
 # Stub: Wrap parity proof — OpenCode picks this stub up and wraps it itself
 
+> Wrapped by Claude Code, not OpenCode (2026-09-04, Jamie's call). The harness roster
+> was verified on disk — ticket-craft + pr-conventions present, session-start plugin
+> loaded, auto-resume pinned — but criteria 1 and 2 name OpenCode and a Claude Code
+> session cannot satisfy them. The native proof is re-cut as
+> `opencode-executor/wrap-parity-proof-native`.
+
 - feature-slug: wrap-parity-proof
 - epic: opencode-executor
 - priority: P1

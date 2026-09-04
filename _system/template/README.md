@@ -75,8 +75,9 @@ Rules:
   `opencode.jsonc` from Biome for exactly that reason, and its `.claude/settings.json`
   is already flagged the same way. Reformatting a canonical asset in-repo is the wrong
   trade — it swaps a visible CI error for silent permanent drift — so the repo either
-  excludes the asset from formatting or accepts the error. Worth solving estate-wide if
-  it spreads beyond one repo.
+  excludes the asset from formatting or accepts the error. `dungeons-dragons` made the
+  same call in its `.prettierignore`, so this is two repos and a pattern:
+  `.icm/intake/triage/canonical-assets-vs-repo-formatters.md`.
 - **Drift is a report line, not a repair.** `icm-check.sh` compares each repo's copy of
   a canonical asset against this folder and warns on divergence. Deliberate divergence
   is fine — the repo wins — but it should be visible, not silent.

@@ -17,7 +17,7 @@
 #   AGENTS.md                reported only — never templated (each repo writes its own)
 #   CLAUDE.md                the one-line `@AGENTS.md` importer — seeded, but only into
 #                            a repo that already carries AGENTS.md
-#   opencode.json            the estate's OpenCode rails — same gate as the importer
+#   opencode.jsonc           the estate's OpenCode rails — same gate as the importer
 #   .icm/project.md          reported only — /project writes it from an interrogation
 #
 # Layer 0 is moving from a full CLAUDE.md to AGENTS.md plus a one-line `@AGENTS.md`
@@ -99,9 +99,9 @@ PIPELINE_GITHUB=( "pull_request_template.md" )
 #   CLAUDE.md      the one-line `@AGENTS.md` importer. Seed-only and NEVER drift-checked:
 #                  a legacy CLAUDE.md diverges from it by design, and that is the whole
 #                  point of the transition tolerance.
-#   opencode.json  the estate's OpenCode rails; drift-reported like any other canonical
+#   opencode.jsonc the estate's OpenCode rails; drift-reported like any other canonical
 #                  asset once a repo carries one.
-CANONICAL_ROOT=( "opencode.json" )
+CANONICAL_ROOT=( "opencode.jsonc" )
 
 bold=$'\033[1m'; red=$'\033[31m'; green=$'\033[32m'; yellow=$'\033[33m'; dim=$'\033[2m'; off=$'\033[0m'
 [[ -t 1 ]] || { bold=; red=; green=; yellow=; dim=; off=; }
@@ -165,6 +165,14 @@ for repo in "${repos[@]}"; do
       [[ -f "$repo/$asset" ]] || missing+=("$asset")
     done
   fi
+
+  # The rails file is opencode.jsonc, not opencode.json — it carries the `//` comment
+  # explaining the push gate's last-match-wins ordering, and a repo linting `**/*` with
+  # Biome parses a `.json` file as strict JSON and fails on it. A leftover `.json` is
+  # either a half-finished rename or a repo OpenCode is now reading twice, so say so
+  # wherever it appears, migrated or not.
+  [[ -f "$repo/opencode.json" ]] && \
+    warns+=("legacy opencode.json at root — the rails file is opencode.jsonc (a .json copy is strict JSON to Biome and breaks \`biome check\`)")
 
   # --- pipeline profile (only when the repo declares it) ---
   if (( pipeline )); then

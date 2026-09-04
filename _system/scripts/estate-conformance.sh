@@ -26,7 +26,7 @@
 # does not control. So the identity check is shape-tolerant: a repo satisfies it with
 # EITHER a legacy CLAUDE.md OR AGENTS.md, and only a repo with neither warns. The
 # new-shape root assets from _system/template/root/ — the CLAUDE.md importer and
-# opencode.json — are GAPs only in a repo that already carries AGENTS.md, so no
+# opencode.jsonc — are GAPs only in a repo that already carries AGENTS.md, so no
 # un-migrated repo goes red for a shape it has not been moved to yet. Whether an
 # existing CLAUDE.md is the importer or a full legacy Layer 0 is a content question and
 # so the local script's; here presence is the whole answer.
@@ -157,15 +157,18 @@ for repo in "${repos[@]}"; do
   fi
 
   # Layer-0 identity, shape-tolerant (see the header): AGENTS.md or CLAUDE.md satisfies
-  # it; neither warns. Once a repo has migrated, the importer and opencode.json are the
+  # it; neither warns. Once a repo has migrated, the importer and opencode.jsonc are the
   # new-shape bundle --fix would seed, so they are GAPs there and invisible everywhere else.
   if [[ "$root" == *" AGENTS.md "* ]]; then
     [[ "$root" == *" CLAUDE.md "*    ]] || missing+=("CLAUDE.md (the one-line \`@AGENTS.md\` importer)")
-    [[ "$root" == *" opencode.json "* ]] || missing+=("opencode.json")
+    [[ "$root" == *" opencode.jsonc "* ]] || missing+=("opencode.jsonc")
   elif [[ "$root" != *" CLAUDE.md "* ]]; then
     warns+=("no Layer-0 identity file — expected AGENTS.md (+ the CLAUDE.md importer) or a legacy CLAUDE.md")
   fi
   [[ "$icm" == *" project.md "*  ]] || warns+=("no .icm/project.md — /project has never run here")
+  # The rails file is opencode.jsonc — see icm-check.sh. A leftover .json copy is either
+  # a half-finished rename or a second config OpenCode also reads; both want saying.
+  [[ "$root" == *" opencode.json "* ]] && warns+=("legacy opencode.json at root — the rails file is opencode.jsonc")
   for loose in TODO.md BACKLOG.md; do
     [[ "$root" == *" $loose "* ]] && warns+=("loose $loose at root — should be tickets in .icm/intake/")
   done

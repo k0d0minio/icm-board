@@ -19,7 +19,7 @@ extracted from, decision D12).
 ```
 root/                            → copied to <repo>/                (migrated repos only)
   CLAUDE.md                      ← the one-line `@AGENTS.md` importer
-  opencode.json                  ← the estate's OpenCode rails (deny local checks, ask on push)
+  opencode.jsonc                 ← the estate's OpenCode rails (deny local checks, ask on push)
 icm/                             → copied to <repo>/.icm/           (every live repo)
   CONTEXT.md                     ← the repo's .icm map; carries the `- profile:` line
   intake/
@@ -59,8 +59,16 @@ Rules:
   identity check with *either* a legacy `CLAUDE.md` *or* `AGENTS.md`; only a repo with
   neither warns. `root/` is gated on `AGENTS.md` being present precisely so that an
   un-migrated repo gains no gap and no warning from a move it has not made yet — the
-  moment its Layer 0 lands, `--fix` seeds the importer and `opencode.json` beside it.
+  moment its Layer 0 lands, `--fix` seeds the importer and `opencode.jsonc` beside it.
   Retiring the legacy tolerance is a decision for after the rollout, with evidence.
+- **The rails file is `.jsonc`, and the extension is the point.** It carries a `//`
+  comment recording that bash permissions are last-match-wins, so the `claude/*` push
+  allow must stay *below* the ask — swap those two lines and every push asks again, and
+  nothing else in the estate records that. OpenCode reads `opencode.jsonc` natively, and
+  the extension declares the dialect to every other tool: a repo linting `**/*` with
+  Biome parses a `.json` file as strict JSON and fails on the comment, which is exactly
+  what took `escondidinho` and `cafe-jardim` red in September 2026. `icm-check.sh` warns
+  on a leftover `opencode.json` at any repo root.
 - **Drift is a report line, not a repair.** `icm-check.sh` compares each repo's copy of
   a canonical asset against this folder and warns on divergence. Deliberate divergence
   is fine — the repo wins — but it should be visible, not silent.

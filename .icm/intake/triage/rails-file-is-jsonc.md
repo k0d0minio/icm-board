@@ -48,6 +48,23 @@ Not obviously one or the other, which is why this is parked rather than patched:
 Whichever way it goes, the change is a template edit plus a re-propagation pass, so
 it wants doing before the next repo adopts the rails.
 
+## The ruling — 2026-09-04, recorded as D16
+
+**Neither. A third option: rename the file to `opencode.jsonc`.**
+
+The two options above trade the comment against the lint accommodation. The extension
+buys both. OpenCode reads `opencode.jsonc` natively (project config, same precedence),
+and `.jsonc` declares the dialect to every other tool — Biome 2.x parses it with
+comments allowed, so `**/*` linting stops caring. The comment stays next to the two
+lines it is about, no repo carries an ignore for it, and `collabimmo` stops being a
+latent break the day it switches to `biome check`.
+
+Cost, paid in this pass: the canonical asset renames in `_system/template/root/`,
+`icm-check.sh` (`CANONICAL_ROOT`), `estate-conformance.sh`, and all 24 rails-carrying
+repos; the two `!**/opencode.json` ignores in `escondidinho` and `cafe-jardim` no longer
+match anything and are removed. Both scripts now warn on a leftover `opencode.json` at
+any repo root — a half-finished rename, or a second config OpenCode also reads.
+
 ## Acceptance criteria (rough)
 
 - [ ] Decision recorded on whether the rails file stays JSONC

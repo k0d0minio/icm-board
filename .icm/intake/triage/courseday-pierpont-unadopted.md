@@ -17,7 +17,7 @@ never been adopted:
 - no `.icm/` at all — no `CONTEXT.md`, `intake/`, `intake/triage/`, `intake/_done/`,
   `docs/`
 - no `AGENTS.md`, so no Layer 0 and no `CLAUDE.md` importer
-- no `opencode.json`, so no rails and no push gate
+- no `opencode.jsonc`, so no rails and no push gate
 
 They are the only two repos `icm-check` reports as GAP; the other 24 are conformant.
 
@@ -52,7 +52,7 @@ Worth checking first whether either is a client repo the admin dashboard created
 Run on Jamie's machine — `projects/*` is local-only. Read
 `.icm/intake/triage/courseday-pierpont-unadopted.md` in the icm-board repo (`~/Apps`).
 `projects/courseday` and `projects/pierpont` are git repos that were never adopted: no
-`.icm/`, no `AGENTS.md`, no `opencode.json`, and they are the only two repos
+`.icm/`, no `AGENTS.md`, no `opencode.jsonc`, and they are the only two repos
 `icm-check.sh` reports as GAP. Work out what each one is first — ask Jamie rather than
 guessing — then run `/project` against each and either adopt it properly (baseline,
 Layer 0, rails with the `claude/*` push gate) or mark it dormant. One PR per repo on a

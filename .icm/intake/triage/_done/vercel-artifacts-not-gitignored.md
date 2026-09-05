@@ -72,3 +72,30 @@ the client repos — never a change to `vercel-env.sh`, which reports and does n
 and `sustentus` and `remi-ai` are governed by their own repos. Confirm the current state
 with `_system/scripts/vercel-env.sh link --dry-run` first; its Warnings section, empty, is
 the acceptance check. Run on Jamie's machine — `projects/*` is local-only.
+
+## Outcome — 2026-09-05
+
+Closed the same day it was cut, and mostly by disproving it. Measured after the first
+full `link` run:
+
+- **Three repos were real and are fixed** — `kau-american-bbq`, `lourenco-botelho`,
+  `vinecliff` had no `.vercel` rule. `vercel link` appended `.vercel` and `.env*` itself
+  when it linked them; each was committed with `!.env.example` added on top, because the
+  CLI's `.env*` would otherwise have covered the manifest each repo already tracks —
+  and the manifest is what `example-convention-and-init` is about to depend on.
+  `garmani` Jamie fixed himself.
+- **The other 16 were a false positive in the checker, not a gap in the repos.**
+  `git check-ignore` cannot match a `dir/`-style rule against a path that does not exist
+  yet, and `link` asks before it writes — so every repo whose rule is `.vercel/` looked
+  unignored. `sustentus` and `remi-ai` both carry an unanchored `.vercel/` at the root,
+  which reaches `apps/<name>/.vercel` perfectly well; the claim in this stub that a root
+  rule "does not reach `apps/`" was simply wrong. `vercel-env.sh` now asks about a file
+  inside the directory instead, and the estate reports no warnings at all.
+- **Nothing was pushed to `sustentus` or `remi-ai`.** The CLI had left redundant
+  `.gitignore` edits in both (a duplicate root rule in one, six new per-app files in the
+  other); they were reverted rather than committed, since the root rules already did the
+  job.
+
+The one thing worth carrying forward is that `vercel link` **edits `.gitignore` in the
+repo it links**, unprompted, and its choice of `.env*` is wrong for this estate. That is
+now noted in the epic rather than here.

@@ -19,7 +19,9 @@
 # rest of the epic fills in `init`, `push-notes`, `pull` and `audit` behind it.
 #
 # `link` writes the `.vercel/project.json` that `vercel env pull` needs, into every
-# directory the registry names. It is idempotent: a directory already pointing at the
+# directory the registry names — and then reads it back, because the CLI has been seen to
+# report success and write nothing at all. A link that did not land is a failure here even
+# though `vercel` exited happy. It is idempotent: a directory already pointing at the
 # right project is left alone, and one pointing at a stale project name (a Vercel rename
 # — messy-play carried `v0-messy-play-website` for months) is re-linked. It refuses to
 # link a project name the team does not actually have, because `vercel link --yes` would
@@ -227,7 +229,11 @@ for entry in "${ENTRIES[@]}"; do
     continue
   fi
   # The link file itself carries only ids, so an unignored one is untidy, not unsafe.
-  if ! git_ignores "$repo_dir" "${prefix}.vercel"; then
+  # Asked about `.vercel`, `git check-ignore` cannot match a `dir/`-style rule against a
+  # path that does not exist yet — and before linking it never does, so every repo whose
+  # rule is `.vercel/` looked unignored. Ask about a file *inside* it instead, which a
+  # directory rule covers whether or not anything is there yet.
+  if ! git_ignores "$repo_dir" "${prefix}.vercel/project.json"; then
     warn_rows+="$path|${prefix}.vercel is not gitignored in ${path%%/*} (ids only, but it does not belong in the tree)"$'\n'
   fi
 
@@ -260,6 +266,25 @@ for entry in "${ENTRIES[@]}"; do
 
   if out=$( cd "$dir" && VERCEL_TOKEN="${TEAM_TOKEN[$team]}" \
               vercel link --yes --project "$project" --scope "$team" </dev/null 2>&1 ); then
+    # Trust, then check. In eight estate directories the CLI reported success and left no
+    # link behind, so a run said "linked" forty times and `vercel env pull` would still
+    # have had nothing to read in a fifth of them. The only claim worth making is that
+    # the file is on disk and names the project we asked for.
+    landed=""
+    [[ -f "$dir/.vercel/project.json" ]] && \
+      landed=$(jq -r '.projectName // empty' "$dir/.vercel/project.json" 2>/dev/null)
+    if [[ "$landed" != "$project" ]]; then
+      n_fail=$((n_fail + 1))
+      if [[ -z "$landed" ]]; then
+        why="\`vercel link\` reported success but wrote no .vercel/project.json"
+      else
+        why="\`vercel link\` reported success but wrote a link to '$landed', not '$project'"
+      fi
+      reason=$(printf '%s' "$out" | grep -iE '"(message|reason)"|^\s*(error|warn)' | head -1 | sed 's/^[[:space:]]*//')
+      fail_rows+="$path|$why${reason:+ — CLI said: $reason}"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}${why}${off}"
+      continue
+    fi
     if [[ "$action" == "relink" ]]; then
       n_relinked=$((n_relinked + 1))
       say "  ${green}relink${off}   $label ${dim}$current -> $team/$project${off}"

@@ -47,3 +47,28 @@ should repair, which is why it reports.
   the app directories. One PR each, in their own repos.
 - Re-run `_system/scripts/vercel-env.sh link --dry-run` — the Warnings section is the
   acceptance check, and empty is done.
+
+## Acceptance criteria (rough)
+
+- [ ] `garmani` ignores `.env*.local` and `.vercel`, and its committed `.env` is either
+      justified or removed from the tree
+- [ ] `kau-american-bbq`, `lourenco-botelho`, `vinecliff` ignore `.vercel`
+- [ ] `sustentus` and `remi-ai` ignore `.vercel` at any depth, not just at the root —
+      raised in their own repos, on their own terms
+- [ ] `_system/scripts/vercel-env.sh link --dry-run` reports no Warnings and no REFUSE
+
+## Prompt
+
+Read `.icm/intake/triage/vercel-artifacts-not-gitignored.md` in the icm-board repo
+(`~/Apps`). `vercel link` writes a `.vercel/project.json` and a `.env.local` holding a
+short-lived `VERCEL_OIDC_TOKEN` into every directory it links, and 17 of the 40 paths in
+`_system/scripts/vercel-env-registry.json` do not gitignore one or both — `garmani` (whose
+`.gitignore` is only `/node_modules`, and which tracks a committed `.env`), three other
+kodominio repos, and every app directory in `sustentus` and `remi-ai`, whose root
+`/.vercel` rule does not reach `apps/<name>/.vercel`. This matters before the epic's
+`pull-documented` stub ships, because that writes real values into those same
+directories. The fix is a `.gitignore` line per repo, so it is a fan-out of small PRs in
+the client repos — never a change to `vercel-env.sh`, which reports and does not repair,
+and `sustentus` and `remi-ai` are governed by their own repos. Confirm the current state
+with `_system/scripts/vercel-env.sh link --dry-run` first; its Warnings section, empty, is
+the acceptance check. Run on Jamie's machine — `projects/*` is local-only.

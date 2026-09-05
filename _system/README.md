@@ -15,7 +15,7 @@ _system/
   contracts/     ← the specs the workspaces and scripts read
   knowledge/     ← what the business knows: services, pricing, voice, terms, stack
   setup/         ← the questionnaire that fills knowledge/
-  scripts/       ← the six executables
+  scripts/       ← the seven executables
   template/      ← the baseline + canonical Claude assets icm-check.sh --fix seeds
   hooks/         ← session hooks for this repo (estate board on SessionStart)
   reference/     ← background reading (the ICM paper)
@@ -59,7 +59,7 @@ Layer-3 for the sell and start workspaces; filled via
 [setup/questionnaire.md](setup/questionnaire.md) (ICM-009). Gaps are honest
 (`— not yet established`), never invented mid-deal.
 
-## `scripts/` — the six executables
+## `scripts/` — the seven executables
 
 Each prints a single `RESULT:` line and takes config from the environment, never `.env`.
 
@@ -71,6 +71,7 @@ Each prints a single `RESULT:` line and takes config from the environment, never
 | [scripts/ticket-hygiene.sh](scripts/ticket-hygiene.sh) | Read-only drift report, plus contract lint over every ticket; `/day` applies the fixes with judgment. An empty `.icm/dormant` parks a repo ([TICKETS.md](contracts/TICKETS.md)). |
 | [scripts/pull-all.sh](scripts/pull-all.sh) | Pull every repo. |
 | [scripts/self-check.sh](scripts/self-check.sh) | Holds **this** repo to its own rules: links resolve, tickets meet the contract. |
+| [scripts/vercel-env.sh](scripts/vercel-env.sh) | The estate's Vercel env plumbing, over [scripts/vercel-env-registry.json](scripts/vercel-env-registry.json) — which repo/app path is which Vercel project, on which of the three teams. `link` so far; notes, values and docs each flow one way behind it (epic `vercel-env-system`). Local machine only, and per-team `VERCEL_TOKEN_*` env vars only. |
 
 The first two are a deliberate pair, not a duplication — one severity model (`GAP` =
 what `--fix` would seed; `warn` = never auto-fixed), two vantage points.

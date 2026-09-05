@@ -21,7 +21,9 @@
 # `link` writes the `.vercel/project.json` that `vercel env pull` needs, into every
 # directory the registry names — and then reads it back, because the CLI has been seen to
 # report success and write nothing at all. A link that did not land is a failure here even
-# though `vercel` exited happy. It is idempotent: a directory already pointing at the
+# though `vercel` exited happy — and the one condition known to cause it, a repo-level
+# `.vercel/repo.json` above the directory, is named before the attempt rather than after.
+# It is idempotent: a directory already pointing at the
 # right project is left alone, and one pointing at a stale project name (a Vercel rename
 # — messy-play carried `v0-messy-play-website` for months) is re-linked. It refuses to
 # link a project name the team does not actually have, because `vercel link --yes` would
@@ -106,6 +108,19 @@ git_ignores() {
   local repo="$1" rel="$2"
   git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
   git -C "$repo" check-ignore -q "$rel"
+}
+
+# A `.vercel/repo.json` anywhere from here up to the repo root puts the CLI into
+# repo-link mode, where `vercel link --project` quietly writes no project link at all.
+# Echo the first one found, so the failure can name it.
+repo_link_mode() {
+  local d="$1" top="$2"
+  while [[ "$d" == "$top"* ]]; do
+    [[ -f "$d/.vercel/repo.json" ]] && { printf '%s' "$d/.vercel/repo.json"; return 0; }
+    [[ "$d" == "$top" ]] && break
+    d="$(dirname "$d")"
+  done
+  return 1
 }
 
 # ---------------------------------------------------------------------------- teams --
@@ -244,6 +259,18 @@ for entry in "${ENTRIES[@]}"; do
   if [[ "$current" == "$project" ]]; then
     n_ok=$((n_ok + 1))
     say "  ${green}ok${off}       $label ${dim}$team/$project${off}"
+    continue
+  fi
+
+  # Repo mode is the one state where `vercel link --project` reports success and writes
+  # nothing, so name it before trying rather than after failing. It cost eight estate
+  # directories a silent no-link: two stale repo.json files, one still describing paths
+  # from before the 2026-08-26 repo split, the other listing projects that no longer
+  # exist.
+  if mode_file=$(repo_link_mode "$dir" "$repo_dir"); then
+    n_fail=$((n_fail + 1))
+    fail_rows+="$path|${mode_file#$PROJECTS/} puts the Vercel CLI in repo-link mode, where \`vercel link --project\` writes no project link. It is a regenerable local cache: delete it if it is stale, or link this repo with \`vercel link --repo\`"$'\n'
+    say "  ${red}FAIL${off}     $label ${red}repo-link mode (${mode_file#$PROJECTS/}) — \`link --project\` cannot write here${off}"
     continue
   fi
 

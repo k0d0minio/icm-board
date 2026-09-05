@@ -50,6 +50,25 @@ sessions.
 5. env-audit — the estate env report, reports and never repairs — depends-on: example-convention-and-init
 6. cloud-session-hook — canonical SessionStart hydration + panel tokens — depends-on: pull-documented
 
+## Worth knowing — learned building stub 1 (2026-09-05)
+
+Three things the research session could not have known, all found by running `link` on
+the real estate rather than reasoning about it:
+
+- **`vercel link` edits the `.gitignore` of the repo it links, unprompted**, appending
+  `.vercel` and `.env*`. The `.env*` is wrong for this estate: it covers the
+  `.env.example` that `example-convention-and-init` makes the manifest. Every repo where
+  it was kept carries `!.env.example` on top; in the two monorepos the additions were
+  redundant with existing root rules and were reverted. Expect stub 2 to meet this again.
+- **`vercel link` also writes a `.env.local` holding a short-lived `VERCEL_OIDC_TOKEN`.**
+  `pull` will be overwriting that file, not creating it.
+- **A `.vercel/repo.json` above a directory puts the CLI in repo-link mode**, where
+  `vercel link --project` reports success and writes no project link. Two stale ones —
+  `jamienisbet`'s still describing paths from before the 2026-08-26 repo split, and
+  `sustentus`'s listing projects that no longer exist — silently cost eight directories
+  their link. `link` now names the condition before it tries, and verifies the link file
+  landed afterwards either way.
+
 ## Out of scope (whole epic)
 
 - Shared team variables — Jamie's call 2026-09-02: project-level is enough. Revisit

@@ -186,7 +186,15 @@ for team in "${teams[@]}"; do
   fi
 done
 
-while IFS=$'\t' read -r path team project; do
+# The registry is read into an array *before* the loop rather than piped into it. Piping
+# it in would leave the loop body reading from the same stdin as the commands it runs —
+# and `vercel` is a node process, which drains whatever stdin it inherits. That ate every
+# remaining entry the moment the first real `vercel link` ran, so a run would stop dead
+# after its first link and still report success. An array cannot be swallowed.
+mapfile -t ENTRIES < <(jq -r '.entries[] | [.path, .team, .project] | @tsv' "$REGISTRY")
+
+for entry in "${ENTRIES[@]}"; do
+  IFS=$'\t' read -r path team project <<<"$entry"
   [[ -n "$path" ]] || continue
   dir="$PROJECTS/$path"
   label=$(printf '%-38s' "$path")
@@ -251,7 +259,7 @@ while IFS=$'\t' read -r path team project; do
   fi
 
   if out=$( cd "$dir" && VERCEL_TOKEN="${TEAM_TOKEN[$team]}" \
-              vercel link --yes --project "$project" --scope "$team" 2>&1 ); then
+              vercel link --yes --project "$project" --scope "$team" </dev/null 2>&1 ); then
     if [[ "$action" == "relink" ]]; then
       n_relinked=$((n_relinked + 1))
       say "  ${green}relink${off}   $label ${dim}$current -> $team/$project${off}"
@@ -265,7 +273,7 @@ while IFS=$'\t' read -r path team project; do
     fail_rows+="$path|vercel link failed: ${reason:-see output}"$'\n'
     say "  ${red}FAIL${off}     $label ${red}${reason:-vercel link failed}${off}"
   fi
-done < <(jq -r '.entries[] | [.path, .team, .project] | @tsv' "$REGISTRY")
+done
 
 if [[ -n "${warn_rows//[$'\n']/}" ]] && (( ! QUIET )); then
   echo

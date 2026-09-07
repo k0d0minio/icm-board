@@ -69,6 +69,31 @@ the real estate rather than reasoning about it:
   their link. `link` now names the condition before it tries, and verifies the link file
   landed afterwards either way.
 
+## Worth knowing — learned building stub 2 (2026-09-07)
+
+`init` seeded 40 registry entries in one pass. What running it taught, for the three
+flows still to build:
+
+- **347 keys, and most of them are not Jamie's.** The Neon and Supabase Vercel
+  integrations inject their own aliases — `PGHOST`, `PGPASSWORD`, `POSTGRES_URL_NO_SSL`,
+  `POSTGRES_PRISMA_URL` and a dozen more — into every project they touch, and the
+  manifest documents every one. So `push-notes` is writing a few hundred comments, and
+  the `# TODO: note` count `audit` reports will start very high and mostly stay there.
+  Worth deciding, when audit lands, whether an integration-managed key deserves the same
+  editorial pressure as one a human set.
+- **17 of the 40 entries have no Vercel variables at all** — the static marketing sites.
+  A flow that treats "no variables" as "not configured yet" will cry wolf about half the
+  estate; init says the two things differently for that reason.
+- **`.env*` in a repo's .gitignore is create-next-app's, not `vercel link`'s.** Stub 1
+  read it as damage the CLI did; it is in the stock Next.js template, under the comment
+  "env files (can opt-in for committing if needed)". Seven repos still had it bare and
+  would have swallowed the manifest they were being given, so they carry `!.env.example`
+  now — the same line the linked repos already had. Any repo scaffolded from that
+  template will need it again.
+- **A key that appears only commented-out (`# SANITY_API_READ_TOKEN=`) does not count as
+  documented** and will be seeded again as a real key line if Vercel has it. Nothing in
+  the estate hit this yet; `audit` is the natural place to notice a near-duplicate.
+
 ## Out of scope (whole epic)
 
 - Shared team variables — Jamie's call 2026-09-02: project-level is enough. Revisit

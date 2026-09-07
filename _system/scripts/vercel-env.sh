@@ -15,8 +15,8 @@
 #
 # Nothing flows back up. A value never leaves Vercel for git, a note never leaves git for
 # a human's memory, and drift between them is a thing to report, not to silently
-# reconcile. Only `link` — the prerequisite for every other flow — exists so far; the
-# rest of the epic fills in `init`, `push-notes`, `pull` and `audit` behind it.
+# reconcile. `link` — the prerequisite for every other flow — and `init` exist so far;
+# the rest of the epic fills in `push-notes`, `pull` and `audit` behind them.
 #
 # `link` writes the `.vercel/project.json` that `vercel env pull` needs, into every
 # directory the registry names — and then reads it back, because the CLI has been seen to
@@ -29,6 +29,45 @@
 # link a project name the team does not actually have, because `vercel link --yes` would
 # cheerfully *create* one, and a typo here should be an error rather than a new Vercel
 # project.
+#
+# `init` seeds the other end of the notes flow: the committed `.env.example` that every
+# later flow reads. Vercel is the authority on which variables an app actually has, so
+# init asks it — names and target environments only, never values, and it never asks for
+# a decrypted one — and appends every key the app's `.env.example` does not already
+# mention. It never overwrites, reorders or deletes an existing line, and it never writes
+# a value: seed what is missing and leave the rest alone, the discipline icm-check
+# already runs on. So a second run does nothing at all, and the prose stays Jamie's to
+# write — init leaves a `# TODO: note` placeholder where the sentence goes, and `audit`
+# will count the ones still outstanding.
+#
+# The convention that file carries is additive — a plain keys-only `.env.example` is
+# still valid, it just documents nothing:
+#
+#   # Postgres connection string, from the Neon branch this app deploys against.
+#   DATABASE_URL=
+#
+#   # Only the production deploy talks to the live Stripe account.  [production]
+#   STRIPE_SECRET_KEY=
+#
+#   * the `#` line — or lines — DIRECTLY above a `KEY=` line, with no blank line between,
+#     are that key's note. Joined with a single space they become the Vercel comment,
+#     which Vercel caps at 500 characters.
+#   * a comment block with a blank line under it belongs to no key: it is a section
+#     heading, which is also how a file's banner stays a banner.
+#   * an optional `[targets]` suffix on the block's last comment line scopes the key to
+#     some of `production`, `preview`, `development`; absent, it means all three. A key
+#     that needs a scope but no prose gets a bare `# [production]`.
+#   * values never appear. init writes `KEY=` and nothing after the `=`.
+#
+# One thing init reports and does not fix: whether `.env.example` is ignored. A bare
+# `.env*` swallows the very file this epic makes the manifest, and create-next-app puts
+# exactly that in every repo it scaffolds — under the comment "env files (can opt-in for
+# committing if needed)", which is precisely what opting in looks like. Seven repos still
+# had it bare when init first ran and now carry `!.env.example` under it, the same line
+# the rest of the estate already had; anything scaffolded next will need it again. A
+# seeded file git cannot see is not a manifest, so init says so per repo and writes the
+# file anyway: the .gitignore of a client repo belongs to that repo, and this script
+# reports.
 #
 # Tokens are Jamie's manual step and are never committed, never printed, and never
 # passed on a command line where `ps` could read them — the team's token is exported as
@@ -53,10 +92,11 @@
 # is only a warning. Neither is repaired here: the .gitignore of a client repo belongs to
 # that repo, and this script reports.
 #
-# Usage: _system/scripts/vercel-env.sh link [--dry-run] [--quiet] [root]
-# Exit:  0 every entry linked, already linked, or absent from disk ·
+# Usage: _system/scripts/vercel-env.sh <link|init> [--dry-run] [--quiet] [root]
+# Exit:  0 every entry done, already done, or absent from disk ·
 #        1 one or more entries failed (missing token, unreachable team, unknown project,
-#          a failed link) — this one is an action, not a report, so failure stays red ·
+#          a failed link, a refused write) — these are actions, not reports, so failure
+#          stays red ·
 #        2 bad invocation, or a missing dependency
 
 set -uo pipefail
@@ -67,7 +107,7 @@ QUIET=0
 APPS_ROOT=""
 for arg in "$@"; do
   case "$arg" in
-    link) CMD="link" ;;
+    link|init) CMD="$arg" ;;
     --dry-run) DRY=1 ;;
     --quiet) QUIET=1 ;;
     -h|--help) awk 'NR>1 && /^#/ { sub(/^# ?/, ""); print; next } NR>1 { exit }' "${BASH_SOURCE[0]}"; exit 0 ;;
@@ -77,7 +117,7 @@ for arg in "$@"; do
 done
 
 if [[ -z "$CMD" ]]; then
-  echo "Usage: $(basename "${BASH_SOURCE[0]}") link [--dry-run] [--quiet] [root]" >&2
+  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init> [--dry-run] [--quiet] [root]" >&2
   exit 2
 fi
 
@@ -156,6 +196,66 @@ fetch_team_projects() {
   printf ' %s ' "$names"
 }
 
+# Every variable a project has, as `KEY<TAB>targets` — names and target environments
+# only. The endpoint returns one row per target set, so the same key can appear several
+# times; group_by folds them into one row with the union of their targets. Values are
+# never asked for (no `decrypt`) and never read out of the response: this subcommand
+# documents which variables exist, and Vercel stays the only place their contents live.
+fetch_project_env() {
+  local team="$1" project="$2" token="$3" url body next rows=""
+  url="https://api.vercel.com/v10/projects/$project/env?slug=$team&limit=100"
+  while [[ -n "$url" ]]; do
+    body=$(printf 'url = "%s"\nheader = "Authorization: Bearer %s"\n' "$url" "$token" \
+             | curl -sS --config - --max-time 30) || return 1
+    jq -e '.envs' >/dev/null 2>&1 <<<"$body" || {
+      jq -r '.error.message // "unrecognised response from the Vercel API"' <<<"$body"
+      return 1
+    }
+    rows+="$(jq -c '.envs[] | {key, target}' <<<"$body")"$'\n'
+    next=$(jq -r '.pagination.next // empty' <<<"$body")
+    if [[ -n "$next" ]]; then
+      url="https://api.vercel.com/v10/projects/$project/env?slug=$team&limit=100&until=$next"
+    else
+      url=""
+    fi
+  done
+  printf '%s' "$rows" | jq -rs 'group_by(.key)[]
+    | [ .[0].key, ([.[].target // []] | flatten | unique | join(",")) ] | @tsv'
+}
+
+# The `[targets]` suffix for a key, or nothing at all. All three environments is the
+# default the convention already means, so it is written as silence rather than as
+# `[production,preview,development]` on every line. A custom environment cannot be
+# expressed here and is simply left out of the suffix.
+render_targets() {
+  local csv="$1" want="" t
+  for t in production preview development; do
+    [[ ",$csv," == *",$t,"* ]] && want+="${want:+,}$t"
+  done
+  [[ -n "$want" && "$want" != "production,preview,development" ]] || return 0
+  printf '  [%s]' "$want"
+}
+
+# A team-wide problem is one problem, so it is said once and its entries are counted
+# rather than repeated forty times. Nothing is skipped quietly: the count is right here,
+# and every one of those entries lands in the failure total and the exit code. A dry run
+# can still preview what it cannot verify — where a preview is possible at all, which is
+# why the caller says so rather than this deciding for itself.
+report_blocked_teams() {
+  local outcome="$1" preview="${2:-}" team n
+  for team in "${teams[@]}"; do
+    [[ -n "${TEAM_BLOCKED[$team]:-}" ]] || continue
+    n=$(jq -r --arg t "$team" '[.entries[] | select(.team == $t)] | length' "$REGISTRY")
+    if (( DRY )) && [[ -n "$preview" ]]; then
+      say "  ${yellow}warn${off}     ${bold}team $team${off} — ${yellow}${TEAM_BLOCKED[$team]}${off}"
+      say "           ${dim}$n entries $preview${off}"
+    else
+      say "  ${red}FAIL${off}     ${bold}team $team${off} — ${red}${TEAM_BLOCKED[$team]}${off}"
+      say "           ${dim}$n entries $outcome${off}"
+    fi
+  done
+}
+
 mapfile -t teams < <(jq -r '.entries[].team' "$REGISTRY" | sort -u)
 
 for team in "${teams[@]}"; do
@@ -177,6 +277,155 @@ for team in "${teams[@]}"; do
   TEAM_PROJECTS[$team]="$projects"
 done
 
+# ---------------------------------------------------------------------------- init ---
+
+# Only written into a file that did not exist. Appending this to a repo's own
+# `.env.example` would be rewriting someone else's file to say what it already implies.
+EXAMPLE_BANNER='# Environment variables for this app: names, notes and target scopes only — never
+# values, which live in Vercel and are pulled from there.
+#
+# The comment lines directly above a key are that key'"'"'s note; an optional trailing
+# [production,preview,development] scopes which Vercel environments it belongs to.'
+
+if [[ "$CMD" == "init" ]]; then
+  n_ok=0; n_seeded=0; n_created=0; n_absent=0; n_fail=0; n_keys=0
+  fail_rows=""; warn_rows=""
+
+  say "${bold}vercel-env init${off} — ${dim}$PROJECTS$( ((DRY)) && printf ' · dry run' )${off}"
+  # No preview phrase: without the team's token there is no way to know which keys are
+  # missing, so a dry run of a blocked team previews nothing and says failure either way.
+  report_blocked_teams "not seeded"
+
+  # Read before the loop, never piped into it — see the note in `link`. Nothing here
+  # drains stdin the way `vercel` does, but the reason not to is the same.
+  mapfile -t ENTRIES < <(jq -r '.entries[] | [.path, .team, .project] | @tsv' "$REGISTRY")
+
+  for entry in "${ENTRIES[@]}"; do
+    IFS=$'\t' read -r path team project <<<"$entry"
+    [[ -n "$path" ]] || continue
+    dir="$PROJECTS/$path"
+    label=$(printf '%-38s' "$path")
+
+    if [[ ! -d "$dir" ]]; then
+      n_absent=$((n_absent + 1))
+      say "  ${dim}absent${off}   $label ${dim}not on disk — repo not cloned here${off}"
+      continue
+    fi
+
+    if [[ -n "${TEAM_BLOCKED[$team]:-}" ]]; then
+      n_fail=$((n_fail + 1))   # already reported once, above, for the whole team
+      continue
+    fi
+
+    if [[ "${TEAM_PROJECTS[$team]}" != *" $project "* ]]; then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|team '$team' has no project named '$project' — the registry and Vercel disagree, and guessing which is right is not this script's job"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}no project '$project' in $team${off}"
+      continue
+    fi
+
+    if ! meta=$(fetch_project_env "$team" "$project" "${TEAM_TOKEN[$team]}"); then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|could not list env vars for $team/$project: ${meta:-request failed}"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}${meta:-could not list env vars}${off}"
+      continue
+    fi
+
+    example="$dir/.env.example"
+
+    # Which keys the file already mentions. `export FOO=` counts, an indented key counts,
+    # and a commented-out one deliberately does not: a key behind a `#` is prose, and the
+    # convention gives prose to the key underneath it.
+    existing=" "
+    [[ -f "$example" ]] && existing+="$(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*/\2/p' "$example" | tr '\n' ' ')"
+
+    add=""; add_keys=""; n_add=0; n_vercel=0
+    while IFS=$'\t' read -r key targets; do
+      [[ -n "$key" ]] || continue
+      n_vercel=$((n_vercel + 1))
+      [[ "$existing" == *" $key "* ]] && continue
+      # A blank line before every block is what keeps the block above it a note and not a
+      # heading — and what stops the first appended note from adopting the last existing
+      # key's line as its own.
+      add+=$'\n'"# TODO: note$(render_targets "$targets")"$'\n'"$key="$'\n'
+      add_keys+="$key "
+      n_add=$((n_add + 1))
+    done <<<"$meta"
+
+    if (( n_add == 0 )); then
+      # Two very different silences, and only one of them means the file is finished:
+      # a project Vercel holds no variables for has nothing to document, and half the
+      # estate's static sites are in exactly that state. Saying so is the difference
+      # between a report and a shrug.
+      n_ok=$((n_ok + 1))
+      if (( n_vercel == 0 )); then
+        say "  ${green}ok${off}       $label ${dim}no variables in Vercel — nothing to document${off}"
+      else
+        say "  ${green}ok${off}       $label ${dim}all $n_vercel Vercel keys already documented${off}"
+      fi
+      continue
+    fi
+
+    repo_dir="$PROJECTS/${path%%/*}"
+    rel="${path#"${path%%/*}"}"; rel="${rel#/}"
+    prefix=""; [[ -n "$rel" ]] && prefix="$rel/"
+    if git_ignores "$repo_dir" "${prefix}.env.example"; then
+      warn_rows+="$path|${prefix}.env.example is not committable in ${path%%/*} — seeded all the same, but it is no one's manifest until that repo's .gitignore carries \`!.env.example\`"$'\n'
+    fi
+
+    if (( DRY )); then
+      n_keys=$((n_keys + n_add))
+      if [[ -f "$example" ]]; then
+        n_seeded=$((n_seeded + 1))
+        say "  ${yellow}would${off}    $label ${dim}seed $n_add · ${add_keys% }${off}"
+      else
+        n_created=$((n_created + 1))
+        say "  ${yellow}would${off}    $label ${dim}create with $n_add · ${add_keys% }${off}"
+      fi
+      continue
+    fi
+
+    if [[ -f "$example" ]]; then
+      # Append, only ever append. A file whose last line has no newline is the one way
+      # appending could still damage something, so it gets the newline it is missing.
+      [[ -s "$example" && -n "$(tail -c 1 "$example")" ]] && printf '\n' >> "$example"
+      printf '%s' "$add" >> "$example"
+      n_seeded=$((n_seeded + 1))
+      say "  ${green}seeded${off}   $label ${dim}$n_add · ${add_keys% }${off}"
+    else
+      { printf '%s\n' "$EXAMPLE_BANNER"; printf '%s' "$add"; } > "$example"
+      n_created=$((n_created + 1))
+      say "  ${green}created${off}  $label ${dim}$n_add · ${add_keys% }${off}"
+    fi
+    n_keys=$((n_keys + n_add))
+  done
+
+  if [[ -n "${warn_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Warnings${off} ${dim}— seeded, but git will not carry the result${off}"
+    while IFS='|' read -r wpath why; do
+      [[ -n "$wpath" ]] || continue
+      printf '  %swarn%s %s\n       %s\n' "$yellow" "$off" "$wpath" "$why"
+    done <<<"$warn_rows"
+  fi
+
+  if [[ -n "${fail_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Failures${off}"
+    while IFS='|' read -r fpath why; do
+      [[ -n "$fpath" ]] || continue
+      printf '  %s%s%s\n    %s\n' "$red" "$fpath" "$off" "$why"
+    done <<<"$fail_rows"
+  fi
+
+  say ""
+  seeded="seeded"; created="created"
+  (( DRY )) && { seeded="to seed"; created="to create"; }
+  echo "RESULT: $n_ok up to date · $n_seeded $seeded · $n_created $created · $n_keys keys · $n_absent absent · $n_fail failed"
+  (( n_fail == 0 )) || exit 1
+  exit 0
+fi
+
 # ---------------------------------------------------------------------------- link ---
 
 n_ok=0; n_linked=0; n_relinked=0; n_absent=0; n_fail=0
@@ -184,24 +433,10 @@ fail_rows=""; warn_rows=""
 
 say "${bold}vercel-env link${off} — ${dim}$PROJECTS$( ((DRY)) && printf ' · dry run' )${off}"
 
-# A team-wide problem is one problem, so it is said once and its entries are counted
-# rather than repeated forty times. Nothing is skipped quietly: the count is right here,
-# and every one of those entries lands in the failure total and the exit code.
-for team in "${teams[@]}"; do
-  [[ -n "${TEAM_BLOCKED[$team]:-}" ]] || continue
-  n=$(jq -r --arg t "$team" '[.entries[] | select(.team == $t)] | length' "$REGISTRY")
-  if (( DRY )); then
-    # A dry run is a preview, and a preview is still worth having before the tokens
-    # exist — it is the only way to see what a first real run will do. What it cannot
-    # do without a token is confirm the project names, so it says so rather than
-    # implying it checked.
-    say "  ${yellow}warn${off}     ${bold}team $team${off} — ${yellow}${TEAM_BLOCKED[$team]}${off}"
-    say "           ${dim}$n entries previewed without confirming their project names${off}"
-  else
-    say "  ${red}FAIL${off}     ${bold}team $team${off} — ${red}${TEAM_BLOCKED[$team]}${off}"
-    say "           ${dim}$n entries not linked${off}"
-  fi
-done
+# A dry run is a preview, and a preview is still worth having before the tokens exist —
+# it is the only way to see what a first real run will do. What it cannot do without a
+# token is confirm the project names, so it says so rather than implying it checked.
+report_blocked_teams "not linked" "previewed without confirming their project names"
 
 # The registry is read into an array *before* the loop rather than piped into it. Piping
 # it in would leave the loop body reading from the same stdin as the commands it runs —

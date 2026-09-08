@@ -81,13 +81,23 @@ template when one is absent, hooks and all.
 carry `vercel-env-hydrate.sh` (a separated team boundary, correctly excluded).
 `icm-check` reports zero "never registers" warnings. The panel token pass is unblocked.
 
-Worth knowing for next time: this landed across three concurrent sessions plus the
+`courseday` and `pierpont` — the two hardest cases here, one with a hand-rolled
+settings.json and no hooks at all, the other with no settings.json — were closed not by
+this pass but by the **adoption session** working `triage/courseday-pierpont-unadopted`
+in parallel: [courseday#277] and [pierpont#13], both merged. It merged courseday's `hooks`
+block by hand (keeping that repo's much longer deny list, and adding the template's
+secret-read denies), and let `--fix` seed pierpont's settings.json whole. Neither touched
+the policy question this stub asks, so D18 stands on its own evidence.
+
+[courseday#277]: https://github.com/k0d0minio/courseday/pull/277
+[pierpont#13]: https://github.com/k0d0minio/pierpont/pull/13
+
+Worth knowing for next time: this landed across several concurrent sessions plus the
 machine's own sweep, and the estate log shows it — 22 repos took the fan-out under `icm
 update` commits rather than reasoned ones, and `cafe-jardim`'s hook registration was
-swept into a commit about whitespace (corrected on `main` in `23599fa`). courseday and
-pierpont were reset mid-pass and re-landed by other sessions. Nothing was lost that
-belonged to this ticket; courseday's own staged `CLAUDE.md → AGENTS.md` migration was
-discarded by the sweep and is not this ticket's to restore.
+swept into a commit about whitespace (corrected on `main` in `23599fa`). The lesson is
+narrow and worth keeping: `~/Apps/projects/` is one tree shared by every worktree, so an
+estate edit left uncommitted is not yours for long. Commit each repo as you touch it.
 
 ## Prompt
 

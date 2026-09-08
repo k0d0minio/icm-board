@@ -52,10 +52,14 @@ subscribed session wakes for each one.
   land. In an estate repo with no workflows at all, the only rows it returns *are* commit
   statuses. That surface is what an agent reading check runs alone misses entirely, and
   why pipeline repos wrap the same question in a script.
-- **PENDING is a third value, not a soft green.** `gh pr checks` exits `0` all-pass, `8`
-  still pending, `1` something failed. Zero checks on a freshly pushed commit is PENDING —
-  GitHub takes seconds to register a workflow, and a read fired the moment after
-  `git push` reads an empty list. Not-yet-red is never green.
+- **PENDING is a third value, not a soft green.** `gh pr checks` exits `0` when everything
+  passed and `8` while anything is still running — an `8` is the blocking call doing its
+  job, not a problem. **Exit `1` is ambiguous: read the message.** It is either a failed
+  check or `no checks reported on the '<branch>' branch`, which means GitHub has not
+  registered a workflow yet — it takes seconds, and a read fired the moment after
+  `git push` finds an empty list. **`--watch` does not wait that out**; it returns at once.
+  An empty list on a fresh push is PENDING — not green, and not a failure either. Give it a
+  few seconds and re-run the call. Not-yet-red is never green.
 - **Read the description, not just the state.** A Vercel row reading `Skipped - Not
   affected` is reported `pass` and built nothing: there is no preview on that commit, so
   it cannot host a smoke and it is not evidence the deploy is green

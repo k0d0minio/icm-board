@@ -94,6 +94,39 @@ flows still to build:
   documented** and will be seeded again as a real key line if Vercel has it. Nothing in
   the estate hit this yet; `audit` is the natural place to notice a near-duplicate.
 
+## Worth knowing — learned building stub 4 (2026-09-08)
+
+`pull` ran clean across all 40 entries. What it found is mostly about what is *not* in
+Vercel, and it changes what stubs 5 and 6 are walking into:
+
+- **The estate has almost no development-scoped variables.** 22 of the 40 entries hold
+  Vercel variables and not one of them in the `development` target — `remi-ai/apps/web`
+  has 20 each in production and preview and nothing in development, and the same shape
+  repeats across the client sites, the three `jamienisbet` apps and most of sustentus.
+  Only 120 of the 347 keys `init` documented come down in a development pull at all, and
+  those live in six repos. Verified against the API rather than trusted from the CLI's
+  silence. So `audit` (stub 5) has a much sharper question than "is this key documented":
+  *can this app run locally at all* — and `cloud-session-hook` (stub 6) needs an answer
+  before it ships, because a cloud session hydrated by `pull` would today start with an
+  empty `.env.local` in most of the estate. Whether the fix is adding development values
+  in Vercel or pulling a different target is Jamie's call, not the hook's.
+- **`vercel env pull` edits the app's `.gitignore` too**, appending `.env*` exactly as
+  `vercel link` does (stub 1) — ten files across seven repos on the first run. `.env*`
+  hides the `.env.example` this system runs on, so `pull` now holds the file across the
+  CLI call and puts it back, reporting what it reverted. An estate-wide run leaves no
+  tracked change in any repo. Expect stubs 3 and 5 to meet the same behaviour in
+  whichever CLI commands they reach for.
+- **The `[targets]` suffix earns its keep here.** It is what lets `pull` tell "this
+  project holds nothing" from "this project holds 24 keys, none of which comes down in a
+  development pull" without a single extra API call — the difference the breakdown warned
+  about crying wolf over, answered for free by the manifest.
+- **`boystomenretreat` still hides its own manifest**: a committed create-next-app
+  `.env*` with no `!.env.example` under it, so the notes `pull` interleaves there exist
+  only on Jamie's disk. Reported by both `init` and `pull`, repaired by neither — that
+  .gitignore belongs to that repo.
+- 104 of the 120 keys that do come down still carry `# TODO: note`. The editorial pass
+  is where the breakdown said it would be.
+
 ## Out of scope (whole epic)
 
 - Shared team variables — Jamie's call 2026-09-02: project-level is enough. Revisit

@@ -16,7 +16,10 @@
 # Nothing flows back up. A value never leaves Vercel for git, a note never leaves git for
 # a human's memory, and drift between them is a thing to report, not to silently
 # reconcile. `link` — the prerequisite for every other flow — plus `init`, `push-notes`,
-# `pull` and `audit` are all here; only the cloud SessionStart hook is still to come.
+# `pull` and `audit` are all here. The cloud half of the epic is not: a Claude cloud
+# session has neither this script nor `projects/`, so it carries its own reduced pull as
+# a committed hook, `_system/template/claude/hooks/vercel-env-hydrate.sh`, seeded per repo
+# by icm-check. This script stays the local, estate-wide tool.
 #
 # `link` writes the `.vercel/project.json` that `vercel env pull` needs, into every
 # directory the registry names — and then reads it back, because the CLI has been seen to

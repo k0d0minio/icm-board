@@ -32,6 +32,8 @@ claude/                          → copied to <repo>/.claude/        (every liv
   hooks/
     session-start.sh             ← the repo's own board greets every session
     wrap-reminder.sh             ← Stop hook: unpushed .icm changes block the stop once
+    vercel-env-hydrate.sh        ← cloud sessions pull their .env.local from Vercel
+                                   (kodominio repos only — see below)
   skills/
     ticket-craft/SKILL.md        ← the intake contract as working knowledge
     pr-conventions/SKILL.md     ← branches, commits, CI-is-truth, no secrets
@@ -48,6 +50,13 @@ github-pipeline/                 → copied to <repo>/.github/        (pipeline 
 Layer 0 itself — `AGENTS.md`, or a legacy full `CLAUDE.md` — is **never templated**.
 Each repo writes its own identity and routing; an empty one would read as established
 intent. Only the importer is canonical, because it is identical everywhere.
+
+`vercel-env-hydrate.sh` is the one asset with a **team boundary**: it hydrates a cloud
+session's environment from the Vercel team a repo deploys under, and sustentus and remi21
+are separated boundaries (epic `vercel-env-system`), so `icm-check` seeds it into the
+kodominio estate and offers it to those two rather than pushing it. It is also the one
+hook `settings.json` does not register — `session-start.sh` invokes it when it is there,
+which is why the estate's hand-owned settings files need no edit to gain it.
 
 Rules:
 

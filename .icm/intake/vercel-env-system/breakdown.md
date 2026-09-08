@@ -196,6 +196,51 @@ changes the two flows still to build:
   from two sessions at once do land on the same files.
 
 
+## Worth knowing — learned building stub 6 (2026-09-08)
+
+The hook is written, canonical and seeded by `icm-check`; nothing has run against real
+Vercel yet, because a session has no token. What building it settled:
+
+- **`vercel link --yes` creates whatever project name it is handed.** Stub 1 inferred it;
+  the CLI's own source says it outright (54.18.6, `inputProject`: with `autoConfirm` it
+  returns `detectedProject || detectedProjectName`, and a bare *name* is the create path).
+  A cloud session cannot check a name against a registry it does not have, and the estate
+  is already retiring eight orphans, so the hook never guesses from the directory name:
+  it asks Vercel which projects are connected to this repo's git remote —
+  `GET /v9/projects?repoUrl=…`, the same lookup the CLI's own cross-team search uses — and
+  a repo with no match hydrates nothing and says so. That query is also what makes the
+  hook configuration-free: no registry, no project id, no team slug in any committed file.
+- **The registration problem decided the shape.** A second `SessionStart` entry would have
+  meant editing 24 hand-owned `settings.json` files, of which **16 of 25 already differ
+  from the template**; `session-start.sh`, by contrast, is byte-identical in all 23 repos
+  that carry it. So the hook is a sibling file that `session-start.sh` invokes, and the
+  fan-out is two canonical files instead of two dozen policy edits.
+- **…and then the sting: 13 kodominio repos never register `session-start.sh` either.**
+  Their `settings.json` has no `hooks` key at all (`pierpont` has no `settings.json`), so
+  both canonical hooks have been inert there all along — `icm-check` has been saying so
+  and nobody acted. It matters now because **every kodominio repo with values to hydrate
+  today is one of them**: courseday, messy-play, pierpont, collabimmo, cafe-jardim. Parked
+  as `triage/settings-json-without-hooks.md`; the panel checklist closes it by hand for
+  those five.
+- **Stub 4's open question, answered by giving it away.** The hook pulls `development` by
+  default — the same environment `pull` writes locally, so the cloud file and the local
+  file say the same thing — and takes `VERCEL_ENV_TARGET` from the panel where a repo
+  needs otherwise. Which is not the hook's call, and now does not have to be: **5 of the
+  26 kodominio entries deliver anything at all** at `development` (24, 17, 14, 13 and 3
+  keys); 7 have no Vercel variables at any target, and the remaining 14 have variables
+  that a development pull cannot reach. An empty hydrate is reported as the ordinary thing
+  it is, with the reason.
+- **An empty pull would have written the annotation pass's own summary line into
+  `.env.local`.** `body="${body%$'\n'*}"` strips nothing from a string with no newline in
+  it, and awk's `\001COUNTS` sentinel is the whole output when the file has no keys. The
+  estate-wide `pull` never hit it — the CLI writes a `VERCEL_OIDC_TOKEN` into every file,
+  so there is always a second line — and all 40 files on disk are clean; the hook guards
+  it explicitly rather than relying on that.
+- **Nothing here has touched Vercel.** No token reaches a Claude session, by design, so
+  the hook was exercised against a stubbed CLI and a stubbed API: every refusal path, the
+  monorepo fan-out, the empty pull, the `.gitignore` revert and the annotation. The
+  end-to-end proof is a cloud session on `courseday` after the panel pass.
+
 ## Out of scope (whole epic)
 
 - Shared team variables — Jamie's call 2026-09-02: project-level is enough. Revisit

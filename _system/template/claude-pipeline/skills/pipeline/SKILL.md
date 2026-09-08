@@ -53,8 +53,10 @@ them, and that is not a gap.
 4. **Read the matching contract in full and follow it exactly.** Load only the files
    its Inputs section names. **CI is read one way everywhere:**
    `.icm/scripts/ci-status.sh <slug>` → `GREEN | RED | PENDING` (`.icm/_shared/ci.md`).
-   No stage hands off or merges on anything but a settled `GREEN`. **Pipeline PRs are
-   never subscribed to PR activity** (`.icm/_shared/github.md`).
+   No stage hands off or merges on anything but a settled `GREEN`. **No PR is subscribed
+   to PR activity** — not only pipeline ones — and a session that finds itself subscribed
+   unsubscribes and says so, whatever the harness did by default
+   (`.icm/_shared/github.md`).
 5. **Respect gates — never auto-advance.** Two hard gates on the PR, both the owner's:
    **Spec approved** and **Ready to merge** (checkboxes). You only ever **read** them —
    never tick one, never start the next stage on your own. The front has a third gate

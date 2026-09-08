@@ -85,15 +85,34 @@ Rules:
   Biome parses a `.json` file as strict JSON and fails on the comment, which is exactly
   what took `escondidinho` and `cafe-jardim` red in September 2026. `icm-check.sh` warns
   on a leftover `opencode.json` at any repo root.
-- **A canonical asset can still lose to a repo's *formatter*, and that is a separate
-  problem.** The `.jsonc` rename ends the parse failures; it does not make a two-space
-  canonical file match a repo that formats with tabs. `cafe-jardim` excludes
-  `opencode.jsonc` from Biome for exactly that reason, and its `.claude/settings.json`
-  is already flagged the same way. Reformatting a canonical asset in-repo is the wrong
-  trade — it swaps a visible CI error for silent permanent drift — so the repo either
-  excludes the asset from formatting or accepts the error. `dungeons-dragons` made the
-  same call in its `.prettierignore`, so this is two repos and a pattern:
-  `.icm/intake/triage/canonical-assets-vs-repo-formatters.md`.
+- **A canonical asset can lose to a repo's *formatter*, and the repo excludes it.** The
+  `.jsonc` rename ends the parse failures; it does not make a two-space canonical file
+  match a repo that formats with tabs. Reformatting a drift-checked asset in-repo is the
+  wrong trade — it swaps a visible CI error for silent permanent drift — so the repo
+  excludes it from formatting. `cafe-jardim` does that for `opencode.jsonc` in
+  `biome.json`; `dungeons-dragons` does it in `.prettierignore`, alongside the `.icm/`
+  and `.claude/` entries already there for the same reason. It stays a per-repo call,
+  discovered by that repo's CI — decision D17, settled 2026-09-08.
+  **The exposed surface is two files: `opencode.jsonc` and `skills/*/SKILL.md`.** Of the
+  drift-checked assets the three `hooks/*.sh` are shell, which no formatter in the estate
+  touches; the rest are markdown and JSONC, and both collide. A first survey (2026-09-04)
+  read the markdown as safe because `remi-ai` checks `**/*.{ts,tsx,md}` and is green —
+  that held for its glob, not for `prettier --check .`. Adopting `courseday` put five
+  files in scope at once and failed all five, `skills/pr-conventions/SKILL.md` among them
+  (k0d0minio/courseday#277, 2026-09-08). Assume any canonical file that is not a shell
+  script can collide in a repo that formats its whole tree.
+  **And the collision is a property of the repo's config, not of the asset.** The four
+  copies of `pr-conventions/SKILL.md` in the estate are byte-identical to this folder's:
+  the same bytes pass under Prettier's defaults and fail under courseday's `printWidth:
+  100`, while `ticket-craft/SKILL.md` passes under both. So there is no formatting of
+  these files that would end this — Biome-with-tabs and Prettier-with-defaults cannot
+  both be satisfied. Note also that **Biome does not format markdown**, so a Biome repo
+  can only ever collide on `opencode.jsonc`.
+  **`.claude/settings.json` is not in that surface**, and the earlier note here that it
+  was is wrong: it is seeded and required, never drift-compared (it is absent from
+  `CANONICAL` in `icm-check.sh`, because every repo edits its own hook wiring). A
+  formatter may reformat it freely — which is what `cafe-jardim` did, rather than carry
+  a second exemption.
 - **Drift is a report line, not a repair.** `icm-check.sh` compares each repo's copy of
   a canonical asset against this folder and warns on divergence. Deliberate divergence
   is fine — the repo wins — but it should be visible, not silent.

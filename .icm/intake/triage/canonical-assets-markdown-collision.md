@@ -83,6 +83,41 @@ a repo *would* carry once adopted.
 carries no formatter config and no CI at all, so it has nothing to collide with. The next
 proof would be adopting a repo that runs a formatter over its whole tree.
 
+## Re-checked on the D17 branch, 2026-09-08 — this narrows the options
+
+Four findings from re-running the survey with the method fixed (enumerate over *capacity
+to collide*, not over what a repo carries today). All verified, none of them speculative:
+
+**The markdown collision is config-specific and file-specific, not a property of the
+asset.** All four copies of `pr-conventions/SKILL.md` — template, courseday, remi-ai,
+dungeons-dragons — are byte-identical (`md5 20f6cfaf8031`). That same file **passes**
+under Prettier's defaults (`remi-ai`, which checks `**/*.{ts,tsx,md}` over `.claude/`
+with no exclusion, green) and **fails** under courseday's config (`printWidth: 100`,
+`semi: false`, `singleQuote: true`). And in courseday itself, `ticket-craft/SKILL.md`
+passed while `pr-conventions/SKILL.md` failed — same repo, same config, same run.
+
+**That kills option 3.** The canonical markdown is *already* Prettier-default-clean, and
+it is dirty under courseday's config at the same time. There is no single formatting of
+the template that satisfies Prettier defaults, courseday's config, and cafe-jardim's tabs
+at once — the cross product of formatter configs is unbounded and cannot be pre-satisfied.
+Option 3 does not shrink the problem; it is not available.
+
+**Biome cannot format markdown at all.** So `cafe-jardim`, `escondidinho` and
+`collabimmo` can only ever collide on `opencode.jsonc` — the markdown assets are out of
+reach for them. `escondidinho` being green is that, not "its style agrees". Only
+Prettier-whole-tree repos see the full surface. (`collabimmo` also runs ESLint, not Biome,
+in CI — its tab `biome.json` is editor-only. Latent, still not a hit.)
+
+**Every repo is now adopted, so the adoption trigger is spent.** All 26 carry `.icm/`;
+courseday was the last one. And new client repos are *not* born colliding — the dashboard's
+`createClientRepo` calls `createRepo` for an empty repo and then `scaffoldIcmBaseline`, with
+no formatter shipped. So this can now only fire one way: an already-adopted repo **adds or
+changes a formatter config**. Nobody will be watching for it when it does, which is the
+honest argument for the exclusion being seeded rather than rediscovered.
+
+Net: the choice is narrower than the three options above suggest — option 3 is out, and
+what remains is keep D17 (option 1) or seed the exclusion (option 2).
+
 ## Acceptance criteria (rough)
 
 - [ ] D17 either re-affirmed with the corrected surface recorded, or superseded by a new

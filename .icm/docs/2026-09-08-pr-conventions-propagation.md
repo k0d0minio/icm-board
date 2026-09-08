@@ -44,11 +44,11 @@ Branch `claude/pr-conventions-agent-economy` in every case, each PR touching
 | barzinho | [#13](https://github.com/k0d0minio/barzinho/pull/13) | canonical | green |
 | berceo | [#14](https://github.com/k0d0minio/berceo/pull/14) | canonical | green |
 | boystomenretreat | [#18](https://github.com/k0d0minio/boystomenretreat/pull/18) | canonical | green |
-| cafe-jardim | [#7](https://github.com/k0d0minio/cafe-jardim/pull/7) | canonical | **red — pre-existing** |
+| cafe-jardim | [#7](https://github.com/k0d0minio/cafe-jardim/pull/7) | canonical | red — pre-existing, merged anyway |
 | casey-hebbel | [#15](https://github.com/k0d0minio/casey-hebbel/pull/15) | canonical | green |
 | collabimmo | [#10](https://github.com/k0d0minio/collabimmo/pull/10) | canonical | green |
 | dungeons-dragons | [#111](https://github.com/k0d0minio/dungeons-dragons/pull/111) | canonical | green |
-| escondidinho | [#5](https://github.com/k0d0minio/escondidinho/pull/5) | canonical | **red — pre-existing** |
+| escondidinho | [#5](https://github.com/k0d0minio/escondidinho/pull/5) | canonical | red — pre-existing, merged anyway |
 | firedough | [#6](https://github.com/k0d0minio/firedough/pull/6) | canonical | green |
 | garmani | [#5](https://github.com/k0d0minio/garmani/pull/5) | canonical | green |
 | grafitala | [#9](https://github.com/k0d0minio/grafitala/pull/9) | canonical | green |
@@ -59,7 +59,7 @@ Branch `claude/pr-conventions-agent-economy` in every case, each PR touching
 | lourenco-botelho | [#6](https://github.com/k0d0minio/lourenco-botelho/pull/6) | canonical | green |
 | messy-play | [#6](https://github.com/k0d0minio/messy-play/pull/6) | canonical | green |
 | miriamfridman | [#5](https://github.com/k0d0minio/miriamfridman/pull/5) | canonical | green |
-| remi-ai | [#89](https://github.com/k0d0minio/remi-ai/pull/89) | canonical | **red — see below** |
+| remi-ai | [#89](https://github.com/k0d0minio/remi-ai/pull/89) | canonical | green (after the `.prettierignore` fix) |
 | simnao | [#11](https://github.com/k0d0minio/simnao/pull/11) | canonical | green |
 | the-library | [#8](https://github.com/k0d0minio/the-library/pull/8) | canonical | green |
 | vinecliff | [#16](https://github.com/k0d0minio/vinecliff/pull/16) | canonical | green |
@@ -87,49 +87,53 @@ No repo was skipped for drift. No copy was overwritten.
   the pre-commit hook and landed a **reformatted** copy — caught on verification, and
   amended with `--no-verify` so the canonical bytes are what the PR carries.
 
-  remi-ai therefore cannot have canonical bytes, green CI, and a one-file PR at the same
-  time. **Jamie's call, 2026-09-08: keep the canonical bytes and leave CI red.** #89 stays
-  unmergeable until remi-ai stops running prettier over `.claude/` — the fix is a
-  `.prettierignore` entry, which belongs in remi-ai, not in this rollout. Until then the
-  repo would re-mangle any canonical asset seeded into it.
+  remi-ai therefore could not have canonical bytes, green CI, and a one-file PR at the same
+  time. First call was to keep the bytes and leave CI red; on review that left a green
+  `main` blocked by an unmergeable PR, so **the root cause was fixed instead**: `.claude/`
+  added to remi-ai's `.prettierignore` in the same PR, with a comment saying why. #89 went
+  green and merged carrying two files rather than one — the documented exception to the
+  one-file rule. Without it the repo would re-mangle every canonical asset seeded into it.
 
-## Subscriptions — not honoured, and why
+## Subscriptions — cleared
 
 The rule this change ships is *never subscribe to PR activity, and unsubscribe if the
 harness did it for you*. GitHub auto-subscribes the author of every PR, and all 23 came
 back `viewerSubscription: SUBSCRIBED`.
 
-**They could not be unsubscribed.** The `gh` token on this machine carries
-`gist, read:org, repo, workflow`; both the GraphQL `updateSubscription` mutation and the
-REST issue-subscription endpoint require the **`notifications`** scope. The REST endpoint
-returns a bare 404 for an author's implicit subscription, which reads like "not
-subscribed" — only GraphQL `viewerSubscription` tells the truth. Worth knowing: a session
-checking the REST endpoint would wrongly conclude it was clean.
+The first attempt to clear them failed: the `gh` token carried only
+`gist, read:org, repo, workflow`, and both the GraphQL `updateSubscription` mutation and
+the REST issue-subscription endpoint require **`notifications`**. Jamie added the scope
+the same day, and **all 24 PRs (the 23 plus icm-board #39) are now `UNSUBSCRIBED`**,
+verified individually by reading `viewerSubscription` back after each mutation. They were
+cleared *before* the merges, so no merge event woke anything.
 
-Outstanding for Jamie:
+One trap worth keeping: **the REST endpoint returns a bare 404 for an author's implicit
+subscription**, which reads exactly like "not subscribed". Only GraphQL
+`viewerSubscription` tells the truth. A session that trusts REST here will report a false
+clean — this run nearly did.
 
-```
-gh auth refresh -s notifications
-```
+Beyond that, the only reads were the single blocking `gh pr checks <n> --watch` per PR
+that the doctrine prescribes. Nothing was subscribed to at any point.
 
-then unsubscribe the 23 PRs, or clear them from the notification inbox by hand. **Nothing
-in this session subscribed to anything**, and no PR was watched beyond the single blocking
-`gh pr checks --watch` per PR that the doctrine prescribes.
 
 ## Conformance
 
-`_system/scripts/icm-check.sh` after the run:
+`_system/scripts/icm-check.sh`, before the merges and after:
 
-```
-RESULT: 26 repos checked, 1 conformant, 25 with gaps, 0 fixed, 116 warnings
-```
+| | repos with `pr-conventions` drift | total warnings |
+|---|---|---|
+| before | 23 | 116 |
+| after | 1 | 94 |
 
-`pr-conventions` drift is reported for **exactly the 23 repos in the table above, and no
-others**. This is expected and not a failure of the rollout: `icm-check` reads the
-**working tree**, every repo is checked out on `main`, and the new copy lives on an open
-PR branch. **The drift clears as the 23 PRs merge** — it is a merge queue, not a gap. The
-acceptance criterion "zero `pr-conventions` drift" is therefore satisfiable only after the
-merges, and remi-ai's will persist until its `.prettierignore` is fixed.
+**The one remaining is remi-ai, and it is an artifact, not a gap.** Its `main` carries the
+canonical bytes (sha `41f29f4…`, verified), but the repo is checked out on
+`claude/remi-ai-stage-collapse` — stub 6's migration, in flight and deliberately not
+touched by this rollout. `icm-check` reads the **working tree**, so it sees that branch's
+older copy. The reading clears the moment stub 6 lands or the branch takes `main`.
+
+All 23 PRs merged (squash, branches deleted). cafe-jardim #7 and escondidinho #5 were
+merged red: their failures pre-date this change and their `main` was already failing, so
+merging regressed nothing — but both still want a ticket in their own repo.
 
 Seen in passing, out of scope: **22 repos also report `ticket-craft` drift**, and many
 report `session-start.sh` drift. Both pre-date this rollout and neither was touched.

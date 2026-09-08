@@ -24,10 +24,20 @@ repo, and seeding the baseline put **five** files in scope, all failing at once:
 | File | Canonical? | Drift risk if reformatted |
 |---|---|---|
 | `.claude/skills/pr-conventions/SKILL.md` | yes — drift-checked | **real** |
-| `.icm/CONTEXT.md` | yes — drift-checked | **real** |
+| `.icm/CONTEXT.md` | **no** — seeded, never compared | none |
 | `opencode.jsonc` | yes — drift-checked | **real** |
 | `.icm/project.md` | no — repo-owned | none |
 | `AGENTS.md` | no — repo-owned | none |
+
+**Corrected 2026-09-08**, by the canonical-assets-formatter-drift session and verified
+against [`icm-check.sh`](../../../_system/scripts/icm-check.sh) — this stub first listed
+`.icm/CONTEXT.md` as drift-checked. It is not. The script runs exactly **two** `cmp -s`
+comparisons (`:207` over `.claude/`'s `CANONICAL`, `:212` over `CANONICAL_ROOT`);
+everything else in the baseline — `.icm/CONTEXT.md`, `.icm/intake/README.md`,
+`.claude/settings.json` — is seeded when missing and never compared again. So the
+drift-risk count in the five is **two**, not three. The seeded-vs-compared distinction is
+the same one that dissolved half of D17's original ticket, which is why it is spelled out
+here rather than corrected quietly.
 
 So the survey's two load-bearing facts are both now false: courseday *does* carry the rails
 file, and the markdown assets *do* collide. `SKILL.md` "satisfies Prettier's defaults today"
@@ -60,6 +70,19 @@ Options, unranked:
    Does nothing for Biome/tab repos (cafe-jardim), so it shrinks the problem without
    closing it.
 
+## The method finding underneath it
+
+The file count is the symptom; the survey method is the cause. D17's table recorded, per
+repo, *what was in scope on the day* — and for an **unadopted** repo that is nothing.
+`courseday` read as "agrees; carries no `opencode.jsonc`" because it carried none of the
+assets yet. **Adoption is what creates the collision**, so any estate-exposure survey that
+enumerates over adopted repos under-counts by construction. A future survey has to ask what
+a repo *would* carry once adopted.
+
+`pierpont`, adopted in the same session, is not the next repo to prove it and cannot be: it
+carries no formatter config and no CI at all, so it has nothing to collide with. The next
+proof would be adopting a repo that runs a formatter over its whole tree.
+
 ## Acceptance criteria (rough)
 
 - [ ] D17 either re-affirmed with the corrected surface recorded, or superseded by a new
@@ -75,9 +98,10 @@ Read `.icm/intake/triage/canonical-assets-markdown-collision.md` in the icm-boar
 (`~/Apps`), then the settled stub it supersedes,
 `.icm/intake/triage/canonical-assets-vs-repo-formatters.md` (decision D17 in
 `.icm/project.md`). Adopting courseday fired D17's own revisit trigger: with the estate
-baseline seeded, `prettier --check .` failed on five files — three of them drift-checked
-canonical assets (`.claude/skills/pr-conventions/SKILL.md`, `.icm/CONTEXT.md`,
-`opencode.jsonc`) and two repo-owned (`.icm/project.md`, `AGENTS.md`). The per-repo fix is
+baseline seeded, `prettier --check .` failed on five files — **two** of them drift-checked
+canonical assets (`.claude/skills/pr-conventions/SKILL.md`, `opencode.jsonc`); the other
+three (`.icm/CONTEXT.md`, `.icm/project.md`, `AGENTS.md`) are seeded-or-repo-owned and
+carry no drift risk, only prose-churn. The per-repo fix is
 already in courseday's `.prettierignore`, so nothing is broken — settle with Jamie whether
 the rule stays per-repo now the surface is five files and three repos, and record the
 outcome as a decision either way. Run on Jamie's machine — `projects/*` is local-only.

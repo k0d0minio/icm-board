@@ -15,8 +15,8 @@
 #
 # Nothing flows back up. A value never leaves Vercel for git, a note never leaves git for
 # a human's memory, and drift between them is a thing to report, not to silently
-# reconcile. `link` — the prerequisite for every other flow — `init` and `audit` exist
-# so far; the rest of the epic fills in `push-notes` and `pull` behind them.
+# reconcile. `link` — the prerequisite for every other flow — plus `init`, `push-notes`
+# and `audit` exist so far; the rest of the epic fills in `pull` behind them.
 #
 # `link` writes the `.vercel/project.json` that `vercel env pull` needs, into every
 # directory the registry names — and then reads it back, because the CLI has been seen to
@@ -69,6 +69,24 @@
 # file anyway: the .gitignore of a client repo belongs to that repo, and this script
 # reports.
 #
+# `push-notes` closes that flow: it reads the note the convention put above each key and
+# makes it the variable's Vercel comment, so the sentence Jamie wrote in git is the
+# sentence the dashboard shows. Comments and nothing else — the request carries a
+# `comment` field and no other, so there is no field in it that could overwrite a value,
+# a type or a target even by accident. It never creates a variable either: a key
+# documented in `.env.example` that Vercel does not have is listed at the end of the run,
+# because creating it would mean inventing the value that is the whole reason the key
+# exists. `# TODO: note` placeholders are skipped rather than published — init writes a
+# few hundred of them and a dashboard full of TODO is worse than a dashboard full of
+# nothing. A note over Vercel's 500-character cap is named and left where it is: the
+# estate has notes running to a thousand characters, and truncating one to fit — or
+# failing the run until someone shortens it — would be letting the mirror edit the
+# original. It is idempotent by comparison rather than by memory: every comment already
+# equal to its note is left untouched, so a run that follows an unchanged `.env.example`
+# makes no write calls at all. One key can hold several Vercel records — the API returns
+# a row per target set — and each of them gets the note, because a key annotated in
+# production and bare in preview is a worse answer than either.
+#
 # `audit` is the report the three one-way flows imply. Nothing syncs, so drift is the
 # expected state rather than the failure state, and one honest reading of it beats three
 # subcommands each disagreeing about what "current" means. It is read-only in the strong
@@ -84,13 +102,17 @@
 #         (fix: Jamie adds the value in Vercel), a directory with no link or the wrong
 #         one (fix: `link`), a linked directory the registry never names, a registry
 #         entry naming a project its team does not have.
-#   warn  judgment, never mechanical: keys whose note is still `# TODO: note` or blank,
-#         a key mentioned only behind a `#` (prose, which `init` will seed again as a
-#         real line), a missing or stale `.env.local`, a Vercel project the registry
-#         does not claim.
+#   warn  judgment, never mechanical: keys whose note is still `# TODO: note` or blank —
+#         exactly the keys `push-notes` skips — a key mentioned only behind a `#` (prose,
+#         which `init` will seed again as a real line), a missing or stale `.env.local`,
+#         a Vercel project the registry does not claim.
 #   info  sensitive-type variables, listed per app. Not a problem — a fact worth stating
 #         once, because Vercel will not read those values back and so no flow in this
 #         epic can ever hydrate them locally.
+#
+# It reads the manifest through `parse_example_notes`, the parser `push-notes` publishes
+# from, so a key audit calls documented is exactly a key push-notes would write a comment
+# for; two readings of the same convention would eventually disagree.
 #
 # Two silences that look identical and are not, both learned from running `init`: a
 # project Vercel holds no variables for has nothing to document and no `.env.local` to be
@@ -127,11 +149,11 @@
 # is only a warning. Neither is repaired here: the .gitignore of a client repo belongs to
 # that repo, and this script reports.
 #
-# Usage: _system/scripts/vercel-env.sh <link|init|audit> [--dry-run] [--quiet]
-#          [--stale-days=N] [root]
-# Exit:  0 link/init: every entry done, already done, or absent from disk ·
+# Usage: _system/scripts/vercel-env.sh <link|init|push-notes|audit> [--dry-run]
+#          [--quiet] [--stale-days=N] [root]
+# Exit:  0 the flows: every entry done, already done, or absent from disk ·
 #          audit: no gaps found (warnings do not count — see above) ·
-#        1 link/init: one or more entries failed (missing token, unreachable team,
+#        1 the flows: one or more entries failed (missing token, unreachable team,
 #          unknown project, a failed link, a refused write) — these are actions, not
 #          reports, so failure stays red ·
 #          audit: gaps found. Unlike the scheduled estate-conformance report (D15), this
@@ -149,7 +171,7 @@ STALE_DAYS=14
 APPS_ROOT=""
 for arg in "$@"; do
   case "$arg" in
-    link|init|audit) CMD="$arg" ;;
+    link|init|push-notes|audit) CMD="$arg" ;;
     --dry-run) DRY=1 ;;
     --quiet) QUIET=1 ;;
     --stale-days=*) STALE_DAYS="${arg#*=}"
@@ -161,7 +183,7 @@ for arg in "$@"; do
 done
 
 if [[ -z "$CMD" ]]; then
-  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init|audit> [--dry-run] [--quiet] [--stale-days=N] [root]" >&2
+  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init|push-notes|audit> [--dry-run] [--quiet] [--stale-days=N] [root]" >&2
   exit 2
 fi
 
@@ -246,15 +268,14 @@ fetch_team_projects() {
   printf ' %s ' "$names"
 }
 
-# Every variable a project has, as `KEY<TAB>targets<TAB>types` — names, target
-# environments and Vercel's variable type, never a value. The endpoint returns one row
-# per target set, so the same key can appear several times; group_by folds them into one
-# row with the union of their targets and types. Values are never asked for (no
-# `decrypt`) and never read out of the response: these subcommands document which
-# variables exist, and Vercel stays the only place their contents live. The type is what
-# `audit` reads to say which keys are sensitive — the ones Vercel will not read back at
-# all, so no flow here can ever hydrate them.
-fetch_project_env() {
+# Every variable a project has, as a JSON array of the five fields this script uses:
+# name, id, target environments, note and Vercel's variable type. Values are never asked
+# for (no `decrypt`) and never read out of the response — these flows document and
+# annotate variables, and Vercel stays the only place their contents live. `comment` is
+# absent rather than null when a variable has none, so it is defaulted here and every
+# caller can just compare. The type is what `audit` reads to say which keys are sensitive
+# — the ones Vercel will not read back at all, so no flow here can ever hydrate them.
+fetch_project_env_json() {
   local team="$1" project="$2" token="$3" url body next rows=""
   url="https://api.vercel.com/v10/projects/$project/env?slug=$team&limit=100"
   while [[ -n "$url" ]]; do
@@ -264,7 +285,7 @@ fetch_project_env() {
       jq -r '.error.message // "unrecognised response from the Vercel API"' <<<"$body"
       return 1
     }
-    rows+="$(jq -c '.envs[] | {key, target, type}' <<<"$body")"$'\n'
+    rows+="$(jq -c '.envs[] | {key, id, target: (.target // []), comment: (.comment // ""), type: (.type // "")}' <<<"$body")"$'\n'
     next=$(jq -r '.pagination.next // empty' <<<"$body")
     if [[ -n "$next" ]]; then
       url="https://api.vercel.com/v10/projects/$project/env?slug=$team&limit=100&until=$next"
@@ -272,10 +293,19 @@ fetch_project_env() {
       url=""
     fi
   done
-  printf '%s' "$rows" | jq -rs 'group_by(.key)[]
+  printf '%s' "$rows" | jq -sc .
+}
+
+# The same thing as `KEY<TAB>targets<TAB>types`, which is all `init` and `audit` need.
+# The endpoint returns one row per target set, so the same key can appear several times;
+# group_by folds them into one row with the union of their targets and types.
+fetch_project_env() {
+  local out
+  out=$(fetch_project_env_json "$@") || { printf '%s' "$out"; return 1; }
+  jq -r 'group_by(.key)[]
     | [ .[0].key,
-        ([.[].target // []] | flatten | unique | join(",")),
-        ([.[].type   // empty] | unique | join(",")) ] | @tsv'
+        ([.[].target] | flatten | unique | join(",")),
+        ([.[].type | select(. != "")] | unique | join(",")) ] | @tsv' <<<"$out"
 }
 
 # The `[targets]` suffix for a key, or nothing at all. All three environments is the
@@ -481,47 +511,248 @@ if [[ "$CMD" == "init" ]]; then
   exit 0
 fi
 
-# --------------------------------------------------------------------------- audit ---
+# ---------------------------------------------------------------------- push-notes ---
 
-# What note a `.env.example` gives each key, and which keys it only mentions behind a
-# `#`. Emits `key<TAB>KEY<TAB>documented|todo|none` per key line, and `commented<TAB>KEY`
-# for a key that appears only commented out. The block of `#` lines DIRECTLY above a key
-# — no blank line between — is its note; a `[targets]` suffix is scope, not prose, so it
-# is stripped before asking whether anything was said.
-example_notes() {
+# Pull a `.env.example` apart into `KEY<TAB>note` for every key the convention gives a
+# note to, and nothing for the keys it does not. The state that matters is the comment
+# block being accumulated: comment lines add to it, a blank line throws it away (that is
+# what makes a heading a heading), a key line consumes it, and anything else — a stray
+# line the convention does not describe — throws it away too rather than letting prose
+# drift onto a key it was never written for. The `[targets]` suffix comes off: targets
+# are structure, and Vercel already knows them.
+parse_example_notes() {
   awk '
-    /^[[:space:]]*#/ {
-      line = $0
-      sub(/^[[:space:]]*#[[:space:]]?/, "", line)
-      block[++nb] = line
-      if (line ~ /^[[:space:]]*(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=/) {
-        k = line
-        sub(/^[[:space:]]*(export[[:space:]]+)?/, "", k)
-        sub(/[[:space:]]*=.*/, "", k)
-        commented[k] = 1
-      }
+    /^[ \t]*$/ { note = ""; next }
+    /^[ \t]*#/ {
+      c = $0
+      sub(/^[ \t]*#[ \t]?/, "", c)
+      note = (note == "" ? c : note " " c)
       next
     }
-    /^[[:space:]]*(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=/ {
-      k = $0
-      sub(/^[[:space:]]*(export[[:space:]]+)?/, "", k)
-      sub(/[[:space:]]*=.*/, "", k)
+    /^[ \t]*(export[ \t]+)?[A-Za-z_][A-Za-z0-9_]*[ \t]*=/ {
+      key = $0
+      sub(/^[ \t]*(export[ \t]+)?/, "", key)
+      sub(/[ \t]*=.*$/, "", key)
+      n = note
+      sub(/[ \t]*\[[A-Za-z, \t]*\][ \t]*$/, "", n)
+      gsub(/[ \t]+/, " ", n)
+      sub(/^ /, "", n); sub(/ $/, "", n)
+      # A commented-out assignment is not prose about the key below it, however much the
+      # convention says the line above a key is its note. `# SANITY_API_READ_TOKEN=` is
+      # someone half-deleting a variable, and publishing that string into a client
+      # dashboard as a sentence would be worse than publishing nothing. init already
+      # refuses to read such a line as documentation; this refuses to read it as prose.
+      if (n ~ /^[A-Za-z_][A-Za-z0-9_]*[ \t]*=/) n = ""
+      if (n != "") print key "\t" n
       note = ""
-      for (i = 1; i <= nb; i++) note = note (note == "" ? "" : " ") block[i]
-      sub(/\[[a-zA-Z,[:space:]]+\][[:space:]]*$/, "", note)
-      gsub(/^[[:space:]]+/, "", note); gsub(/[[:space:]]+$/, "", note)
-      state = "documented"
-      if (note == "") state = "none"
-      else if (toupper(note) ~ /^TODO/) state = "todo"
-      print "key\t" k "\t" state
-      real[k] = 1
-      nb = 0
       next
     }
-    { nb = 0 }
-    END { for (k in commented) if (!(k in real)) print "commented\t" k }
+    { note = "" }
   ' "$1"
 }
+
+# One comment, set. The body is not a secret and rides on the command line; the token is
+# not, and stays on stdin in curl's own config format. Only `comment` is sent, so there
+# is no field in this request that could overwrite a value, a type or a target even by
+# accident.
+set_comment() {
+  local team="$1" project="$2" env_id="$3" note="$4" token="$5" url body resp
+  url="https://api.vercel.com/v9/projects/$project/env/$env_id?slug=$team"
+  body=$(jq -nc --arg c "$note" '{comment: $c}')
+  resp=$(printf 'url = "%s"\nheader = "Authorization: Bearer %s"\nheader = "Content-Type: application/json"\nrequest = "PATCH"\n' \
+           "$url" "$token" | curl -sS --config - --max-time 30 --data "$body") || return 1
+  if jq -e '.error' >/dev/null 2>&1 <<<"$resp"; then
+    jq -r '.error.message // "the Vercel API refused the edit"' <<<"$resp"
+    return 1
+  fi
+  return 0
+}
+
+if [[ "$CMD" == "push-notes" ]]; then
+  n_ok=0; n_pushed=0; n_absent=0; n_fail=0
+  n_set=0; n_same=0; n_todo=0; n_missing=0; n_long=0
+  fail_rows=""; missing_rows=""; long_rows=""
+
+  say "${bold}vercel-env push-notes${off} — ${dim}$PROJECTS$( ((DRY)) && printf ' · dry run' )${off}"
+  # Without the team's token there is no way to know which comments are already right, so
+  # a dry run of a blocked team previews nothing and calls it failure either way.
+  report_blocked_teams "not pushed"
+
+  # Read before the loop, never piped into it — see the note in `link`.
+  mapfile -t ENTRIES < <(jq -r '.entries[] | [.path, .team, .project] | @tsv' "$REGISTRY")
+
+  for entry in "${ENTRIES[@]}"; do
+    IFS=$'\t' read -r path team project <<<"$entry"
+    [[ -n "$path" ]] || continue
+    dir="$PROJECTS/$path"
+    label=$(printf '%-38s' "$path")
+
+    if [[ ! -d "$dir" ]]; then
+      n_absent=$((n_absent + 1))
+      say "  ${dim}absent${off}   $label ${dim}not on disk — repo not cloned here${off}"
+      continue
+    fi
+
+    example="$dir/.env.example"
+    if [[ ! -f "$example" ]]; then
+      # Not a failure and not silence: `init` writes this file wherever Vercel has
+      # anything to document, so its absence means there was nothing to document — or
+      # that init has not run here, which is init's report to make and not this one's.
+      n_ok=$((n_ok + 1))
+      say "  ${green}ok${off}       $label ${dim}no .env.example — nothing to push${off}"
+      continue
+    fi
+
+    # Parse before asking Vercel anything: a file with no prose in it costs no API call.
+    all_notes=$(parse_example_notes "$example" \
+                  | jq -Rn '[inputs | split("\t") | {key: .[0], note: (.[1] // "")}]
+                             | map(select(.note != "")) | unique_by(.key)')
+    n_p=$(jq -r '[.[] | select(.note | test("^TODO\\b"))] | length' <<<"$all_notes")
+    notes=$(jq -c '[.[] | select(.note | test("^TODO\\b") | not)]' <<<"$all_notes")
+    n_todo=$((n_todo + n_p))
+
+    # Vercel caps a comment at 500 characters, and the estate has notes that run to a
+    # thousand — real prose about what a key does and where it is read. Truncating a
+    # sentence to fit is worse than not mirroring it, and failing the run over it would
+    # push Jamie to shorten good documentation to satisfy a tool. The note is
+    # repo-authoritative; Vercel is the mirror. So the key is named and left alone, and
+    # a run that hits nothing else still ends green.
+    while IFS=$'\t' read -r long_key long_len; do
+      [[ -n "$long_key" ]] || continue
+      n_long=$((n_long + 1))
+      long_rows+="$path|$long_key — $long_len characters"$'\n'
+    done < <(jq -r '.[] | select((.note | length) > 500) | [.key, (.note | length)] | @tsv' <<<"$notes")
+    notes=$(jq -c '[.[] | select((.note | length) <= 500)]' <<<"$notes")
+
+    n_notes=$(jq -r 'length' <<<"$notes")
+    if (( n_notes == 0 )); then
+      n_ok=$((n_ok + 1))
+      if (( n_p > 0 )); then
+        say "  ${green}ok${off}       $label ${dim}nothing written yet — $n_p keys still \`# TODO: note\`${off}"
+      else
+        say "  ${green}ok${off}       $label ${dim}no notes in .env.example${off}"
+      fi
+      continue
+    fi
+
+    if [[ -n "${TEAM_BLOCKED[$team]:-}" ]]; then
+      n_fail=$((n_fail + 1))   # already reported once, above, for the whole team
+      continue
+    fi
+
+    if [[ "${TEAM_PROJECTS[$team]}" != *" $project "* ]]; then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|team '$team' has no project named '$project' — the registry and Vercel disagree, and guessing which is right is not this script's job"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}no project '$project' in $team${off}"
+      continue
+    fi
+
+    if ! envs=$(fetch_project_env_json "$team" "$project" "${TEAM_TOKEN[$team]}"); then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|could not list env vars for $team/$project: ${envs:-request failed}"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}${envs:-could not list env vars}${off}"
+      continue
+    fi
+
+    # One key can hold several Vercel records — the endpoint returns a row per target set,
+    # and a project with a different production value carries two. Each row has its own
+    # comment, so each row gets the note; the dashboard should not show a key annotated
+    # in one environment and bare in another.
+    plan=$(jq -rn --argjson notes "$notes" --argjson envs "$envs" '
+      ($envs | group_by(.key) | map({key: .[0].key, rows: .}) | INDEX(.key)) as $by
+      | $notes[]
+      | . as $n
+      | ($by[$n.key] // null) as $hit
+      | if $hit == null then ["missing", $n.key, ""]
+        else $hit.rows[]
+             | [(if (.comment // "") == $n.note then "same" else "set" end), $n.key, .id]
+        end
+      | @tsv')
+
+    e_set=0; e_same=0; e_missing=""; e_failed=0
+    while IFS=$'\t' read -r action key env_id; do
+      [[ -n "$action" ]] || continue
+      case "$action" in
+        same)    e_same=$((e_same + 1)) ;;
+        missing) e_missing+="$key " ;;
+        set)
+          if (( DRY )); then
+            e_set=$((e_set + 1))
+            continue
+          fi
+          note=$(jq -r --arg k "$key" 'map(select(.key == $k))[0].note' <<<"$notes")
+          if why=$(set_comment "$team" "$project" "$env_id" "$note" "${TEAM_TOKEN[$team]}"); then
+            e_set=$((e_set + 1))
+          else
+            e_failed=$((e_failed + 1))
+            fail_rows+="$path|$key: ${why:-the comment could not be set}"$'\n'
+          fi
+          ;;
+      esac
+    done <<<"$plan"
+
+    n_set=$((n_set + e_set)); n_same=$((n_same + e_same))
+    parts=""
+    (( e_set > 0 ))    && parts+="${parts:+ · }$e_set $( ((DRY)) && printf 'to set' || printf 'set' )"
+    (( e_same > 0 ))   && parts+="${parts:+ · }$e_same already right"
+    (( n_p > 0 ))      && parts+="${parts:+ · }$n_p TODO"
+    if [[ -n "$e_missing" ]]; then
+      read -ra miss_keys <<<"$e_missing"; n_miss=${#miss_keys[@]}
+      n_missing=$((n_missing + n_miss))
+      missing_rows+="$path|${e_missing% }"$'\n'
+      parts+="${parts:+ · }$n_miss not in Vercel"
+    fi
+
+    if (( e_failed > 0 )); then
+      n_fail=$((n_fail + 1))
+      say "  ${red}FAIL${off}     $label ${red}$e_failed comment(s) refused${off} ${dim}${parts}${off}"
+    elif (( e_set > 0 )); then
+      n_pushed=$((n_pushed + 1))
+      verb=pushed; (( DRY )) && verb=would
+      printf -v verbcol '%-9s' "$verb"
+      say "  ${green}${verbcol}${off}$label ${dim}${parts}${off}"
+    else
+      n_ok=$((n_ok + 1))
+      say "  ${green}ok${off}       $label ${dim}${parts:-nothing to push}${off}"
+    fi
+  done
+
+  if [[ -n "${long_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Too long for a Vercel comment${off} ${dim}— left in .env.example, which is where the note lives anyway${off}"
+    while IFS='|' read -r lpath what; do
+      [[ -n "$lpath" ]] || continue
+      printf '  %s%s%s\n       %s\n' "$yellow" "$lpath" "$off" "$what"
+    done <<<"$long_rows"
+  fi
+
+  if [[ -n "${missing_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Documented, but not in Vercel${off} ${dim}— reported, never created: a key with no value is not a variable${off}"
+    while IFS='|' read -r mpath keys; do
+      [[ -n "$mpath" ]] || continue
+      printf '  %s%s%s\n       %s\n' "$yellow" "$mpath" "$off" "$keys"
+    done <<<"$missing_rows"
+  fi
+
+  if [[ -n "${fail_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Failures${off}"
+    while IFS='|' read -r fpath why; do
+      [[ -n "$fpath" ]] || continue
+      printf '  %s%s%s\n    %s\n' "$red" "$fpath" "$off" "$why"
+    done <<<"$fail_rows"
+  fi
+
+  say ""
+  pushed="pushed"; setv="set"
+  (( DRY )) && { pushed="to push"; setv="to set"; }
+  echo "RESULT: $n_ok up to date · $n_pushed $pushed · $n_set comments $setv · $n_same already right · $n_todo TODO · $n_long too long · $n_missing not in Vercel · $n_absent absent · $n_fail failed"
+  (( n_fail == 0 )) || exit 1
+  exit 0
+fi
+
+# --------------------------------------------------------------------------- audit ---
 
 # "1 keys" reads like a bug in the script rather than a fact about the estate.
 plural() { (( $1 == 1 )) && printf '%s' "$2" || printf '%s' "${3:-${2}s}"; }
@@ -591,18 +822,29 @@ if [[ "$CMD" == "audit" ]]; then
       [[ ",$types," == *",sensitive,"* ]] && sens+="$key "
     done <<<"$meta"
 
-    # The manifest's side: which keys it documents, how many say nothing, and any key it
-    # mentions only behind a `#`.
     example="$dir/.env.example"
     ex_keys=" "; n_ex=0; n_nonote=0; commented=""
     if [[ -f "$example" ]]; then
-      while IFS=$'\t' read -r kind a b; do
-        case "$kind" in
-          key)       ex_keys+="$a "; n_ex=$((n_ex + 1))
-                     [[ "$b" == documented ]] || n_nonote=$((n_nonote + 1)) ;;
-          commented) commented+="$a " ;;
-        esac
-      done < <(example_notes "$example")
+      # The keys, read the way `init` reads them, and the notes, read by the one parser
+      # `push-notes` publishes from — so a key audit calls documented is exactly a key
+      # push-notes would write a comment for, and the two can never drift into disagreeing
+      # about what counts as prose.
+      unset EX_NOTE; declare -A EX_NOTE=()
+      while IFS=$'\t' read -r k note; do
+        [[ -n "$k" ]] && EX_NOTE[$k]="$note"
+      done < <(parse_example_notes "$example")
+      while read -r k; do
+        [[ -n "$k" ]] || continue
+        ex_keys+="$k "; n_ex=$((n_ex + 1))
+        note="${EX_NOTE[$k]:-}"
+        # `# TODO: note` is init's placeholder, and push-notes skips it for the same
+        # reason it is counted here: a dashboard full of TODO is worse than a bare one.
+        [[ -n "$note" && "${note^^}" != TODO* ]] || n_nonote=$((n_nonote + 1))
+      done < <(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*/\2/p' "$example" | sort -u)
+      while read -r k; do
+        [[ -n "$k" ]] || continue
+        [[ "$ex_keys" == *" $k "* ]] || commented+="$k "
+      done < <(sed -nE 's/^[[:space:]]*#[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*/\2/p' "$example" | sort -u)
     fi
 
     undoc=""; n_undoc=0

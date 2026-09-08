@@ -94,6 +94,36 @@ flows still to build:
   documented** and will be seeded again as a real key line if Vercel has it. Nothing in
   the estate hit this yet; `audit` is the natural place to notice a near-duplicate.
 
+## Worth knowing — learned building stub 5 (2026-09-08)
+
+The first estate-wide `audit` — 40 entries, 464 documented keys — and what it found that
+changes the two flows still to build:
+
+- **248 of the 464 keys are `type: sensitive`, and Vercel will not read those back at
+  all.** Over half the estate — every Neon-injected `POSTGRES_*`/`PG*` alias, every
+  `*_SECRET`, `RESEND_API_KEY`, `AUTH_SECRET` — can never reach a `.env.local`, by
+  Vercel's design and not by any gap in this epic. `pull` will produce a file with holes
+  in it wherever those keys matter, and a cloud session hydrated from it will be missing
+  them. Worth deciding whether `pull` marks them (`# sensitive — set locally`) rather
+  than leaving them silently absent. audit lists them per app for exactly this reason.
+- **The drift runs the other way from the one we expected.** Zero Vercel variables are
+  undocumented (init did its job three days ago), but **50 documented keys are absent
+  from Vercel** — cafe-jardim alone documents 23 that no deploy will ever read. Some of
+  those are a hand-written `.env.example` from before the manifest convention; some are
+  genuinely a build reading nothing. Either way it is Jamie's call per key, which is why
+  it is a GAP with a name rather than something a flow fixes.
+- **The registry is clean in both directions** — every Vercel project has an entry and
+  every entry a project, the 8 kodominio orphans having been retired since — but the disk
+  is not: `projects/sustentus/.vercel/project.json` links the monorepo root to the `web`
+  project, which no registry entry names. The find-on-disk half of the check earns its
+  keep.
+- **`# TODO: note` is 398 of 464 keys**, as stub 2 predicted. That is why warnings do not
+  colour audit's exit code: a report that is permanently red is one you stop reading.
+- **Staleness only means anything with a clock running.** Three `.env.local` files were
+  133–273 days old at the first run and were refreshed mid-session by the `pull` branch
+  running in parallel — which is the check working, and a reminder that estate-wide runs
+  from two sessions at once do land on the same files.
+
 ## Out of scope (whole epic)
 
 - Shared team variables — Jamie's call 2026-09-02: project-level is enough. Revisit

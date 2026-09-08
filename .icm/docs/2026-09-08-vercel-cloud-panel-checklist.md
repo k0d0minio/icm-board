@@ -5,9 +5,9 @@
 > a session a `VERCEL_TOKEN`. That pasting is Jamie's, once per repo, and this is the
 > per-repo reading of what to paste and what to expect afterwards.
 >
-> Estate state read 2026-09-08, from the registry, the `.env.example` manifests and the
-> `.env.local` files the 2026-09-08 estate-wide `pull` left on disk. Nothing in this file
-> is a secret and nothing in it needs updating when a value changes in Vercel.
+> Estate state read 2026-09-08, from the registry and the `.env.example` manifests that
+> `init` seeded from Vercel — key names and target scopes, never values. Nothing in this
+> file is a secret and nothing in it needs updating when a value changes in Vercel.
 
 ## The token
 
@@ -48,59 +48,58 @@ go through a PR.
 `session-start.sh`'s existing `SessionStart` entry, and **13 kodominio repos never make
 that entry**: their `.claude/settings.json` has no `hooks` key at all (and `pierpont` has
 no `settings.json`). That is a pre-existing estate gap — those repos get no board
-greeting either — but it lands squarely on this epic, because **every repo that has
-something to hydrate today is one of them**. `icm-check` names them ("hook … exists but
-settings.json never registers it"); the fix is the `hooks` block from
-`_system/template/claude/settings.json`, merged into each repo's own file by hand.
+greeting either — and **8 of the 17 repos with something to hydrate are among them**.
+`icm-check` names them ("hook … exists but settings.json never registers it"); the fix is
+the `hooks` block from `_system/template/claude/settings.json`, merged into each repo's
+own file by hand. The other 9 work the moment the fan-out lands.
 
-Unwired, in the order it matters: **pierpont** (no settings.json at all), **courseday**,
-**messy-play**, **collabimmo**, **cafe-jardim** — then boystomenretreat, firedough,
-garmani, grafitala, le-pavillon-vert, little-grass-shack, lourenco-botelho, miriamfridman,
-simnao. Parked as
+Unwired and holding variables, in the order it matters: **courseday** (32 keys),
+**cafe-jardim** (26), **messy-play** (17), **collabimmo** (14), **pierpont** (14, and no
+settings.json at all), **boystomenretreat** (3), **lourenco-botelho** (2),
+**little-grass-shack** (1). Unwired and empty anyway: firedough, garmani, grafitala,
+le-pavillon-vert, miriamfridman, simnao. Parked as
 [`triage/settings-json-without-hooks.md`](../intake/triage/settings-json-without-hooks.md).
 
 ## The panels
 
-`VERCEL_TOKEN` in every row. The last column is what the row buys **today** — the key
-count a `development` pull actually delivered on 2026-09-08, which is what a cloud
-session will find in `.env.local`.
+`VERCEL_TOKEN` in every row. The hook pulls the **production** environment by default
+(Jamie's call, 2026-09-08 — almost nothing runs locally). That turns out to be the only
+sensible default here: **every documented key in the kodominio estate is targeted at
+production**, and only six repos scope anything to `development` at all.
 
-### Hydrates immediately — do these five first
+The count below is each repo's manifest — the keys Vercel holds for that project. It is
+an **upper bound on what arrives**, not a promise: Vercel never reads a `type: sensitive`
+variable back, and 248 of the estate's 464 keys are sensitive (every `*_SECRET`, every
+Neon-injected `POSTGRES_*` alias, `RESEND_API_KEY`, `AUTH_SECRET`). `cafe-jardim`
+documents 26 keys and a pull delivered 3 of them. So expect a hydrated file with holes in
+it wherever a secret matters — that is Vercel's design, not a gap in this system, and the
+generated header says so.
 
-These are the repos where the proof can be taken. All five are also in the unwired list
-above, so both edits happen together.
+### Hydrates something — the whole configured estate
 
-| Repo | Vercel project | Keys a development pull delivers |
+| Repo | Vercel project | Manifest keys |
 |---|---|---|
-| `courseday` | `courseday` | 24 |
+| `agorasim` | `agorasim` | 39 |
+| `courseday` | `courseday` | 32 |
+| `cafe-jardim` | `cafe-jardim` | 26 |
+| `jamienisbet` | *three — see below* | 25 / 20 / 19 |
+| `kau-american-bbq` | `kau` | 22 |
+| `vinecliff` | `vinecliff` | 22 |
+| `the-library` | `the-library` | 20 |
+| `casey-hebbel` | `casey-hebbel` | 19 |
+| `dungeons-dragons` | `dungeons-dragons-mafra` | 19 |
 | `messy-play` | `happymessmakers` | 17 |
+| `collabimmo` | `collabimmo` | 14 |
 | `pierpont` | `pierpont` | 14 |
-| `collabimmo` | `collabimmo` | 13 |
-| `cafe-jardim` | `cafe-jardim` | 3 |
+| `boystomenretreat` | `boystomenretreat` | 3 |
+| `lourenco-botelho` | `lourenco-botelho` | 2 |
+| `barzinho` | `barzinho-proposal` | 1 |
+| `escondidinho` | `escondidinho` | 1 |
+| `little-grass-shack` | `little-grass-shack` | 1 |
 
-### Has variables, but nothing reachable at `development`
-
-The token still belongs here — it costs nothing and the repo is ready the moment values
-exist — but a session in one of these will report an empty hydrate and say why. Two ways
-to close it, both Jamie's call per repo: add `development` values in Vercel, or set
-`VERCEL_ENV_TARGET=preview` in that repo's panel. (The estate holds **no**
-development-scoped variables outside these few; `audit` also found 248 of 464 keys are
-`type: sensitive`, and Vercel never reads those back at all — which is why `cafe-jardim`
-documents 26 development keys and delivers 3.)
-
-| Repo | Vercel project | Manifest keys | Delivered |
-|---|---|---|---|
-| `agorasim` | `agorasim` | 39 | 0 |
-| `kau-american-bbq` | `kau` | 22 | 0 |
-| `vinecliff` | `vinecliff` | 22 | 0 |
-| `the-library` | `the-library` | 20 | 0 |
-| `casey-hebbel` | `casey-hebbel` | 19 | 0 |
-| `dungeons-dragons` | `dungeons-dragons-mafra` | 19 | 0 |
-| `boystomenretreat` | `boystomenretreat` | 3 | 0 |
-| `lourenco-botelho` | `lourenco-botelho` | 2 | 0 |
-| `barzinho` | `barzinho-proposal` | 1 | 0 |
-| `escondidinho` | `escondidinho` | 1 | 0 |
-| `little-grass-shack` | `little-grass-shack` | 1 | 0 |
+Five of these are also on the unwired list above and need the `hooks` block before the
+token does anything: **courseday, cafe-jardim, messy-play, collabimmo, pierpont** — plus
+boystomenretreat, little-grass-shack and lourenco-botelho.
 
 `boystomenretreat` additionally hides its own manifest — a committed create-next-app
 `.env*` with no `!.env.example` under it — so the notes the hook would interleave there
@@ -111,7 +110,7 @@ belongs to that repo.
 
 | Repo | Vercel projects | Extra panel variable |
 |---|---|---|
-| `jamienisbet` | `jamie-nisbet`, `portfolio`, `client-referrals` | `VERCEL_PROJECT=<one of the three>` |
+| `jamienisbet` | `jamie-nisbet` (25 keys), `portfolio` (20), `client-referrals` (19) | `VERCEL_PROJECT=<one of the three>` |
 
 The remote maps to three projects and a session's working directory is the repo root, so
 the hook will not choose. Without `VERCEL_PROJECT` it names the three and hydrates
@@ -125,14 +124,21 @@ nothing is missing. Any of them will start hydrating the day it gains a variable
 `berceo` · `firedough` · `garmani` · `grafitala` · `le-pavillon-vert` · `miriamfridman`
 · `simnao`
 
+### If a repo should not pull production
+
+`VERCEL_ENV_TARGET=preview` (or `development`) in that repo's panel. Worth knowing before
+you decide: a cloud session's `.env.local` will hold live production configuration, and
+whatever that session runs talks to production. The sensitive keys never come down, so the
+file is configuration rather than credentials — but it is production configuration.
+
 ## Taking the proof
 
-Open a cloud session on **`courseday`** (24 keys, the largest development set in the
-estate) once its panel holds the token and its `settings.json` registers the hook. The
-session should open with a line like:
+Open a cloud session on **`courseday`** (32 documented keys, the second largest set in
+the estate and the one with the most prose already written) once its panel holds the token
+and its `settings.json` registers the hook. The session should open with a line like:
 
 ```
-Vercel env: .env.local hydrated from kodominio/courseday (development) — 24 keys, <n> documented, <n> still `# TODO: note`.
+Vercel env: .env.local hydrated from kodominio/courseday (production) — <n> keys, <n> documented, <n> still `# TODO: note`.
 ```
 
 and `.env.local` should hold those values under the notes from the repo's own

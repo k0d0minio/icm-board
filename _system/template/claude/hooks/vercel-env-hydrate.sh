@@ -38,14 +38,26 @@
 #     no remote, no project, no network, no CLI. A session that cannot reach Vercel is a
 #     session that carries on.
 #
-# Which environment it pulls is Jamie's call, not this hook's, and the default is the one
-# `vercel-env.sh pull` uses so that the cloud file and the local file say the same thing:
-# `development`, overridable per panel with `VERCEL_ENV_TARGET=preview|production`. Most
-# of the estate has no development-scoped variables at all — 21 of the 26 kodominio
-# entries pulled nothing on 2026-09-08 — so an empty result is reported as the ordinary
-# thing it is, with the reason, rather than looking like a broken hook. The panel
-# checklist (`.icm/docs/2026-09-08-vercel-cloud-panel-checklist.md` in icm-board) carries
-# the per-repo reading.
+# It pulls `production` by default. That is Jamie's call (2026-09-08) and it follows how
+# the estate is actually configured: almost nothing runs locally, and **every one of the
+# 464 keys documented across the kodominio estate is targeted at production** — only six
+# repos scope anything to `development` at all, so a development pull would hand most
+# sessions an empty file. `VERCEL_ENV_TARGET=preview|development` overrides it per panel.
+# This is deliberately *not* what `vercel-env.sh pull` writes locally, which is still
+# `development`: the local file serves a machine that rarely runs the apps, the cloud file
+# serves the session that does.
+#
+# Two things follow from pulling production, both worth knowing rather than guarding
+# against here. A cloud session's `.env.local` holds live production configuration, so
+# whatever that session runs talks to production — which is the point, and is why the file
+# is refused unless the repo ignores it. And it holds rather less than the manifest lists:
+# Vercel never reads a `type: sensitive` variable back, and 248 of those 464 keys are
+# sensitive — every `*_SECRET`, every Neon-injected `POSTGRES_*` alias, `RESEND_API_KEY`,
+# `AUTH_SECRET`. The keys that would hurt most stay in Vercel, by Vercel's design and not
+# by anything this hook does. An empty or partial result is reported as the ordinary thing
+# it is, with the reason, rather than looking like a broken hook. The panel checklist
+# (`.icm/docs/2026-09-08-vercel-cloud-panel-checklist.md` in icm-board) carries the
+# per-repo reading.
 #
 # A monorepo whose remote maps to several Vercel projects cannot be resolved from the
 # remote alone; the hook names the candidates and hydrates nothing until the panel sets
@@ -59,7 +71,7 @@
 # Panel variables, all optional except the first:
 #   VERCEL_TOKEN         team-scoped token. Absent -> the hook does nothing at all.
 #   VERCEL_PROJECT       project name, when the remote maps to more than one.
-#   VERCEL_ENV_TARGET    development (default) | preview | production.
+#   VERCEL_ENV_TARGET    production (default) | preview | development.
 #   VERCEL_ENV_HYDRATE   0 to disable.
 #   VERCEL_ENV_MAX_AGE   seconds before a re-hydrate; default 3600, 0 to always pull.
 
@@ -71,7 +83,7 @@ TOKEN="${VERCEL_TOKEN:-}"
 [[ -n "$TOKEN" ]] || exit 0
 
 ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
-TARGET="${VERCEL_ENV_TARGET:-development}"
+TARGET="${VERCEL_ENV_TARGET:-production}"
 WANT="${VERCEL_PROJECT:-}"
 MAX_AGE="${VERCEL_ENV_MAX_AGE:-3600}"
 [[ "$MAX_AGE" =~ ^[0-9]+$ ]] || MAX_AGE=3600

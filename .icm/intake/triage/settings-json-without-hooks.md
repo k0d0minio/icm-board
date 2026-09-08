@@ -25,10 +25,11 @@ differ from the template) that a blanket overwrite is not the answer.
 ## Why it is worth a ticket now
 
 It stopped being cosmetic. `vercel-env-hydrate.sh` is invoked *by* `session-start.sh`, so
-a repo that never registers that hook hydrates nothing in a cloud session — and **every
-kodominio repo that has values to hydrate today is on the unwired list**: courseday,
-messy-play, pierpont, collabimmo, cafe-jardim. The panel token pass closes it by hand for
-those five; the other nine stay silently inert.
+a repo that never registers that hook hydrates nothing in a cloud session — and **8 of the
+17 kodominio repos with variables to hydrate are on the unwired list**: courseday (32
+keys), cafe-jardim (26), messy-play (17), collabimmo (14), pierpont (14), boystomenretreat
+(3), lourenco-botelho (2), little-grass-shack (1). The panel token pass closes those by
+hand; the six empty ones stay silently inert until someone gives them a variable.
 
 ## Worth knowing
 

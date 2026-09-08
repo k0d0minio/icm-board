@@ -218,18 +218,27 @@ Vercel yet, because a session has no token. What building it settled:
 - **…and then the sting: 13 kodominio repos never register `session-start.sh` either.**
   Their `settings.json` has no `hooks` key at all (`pierpont` has no `settings.json`), so
   both canonical hooks have been inert there all along — `icm-check` has been saying so
-  and nobody acted. It matters now because **every kodominio repo with values to hydrate
-  today is one of them**: courseday, messy-play, pierpont, collabimmo, cafe-jardim. Parked
-  as `triage/settings-json-without-hooks.md`; the panel checklist closes it by hand for
-  those five.
-- **Stub 4's open question, answered by giving it away.** The hook pulls `development` by
-  default — the same environment `pull` writes locally, so the cloud file and the local
-  file say the same thing — and takes `VERCEL_ENV_TARGET` from the panel where a repo
-  needs otherwise. Which is not the hook's call, and now does not have to be: **5 of the
-  26 kodominio entries deliver anything at all** at `development` (24, 17, 14, 13 and 3
-  keys); 7 have no Vercel variables at any target, and the remaining 14 have variables
-  that a development pull cannot reach. An empty hydrate is reported as the ordinary thing
-  it is, with the reason.
+  and nobody acted. It matters now because a repo that never registers `session-start.sh`
+  hydrates nothing, and **8 of the 17 kodominio repos with variables are among them** —
+  courseday, cafe-jardim, messy-play, collabimmo, pierpont, boystomenretreat,
+  lourenco-botelho, little-grass-shack. Parked as
+  `triage/settings-json-without-hooks.md`; the panel checklist closes them by hand.
+- **Stub 4's open question, answered: the cloud hook pulls production.** It first shipped
+  defaulting to `development`, matching what `pull` writes locally — and that was the
+  wrong reading of the estate. Jamie's ruling on seeing it (2026-09-08): almost nothing
+  runs locally, so a cloud session wants production. The manifests agree emphatically —
+  **every one of the 464 documented keys in the kodominio estate is targeted at
+  production**, and only six repos scope anything to `development` at all, so the original
+  default would have handed most sessions an empty file. `VERCEL_ENV_TARGET` overrides per
+  panel. The two flows now deliberately disagree about which environment they mean, and
+  that is the point: `pull` serves a machine that rarely runs the apps, the hook serves the
+  session that does.
+- **What arrives is still less than the manifest lists, and that is Vercel.** 248 of those
+  464 keys are `type: sensitive` and are never read back at any target (stub 5) —
+  `cafe-jardim` documents 26 and a pull delivered 3. So a hydrated file has holes in it
+  wherever a secret matters; the generated header says so, and the checklist stops the
+  counts reading as a promise. The upside is that pulling production is mostly pulling
+  configuration: the keys that would hurt most cannot leave Vercel at all.
 - **An empty pull would have written the annotation pass's own summary line into
   `.env.local`.** `body="${body%$'\n'*}"` strips nothing from a string with no newline in
   it, and awk's `\001COUNTS` sentinel is the whole output when the file has no keys. The

@@ -44,21 +44,19 @@ for r in ~/Apps/projects/*/; do [ -f "$r/.claude/hooks/session-start.sh" ] && cp
 Both files then commit straight to `main` in each client repo — estate plumbing does not
 go through a PR.
 
-**2. Register the hooks where nothing registers them.** The hook rides
-`session-start.sh`'s existing `SessionStart` entry, and **13 kodominio repos never make
-that entry**: their `.claude/settings.json` has no `hooks` key at all (and `pierpont` has
-no `settings.json`). That is a pre-existing estate gap — those repos get no board
-greeting either — and **8 of the 17 repos with something to hydrate are among them**.
-`icm-check` names them ("hook … exists but settings.json never registers it"); the fix is
-the `hooks` block from `_system/template/claude/settings.json`, merged into each repo's
-own file by hand. The other 9 work the moment the fan-out lands.
+**2. Register the hooks where nothing registers them — done, 2026-09-08.** The hook rides
+`session-start.sh`'s existing `SessionStart` entry, and thirteen repos never made that
+entry: their `.claude/settings.json` had no `hooks` key at all, and `pierpont` had no
+`settings.json`. That put **8 of the 17 repos with something to hydrate** out of reach.
 
-Unwired and holding variables, in the order it matters: **courseday** (32 keys),
-**cafe-jardim** (26), **messy-play** (17), **collabimmo** (14), **pierpont** (14, and no
-settings.json at all), **boystomenretreat** (3), **lourenco-botelho** (2),
-**little-grass-shack** (1). Unwired and empty anyway: firedough, garmani, grafitala,
-le-pavillon-vert, miriamfridman, simnao. Parked as
-[`triage/settings-json-without-hooks.md`](../intake/triage/settings-json-without-hooks.md).
+`icm-check --fix` now merges the registration in itself — decision **D18**: it appends the
+template's own entry only for a hook the repo's file does not already name, and rewrites
+nothing. All 25 non-exempt repos register both hooks, and `icm-check` reports no "exists
+but settings.json never registers it" warnings. Closed as
+[`triage/_done/settings-json-without-hooks.md`](../intake/triage/_done/settings-json-without-hooks.md),
+which records the two things the merge turned out to need.
+
+Nothing is left to do here before the panels.
 
 ## The panels
 
@@ -97,9 +95,10 @@ generated header says so.
 | `escondidinho` | `escondidinho` | 1 |
 | `little-grass-shack` | `little-grass-shack` | 1 |
 
-Five of these are also on the unwired list above and need the `hooks` block before the
-token does anything: **courseday, cafe-jardim, messy-play, collabimmo, pierpont** — plus
-boystomenretreat, little-grass-shack and lourenco-botelho.
+Eight of these were the unwired ones — **courseday, cafe-jardim, messy-play, collabimmo,
+pierpont, boystomenretreat, little-grass-shack, lourenco-botelho** — and all eight now
+register the hook, so the token is the only thing standing between them and a hydrated
+session.
 
 `boystomenretreat` additionally hides its own manifest — a committed create-next-app
 `.env*` with no `!.env.example` under it — so the notes the hook would interleave there

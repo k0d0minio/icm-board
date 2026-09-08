@@ -49,10 +49,45 @@ Options, unranked:
 
 ## Acceptance criteria (rough)
 
-- [ ] Decided whether `--fix` may merge into an existing `settings.json`, or this stays a
+- [x] Decided whether `--fix` may merge into an existing `settings.json`, or this stays a
       hand pass
-- [ ] All 14 repos either register both canonical hooks or are a deliberate exception
-- [ ] `icm-check` reports no "exists but settings.json never registers it" warnings
+- [x] All 14 repos either register both canonical hooks or are a deliberate exception
+- [x] `icm-check` reports no "exists but settings.json never registers it" warnings
+
+## Outcome — 2026-09-08
+
+**Option 2, Jamie's call: `--fix` learned the merge.** Recorded as **D18**, not D17 — a
+concurrent session claimed D17 the same afternoon for the canonical-asset formatter
+ruling. D18 narrows D7 one level down, the way D11 narrowed D3: `--fix` may append the
+template's own registration for a hook the repo's settings.json does not already name
+anywhere, and only that. Nothing the repo already holds is rewritten. Both the event and
+the entry are read from the template, so registering a future hook is a template edit and
+nothing more. Needs `jq`; without it the merge is skipped and the warning stands with the
+reason attached.
+
+Two things the implementation turned up that the stub did not predict:
+
+- The inert-hook check had to move **after** the seeding step. It ran before, so a repo
+  with no hooks at all (courseday) was seeded and left newly inert, unreported. Judged on
+  the state the pass leaves behind, that repo now comes out wired.
+- `jq` re-emits the whole document, so a repo that hand-packs an array onto one line gets
+  it reflowed — content-identical, but visible to a repo whose CI format-checks
+  `.claude/`. Accepted, and named in D18 and at the code.
+
+`pierpont` needed no decision in the end: `--fix` already creates a settings.json from the
+template when one is absent, hooks and all.
+
+**Estate state: all 25 non-exempt repos register both hooks**, and all but `remi-ai`
+carry `vercel-env-hydrate.sh` (a separated team boundary, correctly excluded).
+`icm-check` reports zero "never registers" warnings. The panel token pass is unblocked.
+
+Worth knowing for next time: this landed across three concurrent sessions plus the
+machine's own sweep, and the estate log shows it — 22 repos took the fan-out under `icm
+update` commits rather than reasoned ones, and `cafe-jardim`'s hook registration was
+swept into a commit about whitespace (corrected on `main` in `23599fa`). courseday and
+pierpont were reset mid-pass and re-landed by other sessions. Nothing was lost that
+belonged to this ticket; courseday's own staged `CLAUDE.md → AGENTS.md` migration was
+discarded by the sweep and is not this ticket's to restore.
 
 ## Prompt
 

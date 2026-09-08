@@ -85,15 +85,24 @@ Rules:
   Biome parses a `.json` file as strict JSON and fails on the comment, which is exactly
   what took `escondidinho` and `cafe-jardim` red in September 2026. `icm-check.sh` warns
   on a leftover `opencode.json` at any repo root.
-- **A canonical asset can still lose to a repo's *formatter*, and that is a separate
-  problem.** The `.jsonc` rename ends the parse failures; it does not make a two-space
-  canonical file match a repo that formats with tabs. `cafe-jardim` excludes
-  `opencode.jsonc` from Biome for exactly that reason, and its `.claude/settings.json`
-  is already flagged the same way. Reformatting a canonical asset in-repo is the wrong
-  trade — it swaps a visible CI error for silent permanent drift — so the repo either
-  excludes the asset from formatting or accepts the error. `dungeons-dragons` made the
-  same call in its `.prettierignore`, so this is two repos and a pattern:
-  `.icm/intake/triage/canonical-assets-vs-repo-formatters.md`.
+- **A canonical asset can lose to a repo's *formatter*, and the repo excludes it.** The
+  `.jsonc` rename ends the parse failures; it does not make a two-space canonical file
+  match a repo that formats with tabs. Reformatting a drift-checked asset in-repo is the
+  wrong trade — it swaps a visible CI error for silent permanent drift — so the repo
+  excludes it from formatting. `cafe-jardim` does that for `opencode.jsonc` in
+  `biome.json`; `dungeons-dragons` does it in `.prettierignore`, alongside the `.icm/`
+  and `.claude/` entries already there for the same reason. It stays a per-repo call,
+  discovered by that repo's CI — decision D17, settled 2026-09-08.
+  **The exposed surface is one file.** Of the drift-checked assets, the four `hooks/*.sh`
+  are shell (no formatter in the estate touches them) and the two `SKILL.md` are
+  markdown that satisfies Prettier's defaults today — `remi-ai` checks `**/*.md` across
+  `.claude/` and `.icm/` and is green. Only `opencode.jsonc` collides, and only in a repo
+  whose style differs from this folder's two-space.
+  **`.claude/settings.json` is not in that surface**, and the earlier note here that it
+  was is wrong: it is seeded and required, never drift-compared (it is absent from
+  `CANONICAL` in `icm-check.sh`, because every repo edits its own hook wiring). A
+  formatter may reformat it freely — which is what `cafe-jardim` did, rather than carry
+  a second exemption.
 - **Drift is a report line, not a repair.** `icm-check.sh` compares each repo's copy of
   a canonical asset against this folder and warns on divergence. Deliberate divergence
   is fine — the repo wins — but it should be visible, not silent.

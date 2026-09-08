@@ -15,9 +15,8 @@
 #
 # Nothing flows back up. A value never leaves Vercel for git, a note never leaves git for
 # a human's memory, and drift between them is a thing to report, not to silently
-# reconcile. `link` — the prerequisite for every other flow — plus `init` and
-# `push-notes` exist so far; the rest of the epic fills in `pull` and `audit` behind
-# them.
+# reconcile. `link` — the prerequisite for every other flow — plus `init`, `push-notes`
+# and `audit` exist so far; the rest of the epic fills in `pull` behind them.
 #
 # `link` writes the `.vercel/project.json` that `vercel env pull` needs, into every
 # directory the registry names — and then reads it back, because the CLI has been seen to
@@ -88,6 +87,45 @@
 # a row per target set — and each of them gets the note, because a key annotated in
 # production and bare in preview is a worse answer than either.
 #
+# `audit` is the report the three one-way flows imply. Nothing syncs, so drift is the
+# expected state rather than the failure state, and one honest reading of it beats three
+# subcommands each disagreeing about what "current" means. It is read-only in the strong
+# sense: no file is written on any code path, the Vercel API is only ever asked (GET),
+# and it does not invoke the CLI at all — the one tool here that could write is the one
+# tool it never runs.
+#
+# It reads the same three places the flows do — the registry, Vercel, and the disk — and
+# sorts what it finds by what would fix it, in estate-conformance.sh's severity spirit:
+#
+#   GAP   two systems disagree, and something known closes the gap: a Vercel variable no
+#         `.env.example` documents (fix: `init`), a documented key Vercel does not hold
+#         (fix: Jamie adds the value in Vercel), a directory with no link or the wrong
+#         one (fix: `link`), a linked directory the registry never names, a registry
+#         entry naming a project its team does not have.
+#   warn  judgment, never mechanical: keys whose note is still `# TODO: note` or blank —
+#         exactly the keys `push-notes` skips — a key mentioned only behind a `#` (prose,
+#         which `init` will seed again as a real line), a missing or stale `.env.local`,
+#         a Vercel project the registry does not claim.
+#   info  sensitive-type variables, listed per app. Not a problem — a fact worth stating
+#         once, because Vercel will not read those values back and so no flow in this
+#         epic can ever hydrate them locally.
+#
+# It reads the manifest through `parse_example_notes`, the parser `push-notes` publishes
+# from, so a key audit calls documented is exactly a key push-notes would write a comment
+# for; two readings of the same convention would eventually disagree.
+#
+# Two silences that look identical and are not, both learned from running `init`: a
+# project Vercel holds no variables for has nothing to document and no `.env.local` to be
+# stale, so it is never asked about either; and a `.env.example` full of keys Vercel does
+# not hold is a break waiting to happen *only* if Vercel holds anything at all — where it
+# holds nothing, the same fact means the app is configured in git and nowhere else, which
+# is a warning and not a gap.
+#
+# Only gaps colour the exit code. The `# TODO: note` count starts in the hundreds — the
+# Neon and Supabase integrations inject their own aliases into every project they touch,
+# and the manifest documents every one — so warnings that gate a run would make it
+# permanently red, and a permanently red report is one you stop reading.
+#
 # Tokens are Jamie's manual step and are never committed, never printed, and never
 # passed on a command line where `ps` could read them — the team's token is exported as
 # VERCEL_TOKEN into the CLI's own environment, and handed to curl over stdin. Create one
@@ -111,24 +149,33 @@
 # is only a warning. Neither is repaired here: the .gitignore of a client repo belongs to
 # that repo, and this script reports.
 #
-# Usage: _system/scripts/vercel-env.sh <link|init|push-notes> [--dry-run] [--quiet] [root]
-# Exit:  0 every entry done, already done, or absent from disk ·
-#        1 one or more entries failed (missing token, unreachable team, unknown project,
-#          a failed link, a refused write) — these are actions, not reports, so failure
-#          stays red ·
-#        2 bad invocation, or a missing dependency
+# Usage: _system/scripts/vercel-env.sh <link|init|push-notes|audit> [--dry-run]
+#          [--quiet] [--stale-days=N] [root]
+# Exit:  0 the flows: every entry done, already done, or absent from disk ·
+#          audit: no gaps found (warnings do not count — see above) ·
+#        1 the flows: one or more entries failed (missing token, unreachable team,
+#          unknown project, a failed link, a refused write) — these are actions, not
+#          reports, so failure stays red ·
+#          audit: gaps found. Unlike the scheduled estate-conformance report (D15), this
+#          one is a step in a ritual a human runs, and a wrap that cannot tell clean from
+#          drifted cannot gate on it ·
+#        2 bad invocation, a missing dependency, or — audit only — no team token at all,
+#          which would make the report a lie rather than a partial reading
 
 set -uo pipefail
 
 CMD=""
 DRY=0
 QUIET=0
+STALE_DAYS=14
 APPS_ROOT=""
 for arg in "$@"; do
   case "$arg" in
-    link|init|push-notes) CMD="$arg" ;;
+    link|init|push-notes|audit) CMD="$arg" ;;
     --dry-run) DRY=1 ;;
     --quiet) QUIET=1 ;;
+    --stale-days=*) STALE_DAYS="${arg#*=}"
+      [[ "$STALE_DAYS" =~ ^[0-9]+$ ]] || { echo "--stale-days wants a whole number of days" >&2; exit 2; } ;;
     -h|--help) awk 'NR>1 && /^#/ { sub(/^# ?/, ""); print; next } NR>1 { exit }' "${BASH_SOURCE[0]}"; exit 0 ;;
     -*) echo "Unknown flag: $arg" >&2; exit 2 ;;
     *) if [[ -z "$CMD" ]]; then echo "Unknown subcommand: $arg" >&2; exit 2; else APPS_ROOT="$arg"; fi ;;
@@ -136,11 +183,17 @@ for arg in "$@"; do
 done
 
 if [[ -z "$CMD" ]]; then
-  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init|push-notes> [--dry-run] [--quiet] [root]" >&2
+  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init|push-notes|audit> [--dry-run] [--quiet] [--stale-days=N] [root]" >&2
   exit 2
 fi
 
-command -v vercel >/dev/null 2>&1 || { echo "vercel (Vercel CLI) is required" >&2; exit 2; }
+if [[ "$CMD" == "audit" ]] && (( DRY )); then
+  echo "audit writes nothing on any path — --dry-run has nothing to preview" >&2
+  exit 2
+fi
+
+# audit never runs the CLI, and saying so in the dependency check is part of the promise.
+[[ "$CMD" == "audit" ]] || command -v vercel >/dev/null 2>&1 || { echo "vercel (Vercel CLI) is required" >&2; exit 2; }
 command -v jq     >/dev/null 2>&1 || { echo "jq is required" >&2; exit 2; }
 command -v curl   >/dev/null 2>&1 || { echo "curl is required" >&2; exit 2; }
 command -v git    >/dev/null 2>&1 || { echo "git is required" >&2; exit 2; }
@@ -215,11 +268,13 @@ fetch_team_projects() {
   printf ' %s ' "$names"
 }
 
-# Every variable a project has, as a JSON array of the four fields this script uses:
-# name, id, target environments and note. Values are never asked for (no `decrypt`) and
-# never read out of the response — these flows document and annotate variables, and
-# Vercel stays the only place their contents live. `comment` is absent rather than null
-# when a variable has none, so it is defaulted here and every caller can just compare.
+# Every variable a project has, as a JSON array of the five fields this script uses:
+# name, id, target environments, note and Vercel's variable type. Values are never asked
+# for (no `decrypt`) and never read out of the response — these flows document and
+# annotate variables, and Vercel stays the only place their contents live. `comment` is
+# absent rather than null when a variable has none, so it is defaulted here and every
+# caller can just compare. The type is what `audit` reads to say which keys are sensitive
+# — the ones Vercel will not read back at all, so no flow here can ever hydrate them.
 fetch_project_env_json() {
   local team="$1" project="$2" token="$3" url body next rows=""
   url="https://api.vercel.com/v10/projects/$project/env?slug=$team&limit=100"
@@ -230,7 +285,7 @@ fetch_project_env_json() {
       jq -r '.error.message // "unrecognised response from the Vercel API"' <<<"$body"
       return 1
     }
-    rows+="$(jq -c '.envs[] | {key, id, target: (.target // []), comment: (.comment // "")}' <<<"$body")"$'\n'
+    rows+="$(jq -c '.envs[] | {key, id, target: (.target // []), comment: (.comment // ""), type: (.type // "")}' <<<"$body")"$'\n'
     next=$(jq -r '.pagination.next // empty' <<<"$body")
     if [[ -n "$next" ]]; then
       url="https://api.vercel.com/v10/projects/$project/env?slug=$team&limit=100&until=$next"
@@ -241,14 +296,16 @@ fetch_project_env_json() {
   printf '%s' "$rows" | jq -sc .
 }
 
-# The same thing as `KEY<TAB>targets`, which is all `init` needs. The endpoint returns one
-# row per target set, so the same key can appear several times; group_by folds them into
-# one row with the union of their targets.
+# The same thing as `KEY<TAB>targets<TAB>types`, which is all `init` and `audit` need.
+# The endpoint returns one row per target set, so the same key can appear several times;
+# group_by folds them into one row with the union of their targets and types.
 fetch_project_env() {
   local out
   out=$(fetch_project_env_json "$@") || { printf '%s' "$out"; return 1; }
   jq -r 'group_by(.key)[]
-    | [ .[0].key, ([.[].target] | flatten | unique | join(",")) ] | @tsv' <<<"$out"
+    | [ .[0].key,
+        ([.[].target] | flatten | unique | join(",")),
+        ([.[].type | select(. != "")] | unique | join(",")) ] | @tsv' <<<"$out"
 }
 
 # The `[targets]` suffix for a key, or nothing at all. All three environments is the
@@ -368,7 +425,7 @@ if [[ "$CMD" == "init" ]]; then
     [[ -f "$example" ]] && existing+="$(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*/\2/p' "$example" | tr '\n' ' ')"
 
     add=""; add_keys=""; n_add=0; n_vercel=0
-    while IFS=$'\t' read -r key targets; do
+    while IFS=$'\t' read -r key targets _types; do
       [[ -n "$key" ]] || continue
       n_vercel=$((n_vercel + 1))
       [[ "$existing" == *" $key "* ]] && continue
@@ -692,6 +749,295 @@ if [[ "$CMD" == "push-notes" ]]; then
   (( DRY )) && { pushed="to push"; setv="to set"; }
   echo "RESULT: $n_ok up to date · $n_pushed $pushed · $n_set comments $setv · $n_same already right · $n_todo TODO · $n_long too long · $n_missing not in Vercel · $n_absent absent · $n_fail failed"
   (( n_fail == 0 )) || exit 1
+  exit 0
+fi
+
+# --------------------------------------------------------------------------- audit ---
+
+# "1 keys" reads like a bug in the script rather than a fact about the estate.
+plural() { (( $1 == 1 )) && printf '%s' "$2" || printf '%s' "${3:-${2}s}"; }
+
+if [[ "$CMD" == "audit" ]]; then
+  n_clean=0; n_gap=0; n_warn=0; n_absent=0; n_skip=0; n_unreg=0
+  t_undoc=0; t_missing=0; t_nonote=0; t_keys=0; t_sensitive=0
+  gap_rows=""; warn_rows=""; sens_rows=""
+
+  say "${bold}vercel-env audit${off} — ${dim}$PROJECTS · read-only${off}"
+  say "${dim}GAP = two systems disagree and something known fixes it · warn = judgment · sensitive = a fact worth stating${off}"
+
+  # A team without a token is skipped and named, not failed: a partial report is still a
+  # report, and one token is enough to audit that team's repos. Every team blocked is the
+  # one exception — then there is nothing to report and saying "clean" would be a lie.
+  reachable=0
+  for team in "${teams[@]}"; do
+    if [[ -z "${TEAM_BLOCKED[$team]:-}" ]]; then reachable=1; continue; fi
+    n=$(jq -r --arg t "$team" '[.entries[] | select(.team == $t)] | length' "$REGISTRY")
+    say "  ${dim}skip${off}     ${bold}team $team${off} — ${yellow}${TEAM_BLOCKED[$team]}${off}"
+    say "           ${dim}$n entries not audited${off}"
+  done
+  if (( ! reachable )); then
+    echo "RESULT: unreachable — no team token is set, so nothing could be read" >&2
+    exit 2
+  fi
+
+  mapfile -t ENTRIES < <(jq -r '.entries[] | [.path, .team, .project] | @tsv' "$REGISTRY")
+
+  for entry in "${ENTRIES[@]}"; do
+    IFS=$'\t' read -r path team project <<<"$entry"
+    [[ -n "$path" ]] || continue
+    dir="$PROJECTS/$path"
+    label=$(printf '%-38s' "$path")
+
+    if [[ ! -d "$dir" ]]; then
+      n_absent=$((n_absent + 1))
+      say "  ${dim}absent${off}   $label ${dim}not on disk — repo not cloned here${off}"
+      continue
+    fi
+    if [[ -n "${TEAM_BLOCKED[$team]:-}" ]]; then
+      n_skip=$((n_skip + 1))   # already named once, above, for the whole team
+      continue
+    fi
+
+    gaps=""; warns=""; parts=""
+
+    if [[ "${TEAM_PROJECTS[$team]}" != *" $project "* ]]; then
+      n_gap=$((n_gap + 1))
+      gap_rows+="$path|registry|the registry says $team/$project, and team '$team' has no project by that name — one of the two has moved on|"$'\n'
+      say "  ${red}GAP${off}      $label ${red}no project '$project' in $team${off}"
+      continue
+    fi
+
+    if ! meta=$(fetch_project_env "$team" "$project" "${TEAM_TOKEN[$team]}"); then
+      n_gap=$((n_gap + 1))
+      gap_rows+="$path|unreadable|could not list env vars for $team/$project: ${meta:-request failed}|"$'\n'
+      say "  ${red}GAP${off}      $label ${red}${meta:-could not list env vars}${off}"
+      continue
+    fi
+
+    # Vercel's side: which keys exist, and which of them can never leave Vercel.
+    vkeys=" "; sens=""; n_vercel=0
+    while IFS=$'\t' read -r key targets types; do
+      [[ -n "$key" ]] || continue
+      n_vercel=$((n_vercel + 1)); vkeys+="$key "
+      [[ ",$types," == *",sensitive,"* ]] && sens+="$key "
+    done <<<"$meta"
+
+    example="$dir/.env.example"
+    ex_keys=" "; n_ex=0; n_nonote=0; commented=""
+    if [[ -f "$example" ]]; then
+      # The keys, read the way `init` reads them, and the notes, read by the one parser
+      # `push-notes` publishes from — so a key audit calls documented is exactly a key
+      # push-notes would write a comment for, and the two can never drift into disagreeing
+      # about what counts as prose.
+      unset EX_NOTE; declare -A EX_NOTE=()
+      while IFS=$'\t' read -r k note; do
+        [[ -n "$k" ]] && EX_NOTE[$k]="$note"
+      done < <(parse_example_notes "$example")
+      while read -r k; do
+        [[ -n "$k" ]] || continue
+        ex_keys+="$k "; n_ex=$((n_ex + 1))
+        note="${EX_NOTE[$k]:-}"
+        # `# TODO: note` is init's placeholder, and push-notes skips it for the same
+        # reason it is counted here: a dashboard full of TODO is worse than a bare one.
+        [[ -n "$note" && "${note^^}" != TODO* ]] || n_nonote=$((n_nonote + 1))
+      done < <(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*/\2/p' "$example" | sort -u)
+      while read -r k; do
+        [[ -n "$k" ]] || continue
+        [[ "$ex_keys" == *" $k "* ]] || commented+="$k "
+      done < <(sed -nE 's/^[[:space:]]*#[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*/\2/p' "$example" | sort -u)
+    fi
+
+    undoc=""; n_undoc=0
+    for k in $vkeys; do
+      [[ "$ex_keys" == *" $k "* ]] || { undoc+="$k "; n_undoc=$((n_undoc + 1)); }
+    done
+    orphan_keys=""; n_orphan_keys=0
+    for k in $ex_keys; do
+      [[ "$vkeys" == *" $k "* ]] || { orphan_keys+="$k "; n_orphan_keys=$((n_orphan_keys + 1)); }
+    done
+
+    if (( n_undoc > 0 )); then
+      if [[ -f "$example" ]]; then
+        gaps+="undocumented|$n_undoc in Vercel, absent from .env.example (fix: \`vercel-env.sh init\`)|${undoc% }"$'\n'
+      else
+        gaps+="undocumented|no .env.example at all, and Vercel holds $n_undoc keys (fix: \`vercel-env.sh init\`)|${undoc% }"$'\n'
+      fi
+      parts+="${parts:+ · }$n_undoc undocumented"
+      t_undoc=$((t_undoc + n_undoc))
+    fi
+
+    # A key the manifest documents and Vercel does not hold is a deploy reading nothing —
+    # unless Vercel holds nothing at all for this project, which is half the estate's
+    # static sites. There the same fact means "this app is configured in git and nowhere
+    # else", which is a thing to look at, not a break to fix.
+    if (( n_orphan_keys > 0 )); then
+      if (( n_vercel == 0 )); then
+        warns+="$n_orphan_keys documented $(plural "$n_orphan_keys" key) $(plural "$n_orphan_keys" exists exist) only in git — Vercel holds no variables for $team/$project at all|${orphan_keys% }"$'\n'
+        parts+="${parts:+ · }$n_orphan_keys keys not in Vercel"
+      else
+        gaps+="missing|$n_orphan_keys documented in .env.example, absent from Vercel — a deploy would read nothing (fix: add the $(plural "$n_orphan_keys" value) in Vercel)|${orphan_keys% }"$'\n'
+        parts+="${parts:+ · }$n_orphan_keys missing on Vercel"
+        t_missing=$((t_missing + n_orphan_keys))
+      fi
+    fi
+
+    if (( n_nonote > 0 )); then
+      warns+="$n_nonote of $n_ex documented $(plural "$n_ex" key) $(plural "$n_nonote" carries carry) no note — \`push-notes\` would upsert a placeholder|"$'\n'
+      parts+="${parts:+ · }$n_nonote without a note"
+      t_nonote=$((t_nonote + n_nonote))
+    fi
+    t_keys=$((t_keys + n_ex))
+
+    # A key that appears only commented out reads as documented and is not: the
+    # convention gives prose to the key underneath a `#` block, never to the `#` line
+    # itself, so `init` will seed a second, real mention of the same key.
+    dup=""
+    for k in $commented; do
+      [[ "$vkeys" == *" $k "* ]] && dup+="$k "
+    done
+    if [[ -n "$dup" ]]; then
+      warns+="mentioned only behind a \`#\` — that is prose, not documentation, and \`init\` will seed each of these again as a real key line|${dup% }"$'\n'
+    fi
+
+    # Linked, and linked to what the registry says. Every other flow reads this file.
+    linked=""
+    [[ -f "$dir/.vercel/project.json" ]] && \
+      linked=$(jq -r '.projectName // empty' "$dir/.vercel/project.json" 2>/dev/null)
+    if [[ -z "$linked" ]]; then
+      gaps+="unlinked|no .vercel/project.json — \`vercel env pull\` has nothing to read here (fix: \`vercel-env.sh link\`)|"$'\n'
+      parts+="${parts:+ · }unlinked"
+    elif [[ "$linked" != "$project" ]]; then
+      gaps+="mislinked|linked to '$linked', registry says '$project' (fix: \`vercel-env.sh link\`)|"$'\n'
+      parts+="${parts:+ · }mislinked"
+    fi
+
+    # Staleness is a question only where there is something to hydrate. A project Vercel
+    # holds no variables for has no .env.local to be out of date, and treating those as
+    # unconfigured would cry wolf about half the estate.
+    if (( n_vercel > 0 )); then
+      local_file="$dir/.env.local"
+      if [[ ! -f "$local_file" ]]; then
+        warns+="no .env.local — nothing has hydrated this app yet|"$'\n'
+        parts+="${parts:+ · }no .env.local"
+      else
+        mtime=$(stat -c %Y "$local_file" 2>/dev/null || echo 0)
+        age=$(( ( $(date +%s) - mtime ) / 86400 ))
+        if (( age >= STALE_DAYS )); then
+          warns+=".env.local is $age days old ($(date -d "@$mtime" +%Y-%m-%d)) — values in Vercel may have moved on since|"$'\n'
+          parts+="${parts:+ · }.env.local ${age}d old"
+        fi
+      fi
+    fi
+
+    if [[ -n "$sens" ]]; then
+      n_sens=$(wc -w <<<"$sens" | tr -d " ")
+      t_sensitive=$((t_sensitive + n_sens))
+      sens_rows+="$path|$n_sens of $n_vercel|${sens% }"$'\n'
+    fi
+
+    while IFS= read -r g; do
+      [[ -n "$g" ]] || continue
+      gap_rows+="$path|$g"$'\n'
+    done <<<"$gaps"
+    while IFS= read -r w; do
+      [[ -n "$w" ]] || continue
+      warn_rows+="$path|$w"$'\n'
+      n_warn=$((n_warn + 1))
+    done <<<"$warns"
+
+    if [[ -n "${gaps//[$'\n']/}" ]]; then
+      n_gap=$((n_gap + 1))
+      say "  ${red}GAP${off}      $label ${dim}$parts${off}"
+    elif [[ -n "${warns//[$'\n']/}" ]]; then
+      say "  ${yellow}warn${off}     $label ${dim}$parts${off}"
+    else
+      n_clean=$((n_clean + 1))
+      if (( n_vercel == 0 )); then
+        say "  ${green}ok${off}       $label ${dim}no variables in Vercel — nothing to document${off}"
+      else
+        say "  ${green}ok${off}       $label ${dim}$n_vercel $(plural "$n_vercel" key), documented and linked${off}"
+      fi
+    fi
+  done
+
+  # A directory linked to a Vercel project that no registry entry names. The registry is
+  # what every flow iterates, so an app missing from it is an app the whole epic skips.
+  reg_paths=" $(jq -r '.entries[].path' "$REGISTRY" | tr '\n' ' ') "
+  while IFS= read -r link_file; do
+    [[ -n "$link_file" ]] || continue
+    d="${link_file%/.vercel/project.json}"
+    rel="${d#"$PROJECTS/"}"
+    [[ "$reg_paths" == *" $rel "* ]] && continue
+    name=$(jq -r '.projectName // "?"' "$link_file" 2>/dev/null)
+    gap_rows+="$rel|unregistered|linked to Vercel project '$name', and no registry entry names this path — every flow skips it|"$'\n'
+    n_unreg=$((n_unreg + 1))
+  done < <(find "$PROJECTS" -maxdepth 6 -type d -name node_modules -prune -o \
+             -type f -path '*/.vercel/project.json' -print 2>/dev/null | sort)
+
+  # And the same drift from the other side: a Vercel project the registry never claims.
+  # Reported, not judged — some are known orphans with their own triage stub, and
+  # deciding which is which is Jamie's, not this script's.
+  for team in "${teams[@]}"; do
+    [[ -n "${TEAM_BLOCKED[$team]:-}" ]] && continue
+    claimed=" $(jq -r --arg t "$team" '.entries[] | select(.team == $t) | .project' "$REGISTRY" | tr '\n' ' ') "
+    unclaimed=""; n_unclaimed=0
+    for p in ${TEAM_PROJECTS[$team]}; do
+      [[ "$claimed" == *" $p "* ]] || { unclaimed+="$p "; n_unclaimed=$((n_unclaimed + 1)); }
+    done
+    if (( n_unclaimed > 0 )); then
+      warn_rows+="team $team|$n_unclaimed Vercel projects no registry entry claims — an app the flows skip, or an orphan to retire|${unclaimed% }"$'\n'
+      n_warn=$((n_warn + 1))
+    fi
+  done
+
+  # Long key lists fold rather than run off the terminal, indented under their finding.
+  keys_under() { printf '%s\n' "$1" | fold -s -w 62 | sed 's/^/                       /'; }
+
+  if [[ -n "${gap_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Gaps${off} ${dim}— two systems disagree, and something known fixes it${off}"
+    last=""
+    while IFS='|' read -r p kind detail keys; do
+      [[ -n "$p" ]] || continue
+      [[ "$p" == "$last" ]] || printf '  %sGAP%s  %s%s%s\n' "$red" "$off" "$bold" "$p" "$off"
+      last="$p"
+      printf '       %-14s %s\n' "$kind" "$detail"
+      [[ -n "$keys" ]] && keys_under "$keys"
+    done <<<"$gap_rows"
+  fi
+
+  if [[ -n "${warn_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Warnings${off} ${dim}— judgment, never mechanical${off}"
+    last=""
+    while IFS='|' read -r p detail keys; do
+      [[ -n "$p" ]] || continue
+      [[ "$p" == "$last" ]] || printf '  %swarn%s %s%s%s\n' "$yellow" "$off" "$bold" "$p" "$off"
+      last="$p"
+      printf '       %s\n' "$detail"
+      [[ -n "$keys" ]] && keys_under "$keys"
+    done <<<"$warn_rows"
+  fi
+
+  if [[ -n "${sens_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Sensitive${off} ${dim}— Vercel will not read these back, so no flow can ever hydrate them locally${off}"
+    while IFS='|' read -r p count keys; do
+      [[ -n "$p" ]] || continue
+      printf '  %s%s%s %s(%s keys)%s\n' "$bold" "$p" "$off" "$dim" "$count" "$off"
+      keys_under "$keys"
+    done <<<"$sens_rows"
+  fi
+
+  say ""
+  say "${dim}keys: $t_keys documented · $t_undoc undocumented · $t_missing absent from Vercel · $t_nonote without a note · $t_sensitive sensitive${off}"
+  echo "RESULT: $n_clean clean · $n_gap with gaps · $n_warn warnings · $n_unreg unregistered · $n_absent absent · $n_skip skipped (of ${#ENTRIES[@]} entries)"
+  # Findings are the whole point, so they colour the exit code — this is a step in a
+  # ritual a human runs, not the scheduled report D15 was written about, and a wrap that
+  # cannot tell clean from drifted cannot gate on it. Warnings deliberately do not: the
+  # `# TODO: note` count starts in the hundreds and will stay high for a long time, and a
+  # run that is permanently red teaches you to stop reading it.
+  (( n_gap == 0 && n_unreg == 0 )) || exit 1
   exit 0
 fi
 

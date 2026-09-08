@@ -12,7 +12,8 @@
 #   .icm/intake/_done/       the archive (completed epics + legacy tickets)
 #   .icm/docs/               ad hoc reports
 #   .claude/settings.json    clean policy baseline
-#   .claude/hooks/*          canonical estate hooks (session-start, wrap-reminder)
+#   .claude/hooks/*          canonical estate hooks (session-start, wrap-reminder, and —
+#                            kodominio repos only — vercel-env-hydrate)
 #   .claude/skills/*         canonical estate skills (ticket-craft, pr-conventions)
 #   AGENTS.md                reported only — never templated (each repo writes its own)
 #   CLAUDE.md                the one-line `@AGENTS.md` importer — seeded, but only into
@@ -70,6 +71,16 @@ CANONICAL=(
   "skills/ticket-craft/SKILL.md"
   "skills/pr-conventions/SKILL.md"
 )
+
+# Canonical assets that stop at a team boundary. `vercel-env-hydrate.sh` hydrates a cloud
+# session's environment from the Vercel team the repo deploys under, and sustentus and
+# remi21 are separated boundaries (epic vercel-env-system, Jamie's ruling 2026-09-02):
+# what their repos carry is decided in their repos, so the hook is offered there rather
+# than seeded. sustentus is already exempt outright; remi-ai is named here instead of
+# added to EXEMPT because it still takes every other part of the baseline. Nothing breaks
+# in a repo that goes without it — `session-start.sh` only calls the file if it is there.
+CANONICAL_KODOMINIO=( "hooks/vercel-env-hydrate.sh" )
+SEPARATE_TEAM=("remi-ai")
 
 # Pipeline profile (template/icm-pipeline/…): paths relative to <repo>/.icm/.
 PIPELINE_ICM=(
@@ -142,6 +153,12 @@ for repo in "${repos[@]}"; do
   pipeline=0
   grep -qE '^- *profile: *pipeline' "$repo/.icm/CONTEXT.md" 2>/dev/null && pipeline=1
 
+  # The canonical Claude assets this particular repo should carry.
+  assets=("${CANONICAL[@]}")
+  separate=0
+  for t in "${SEPARATE_TEAM[@]}"; do [[ "$base" == "$t" ]] && separate=1; done
+  (( separate )) || assets+=("${CANONICAL_KODOMINIO[@]}")
+
   # Has this repo's Layer 0 moved to AGENTS.md yet? Everything new-shape hangs off this
   # one fact, so an un-migrated repo is measured exactly as it was before the move.
   migrated=0
@@ -158,7 +175,7 @@ for repo in "${repos[@]}"; do
   # --- .claude baseline ---
   [[ -d "$repo/.claude" ]]               || missing+=(".claude/")
   [[ -f "$repo/.claude/settings.json" ]] || missing+=(".claude/settings.json")
-  for asset in "${CANONICAL[@]}"; do
+  for asset in "${assets[@]}"; do
     [[ -f "$repo/.claude/$asset" ]] || missing+=(".claude/$asset")
   done
 
@@ -186,7 +203,7 @@ for repo in "${repos[@]}"; do
   fi
 
   # --- canonical drift (report-only, never repaired — repos own their copies) ---
-  for asset in "${CANONICAL[@]}"; do
+  for asset in "${assets[@]}"; do
     if [[ -f "$repo/.claude/$asset" ]] && ! cmp -s "$TEMPLATE/claude/$asset" "$repo/.claude/$asset"; then
       warns+=("drift from canonical: .claude/$asset differs from _system/template/claude/$asset")
     fi
@@ -197,6 +214,8 @@ for repo in "${repos[@]}"; do
     fi
   done
   # Hooks seeded into a repo whose settings.json predates the wiring are inert; say so.
+  # Only the two settings.json registers: `vercel-env-hydrate.sh` is deliberately not one
+  # of them — `session-start.sh` invokes it, so its registration is that hook's.
   if [[ -f "$repo/.claude/settings.json" ]]; then
     for hook in session-start.sh wrap-reminder.sh; do
       if [[ -f "$repo/.claude/hooks/$hook" ]] && \
@@ -265,7 +284,7 @@ for repo in "${repos[@]}"; do
       cp "$TEMPLATE/claude/settings.json" "$repo/.claude/settings.json"
       actions+=("created .claude/settings.json")
     fi
-    for asset in "${CANONICAL[@]}"; do
+    for asset in "${assets[@]}"; do
       if [[ ! -f "$repo/.claude/$asset" ]]; then
         mkdir -p "$(dirname "$repo/.claude/$asset")"
         cp "$TEMPLATE/claude/$asset" "$repo/.claude/$asset"
@@ -317,7 +336,7 @@ for repo in "${repos[@]}"; do
     for p in .icm/CONTEXT.md .icm/intake/README.md .icm/intake/triage .icm/intake/_done .icm/docs .claude/settings.json; do
       [[ -e "$repo/$p" ]] || missing+=("$p (fix failed)")
     done
-    for asset in "${CANONICAL[@]}"; do
+    for asset in "${assets[@]}"; do
       [[ -f "$repo/.claude/$asset" ]] || missing+=(".claude/$asset (fix failed)")
     done
     if (( migrated )); then

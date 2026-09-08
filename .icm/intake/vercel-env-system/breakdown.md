@@ -196,6 +196,60 @@ changes the two flows still to build:
   from two sessions at once do land on the same files.
 
 
+## Worth knowing — learned building stub 6 (2026-09-08)
+
+The hook is written, canonical and seeded by `icm-check`; nothing has run against real
+Vercel yet, because a session has no token. What building it settled:
+
+- **`vercel link --yes` creates whatever project name it is handed.** Stub 1 inferred it;
+  the CLI's own source says it outright (54.18.6, `inputProject`: with `autoConfirm` it
+  returns `detectedProject || detectedProjectName`, and a bare *name* is the create path).
+  A cloud session cannot check a name against a registry it does not have, and the estate
+  is already retiring eight orphans, so the hook never guesses from the directory name:
+  it asks Vercel which projects are connected to this repo's git remote —
+  `GET /v9/projects?repoUrl=…`, the same lookup the CLI's own cross-team search uses — and
+  a repo with no match hydrates nothing and says so. That query is also what makes the
+  hook configuration-free: no registry, no project id, no team slug in any committed file.
+- **The registration problem decided the shape.** A second `SessionStart` entry would have
+  meant editing 24 hand-owned `settings.json` files, of which **16 of 25 already differ
+  from the template**; `session-start.sh`, by contrast, is byte-identical in all 23 repos
+  that carry it. So the hook is a sibling file that `session-start.sh` invokes, and the
+  fan-out is two canonical files instead of two dozen policy edits.
+- **…and then the sting: 13 kodominio repos never register `session-start.sh` either.**
+  Their `settings.json` has no `hooks` key at all (`pierpont` has no `settings.json`), so
+  both canonical hooks have been inert there all along — `icm-check` has been saying so
+  and nobody acted. It matters now because a repo that never registers `session-start.sh`
+  hydrates nothing, and **8 of the 17 kodominio repos with variables are among them** —
+  courseday, cafe-jardim, messy-play, collabimmo, pierpont, boystomenretreat,
+  lourenco-botelho, little-grass-shack. Parked as
+  `triage/settings-json-without-hooks.md`; the panel checklist closes them by hand.
+- **Stub 4's open question, answered: the cloud hook pulls production.** It first shipped
+  defaulting to `development`, matching what `pull` writes locally — and that was the
+  wrong reading of the estate. Jamie's ruling on seeing it (2026-09-08): almost nothing
+  runs locally, so a cloud session wants production. The manifests agree emphatically —
+  **every one of the 464 documented keys in the kodominio estate is targeted at
+  production**, and only six repos scope anything to `development` at all, so the original
+  default would have handed most sessions an empty file. `VERCEL_ENV_TARGET` overrides per
+  panel. The two flows now deliberately disagree about which environment they mean, and
+  that is the point: `pull` serves a machine that rarely runs the apps, the hook serves the
+  session that does.
+- **What arrives is still less than the manifest lists, and that is Vercel.** 248 of those
+  464 keys are `type: sensitive` and are never read back at any target (stub 5) —
+  `cafe-jardim` documents 26 and a pull delivered 3. So a hydrated file has holes in it
+  wherever a secret matters; the generated header says so, and the checklist stops the
+  counts reading as a promise. The upside is that pulling production is mostly pulling
+  configuration: the keys that would hurt most cannot leave Vercel at all.
+- **An empty pull would have written the annotation pass's own summary line into
+  `.env.local`.** `body="${body%$'\n'*}"` strips nothing from a string with no newline in
+  it, and awk's `\001COUNTS` sentinel is the whole output when the file has no keys. The
+  estate-wide `pull` never hit it — the CLI writes a `VERCEL_OIDC_TOKEN` into every file,
+  so there is always a second line — and all 40 files on disk are clean; the hook guards
+  it explicitly rather than relying on that.
+- **Nothing here has touched Vercel.** No token reaches a Claude session, by design, so
+  the hook was exercised against a stubbed CLI and a stubbed API: every refusal path, the
+  monorepo fan-out, the empty pull, the `.gitignore` revert and the annotation. The
+  end-to-end proof is a cloud session on `courseday` after the panel pass.
+
 ## Out of scope (whole epic)
 
 - Shared team variables — Jamie's call 2026-09-02: project-level is enough. Revisit

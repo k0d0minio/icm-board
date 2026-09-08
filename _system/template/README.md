@@ -93,11 +93,14 @@ Rules:
   `biome.json`; `dungeons-dragons` does it in `.prettierignore`, alongside the `.icm/`
   and `.claude/` entries already there for the same reason. It stays a per-repo call,
   discovered by that repo's CI — decision D17, settled 2026-09-08.
-  **The exposed surface is one file.** Of the drift-checked assets, the four `hooks/*.sh`
-  are shell (no formatter in the estate touches them) and the two `SKILL.md` are
-  markdown that satisfies Prettier's defaults today — `remi-ai` checks `**/*.md` across
-  `.claude/` and `.icm/` and is green. Only `opencode.jsonc` collides, and only in a repo
-  whose style differs from this folder's two-space.
+  **The exposed surface is two files: `opencode.jsonc` and `skills/*/SKILL.md`.** Of the
+  drift-checked assets the three `hooks/*.sh` are shell, which no formatter in the estate
+  touches; the rest are markdown and JSONC, and both collide. A first survey (2026-09-04)
+  read the markdown as safe because `remi-ai` checks `**/*.{ts,tsx,md}` and is green —
+  that held for its glob, not for `prettier --check .`. Adopting `courseday` put five
+  files in scope at once and failed all five, `skills/pr-conventions/SKILL.md` among them
+  (k0d0minio/courseday#277, 2026-09-08). Assume any canonical file that is not a shell
+  script can collide in a repo that formats its whole tree.
   **`.claude/settings.json` is not in that surface**, and the earlier note here that it
   was is wrong: it is seeded and required, never drift-compared (it is absent from
   `CANONICAL` in `icm-check.sh`, because every repo edits its own hook wiring). A

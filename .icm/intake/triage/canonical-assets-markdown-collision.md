@@ -24,10 +24,18 @@ repo, and seeding the baseline put **five** files in scope, all failing at once:
 | File | Canonical? | Drift risk if reformatted |
 |---|---|---|
 | `.claude/skills/pr-conventions/SKILL.md` | yes — drift-checked | **real** |
-| `.icm/CONTEXT.md` | yes — drift-checked | **real** |
+| `.icm/CONTEXT.md` | seeded, **not** drift-checked | none |
 | `opencode.jsonc` | yes — drift-checked | **real** |
 | `.icm/project.md` | no — repo-owned | none |
 | `AGENTS.md` | no — repo-owned | none |
+
+One correction to the table above (made on the branch that closed D17): `.icm/CONTEXT.md`
+is **not** drift-checked. `icm-check.sh` runs exactly two `cmp -s` comparisons — over
+`.claude/`'s `CANONICAL` and over `CANONICAL_ROOT` — so `.icm/CONTEXT.md` and
+`.icm/intake/README.md` are seeded-when-missing and never compared, the same standing
+`.claude/settings.json` has. That leaves **two** files with real drift risk, not three:
+`skills/*/SKILL.md` and `opencode.jsonc`. It does not weaken the case here — the point is
+that the markdown collides at all, and `SKILL.md` is drift-checked.
 
 So the survey's two load-bearing facts are both now false: courseday *does* carry the rails
 file, and the markdown assets *do* collide. `SKILL.md` "satisfies Prettier's defaults today"

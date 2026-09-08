@@ -34,8 +34,12 @@
 # never upgrades one.
 #
 # --fix creates ONLY what is missing, from the template; existing files are never
-# touched. A repo's copy of a canonical asset that has diverged from the template is
-# reported as drift and never repaired — repos own their copies (template/README.md).
+# touched — with exactly one exception, decision D18: it merges the template's own
+# registration for a seeded-but-unregistered hook into an existing settings.json. It
+# appends only an entry the repo's file does not already name, rewrites nothing, and
+# touches no other key. Requires jq; without it the merge is skipped and the inert-hook
+# warning stands. A repo's copy of a canonical asset that has diverged from the template
+# is reported as drift and never repaired — repos own their copies (template/README.md).
 # Legacy flat PREFIX-NNN tickets are reported as unmigrated, never converted.
 #
 # Usage: _system/scripts/icm-check.sh [--fix] [root]
@@ -55,6 +59,11 @@ for arg in "$@"; do
 done
 [[ -n "$APPS_ROOT" ]] || APPS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/template"
+
+# jq powers the single merge --fix is permitted to make into an existing file (D18).
+# Absent, the merge is skipped and the warning it would have silenced is reported with
+# the reason attached — the report never claims a repo is wired when it is not.
+JQ="$(command -v jq 2>/dev/null || true)"
 
 if [[ ! -d "$APPS_ROOT" ]]; then echo "Not a directory: $APPS_ROOT" >&2; exit 2; fi
 if [[ ! -d "$TEMPLATE/icm" || ! -d "$TEMPLATE/claude" || ! -d "$TEMPLATE/root" ]]; then
@@ -148,7 +157,7 @@ for repo in "${repos[@]}"; do
   fi
 
   total=$((total + 1))
-  missing=(); warns=(); actions=()
+  missing=(); warns=(); actions=(); repo_fixed=0
 
   pipeline=0
   grep -qE '^- *profile: *pipeline' "$repo/.icm/CONTEXT.md" 2>/dev/null && pipeline=1
@@ -213,18 +222,6 @@ for repo in "${repos[@]}"; do
       warns+=("drift from canonical: $asset differs from _system/template/root/$asset")
     fi
   done
-  # Hooks seeded into a repo whose settings.json predates the wiring are inert; say so.
-  # Only the two settings.json registers: `vercel-env-hydrate.sh` is deliberately not one
-  # of them — `session-start.sh` invokes it, so its registration is that hook's.
-  if [[ -f "$repo/.claude/settings.json" ]]; then
-    for hook in session-start.sh wrap-reminder.sh; do
-      if [[ -f "$repo/.claude/hooks/$hook" ]] && \
-         ! grep -q "$hook" "$repo/.claude/settings.json" 2>/dev/null; then
-        warns+=("hook .claude/hooks/$hook exists but settings.json never registers it (inert)")
-      fi
-    done
-  fi
-
   # --- report-only checks (agent/human territory, never auto-fixed) ---
   # Layer-0 identity, shape-tolerant for the length of the AGENTS.md rollout: either the
   # legacy full CLAUDE.md or the AGENTS.md + importer pair satisfies it, and only a repo
@@ -330,7 +327,7 @@ for repo in "${repos[@]}"; do
         fi
       done
     fi
-    fixed=$((fixed + 1))
+    fixed=$((fixed + 1)); repo_fixed=1
     missing=()
     # re-verify what we just created
     for p in .icm/CONTEXT.md .icm/intake/README.md .icm/intake/triage .icm/intake/_done .icm/docs .claude/settings.json; do
@@ -350,6 +347,68 @@ for repo in "${repos[@]}"; do
       for p in "${PIPELINE_CLAUDE[@]}"; do [[ -f "$repo/.claude/$p" ]] || missing+=(".claude/$p (fix failed)"); done
       for p in "${PIPELINE_GITHUB[@]}"; do [[ -f "$repo/.github/$p" ]] || missing+=(".github/$p (fix failed)"); done
     fi
+  fi
+
+  # --- hook registration (D18) ---
+  # A hook on disk is inert until settings.json names it, and 13 repos carried both
+  # canonical hooks under a settings.json written before the `hooks` key existed. This
+  # runs AFTER the seeding above so a hook created on this very pass is judged on the
+  # state it leaves behind, not the state it arrived in.
+  #
+  # The merge is the one edit --fix makes to a file it did not create. Its discipline is
+  # D7's, one level down: the template is read for the event and the entry, and the entry
+  # is appended ONLY for a hook the repo's file does not already mention anywhere. No
+  # value the repo already holds is changed — an entry it already names is never
+  # rewritten, and its own extra hooks and permissions survive untouched. Both sides come
+  # from the template rather than being hardcoded here, so adding a hook to
+  # template/claude/settings.json is all it takes to have this register it.
+  #
+  # One caveat worth knowing before you run it: jq re-emits the whole document, so a repo
+  # that hand-packs an array onto one line gets it reflowed. Content-identical, but a repo
+  # whose CI format-checks .claude/ will notice. (2026-09-08: courseday, and only
+  # courseday — every other file here is the template's own shape, which jq reproduces
+  # byte-for-byte.)
+  #
+  # `vercel-env-hydrate.sh` is deliberately absent from the loop: it rides
+  # session-start.sh, which invokes it, so registering that one registers both.
+  if [[ -f "$repo/.claude/settings.json" ]]; then
+    for hook in session-start.sh wrap-reminder.sh; do
+      [[ -f "$repo/.claude/hooks/$hook" ]] || continue
+      grep -q "$hook" "$repo/.claude/settings.json" 2>/dev/null && continue
+      merged=0
+      if (( FIX )) && [[ -n "$JQ" ]]; then
+        # Which event does the template file this hook under, and under what entry?
+        event="$("$JQ" -r --arg h "$hook" \
+          '.hooks // {} | to_entries[]
+             | select(any(.value[]?; any(.hooks[]?; .command // "" | contains($h))))
+             | .key' "$TEMPLATE/claude/settings.json" 2>/dev/null | head -1)"
+        if [[ -n "$event" ]]; then
+          entry="$("$JQ" -c --arg h "$hook" --arg e "$event" \
+            '.hooks[$e] | map(select(any(.hooks[]?; .command // "" | contains($h))))' \
+            "$TEMPLATE/claude/settings.json" 2>/dev/null)"
+          tmp="$repo/.claude/settings.json.icm-check.$$"
+          if [[ -n "$entry" && "$entry" != "null" && "$entry" != "[]" ]] && \
+             "$JQ" --arg e "$event" --argjson add "$entry" \
+               '.hooks = ((.hooks // {}) | .[$e] = ((.[$e] // []) + $add))' \
+               "$repo/.claude/settings.json" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+            mv "$tmp" "$repo/.claude/settings.json"
+            actions+=("registered .claude/hooks/$hook in settings.json (${event})")
+            merged=1
+          else
+            rm -f "$tmp"
+          fi
+        fi
+      fi
+      if (( ! merged )); then
+        why=""
+        (( FIX )) && [[ -z "$JQ" ]] && why=" — jq not installed, so --fix could not merge it"
+        warns+=("hook .claude/hooks/$hook exists but settings.json never registers it (inert)${why}")
+      fi
+    done
+  fi
+  # A repo whose only repair was the merge above is still a repo this pass fixed.
+  if (( FIX )) && (( ! repo_fixed )) && (( ${#actions[@]} > 0 )); then
+    fixed=$((fixed + 1)); repo_fixed=1
   fi
 
   # --- report ---

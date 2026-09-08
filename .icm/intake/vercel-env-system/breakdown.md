@@ -94,6 +94,44 @@ flows still to build:
   documented** and will be seeded again as a real key line if Vercel has it. Nothing in
   the estate hit this yet; `audit` is the natural place to notice a near-duplicate.
 
+## Worth knowing — learned building stub 3 (2026-09-08)
+
+`push-notes` set 42 comments estate-wide on its first run and zero on its second. What
+the run taught, for `pull` and `audit`:
+
+- **Only 12 of 40 entries had anything to push, and 347 keys are still `# TODO: note`.**
+  Stub 2 predicted the placeholder count would start high; it is 347 out of 389 noted
+  keys, so the estate's dashboards are ~11% annotated. The 42 that landed came almost
+  entirely from repos that already had hand-written `.env.example` prose before init ran
+  — agorasim, courseday, sustentus/apps/web. The editorial pass is the bottleneck now,
+  not the plumbing.
+- **Five notes are longer than Vercel's 500-character comment cap** — one runs to 1202.
+  They are good documentation, not sloppy ones: paragraphs explaining which Stripe
+  webhook events a secret signs, why a seed account exists. Failing the run over them
+  would push Jamie to shorten prose to satisfy a tool, and truncating would let the
+  mirror edit the original — so they are named in a warning section and left alone, and
+  the run still exits 0. If the dashboard ever needs them, the answer is a shorter first
+  sentence in `.env.example`, not a smarter script.
+- **A `# SANITY_API_READ_TOKEN=` line reads as prose to the convention.** Stub 2 flagged
+  the commented-out-key case as something audit should notice; it turns out `push-notes`
+  meets it first, because the convention hands that line to the key below it as a note
+  and publishing `SANITY_API_READ_TOKEN=` into a client dashboard as a sentence would be
+  nonsense. The parser now refuses a note that is only an assignment. `audit` still owns
+  noticing the near-duplicate key.
+- **62 Vercel records already carry an empty-string comment, and two carry a real one.**
+  The empty ones are noise — `comment` is absent when never set, so something touched
+  these and cleared them. The two real ones are on `sustentus/marketing`
+  (`CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`), written in the dashboard,
+  and they survived this run only because those keys are still `# TODO: note`. The
+  moment someone writes that note, repo-authoritative means the dashboard text is
+  replaced. That is the 2026-09-02 ruling working, not a bug — but it is the first real
+  instance of it, and worth knowing before it surprises someone.
+- **`PATCH .../env/{id}` with a `comment` field and nothing else leaves everything else
+  alone.** Verified rather than assumed: a fingerprint of all 422 records in the estate
+  — id, key, type, target set and a SHA-256 of the value — is byte-identical before and
+  after. `updatedAt` does move, so `vercel env ls` timestamps are *not* a usable
+  spot-check for this flow; the value hash is.
+
 ## Worth knowing — learned building stub 4 (2026-09-08)
 
 `pull` ran clean across all 40 entries. What it found is mostly about what is *not* in
@@ -126,6 +164,37 @@ Vercel, and it changes what stubs 5 and 6 are walking into:
   .gitignore belongs to that repo.
 - 104 of the 120 keys that do come down still carry `# TODO: note`. The editorial pass
   is where the breakdown said it would be.
+
+## Worth knowing — learned building stub 5 (2026-09-08)
+
+The first estate-wide `audit` — 40 entries, 464 documented keys — and what it found that
+changes the two flows still to build:
+
+- **248 of the 464 keys are `type: sensitive`, and Vercel will not read those back at
+  all.** Over half the estate — every Neon-injected `POSTGRES_*`/`PG*` alias, every
+  `*_SECRET`, `RESEND_API_KEY`, `AUTH_SECRET` — can never reach a `.env.local`, by
+  Vercel's design and not by any gap in this epic. `pull` will produce a file with holes
+  in it wherever those keys matter, and a cloud session hydrated from it will be missing
+  them. Worth deciding whether `pull` marks them (`# sensitive — set locally`) rather
+  than leaving them silently absent. audit lists them per app for exactly this reason.
+- **The drift runs the other way from the one we expected.** Zero Vercel variables are
+  undocumented (init did its job three days ago), but **50 documented keys are absent
+  from Vercel** — cafe-jardim alone documents 23 that no deploy will ever read. Some of
+  those are a hand-written `.env.example` from before the manifest convention; some are
+  genuinely a build reading nothing. Either way it is Jamie's call per key, which is why
+  it is a GAP with a name rather than something a flow fixes.
+- **The registry is clean in both directions** — every Vercel project has an entry and
+  every entry a project, the 8 kodominio orphans having been retired since — but the disk
+  is not: `projects/sustentus/.vercel/project.json` links the monorepo root to the `web`
+  project, which no registry entry names. The find-on-disk half of the check earns its
+  keep.
+- **`# TODO: note` is 398 of 464 keys**, as stub 2 predicted. That is why warnings do not
+  colour audit's exit code: a report that is permanently red is one you stop reading.
+- **Staleness only means anything with a clock running.** Three `.env.local` files were
+  133–273 days old at the first run and were refreshed mid-session by the `pull` branch
+  running in parallel — which is the check working, and a reminder that estate-wide runs
+  from two sessions at once do land on the same files.
+
 
 ## Out of scope (whole epic)
 

@@ -53,10 +53,18 @@ green"); never on a verdict you didn't establish yourself after your own last pu
 not substitute a bare check-runs read for the script — it misses commit statuses and
 counts superseded attempts.
 
-## After the merge
+## Close-out — before the merge, not after
 
-Close-out is the merging session's last act, on `main`:
-`git mv .icm/runs/<slug>/ .icm/runs/_done/<slug>/` (plus the epic archive when it
-completed — the stage contracts say when), committed as `Wrap: close out <slug>` and
-pushed. Live folders hold only live work — a merged run still sitting in `runs/` is the
-alarm, not a state.
+Close-out is the last commit on the branch, **not** a push to `main`:
+`.icm/scripts/close-out.sh <slug>` moves `.icm/runs/<slug>/` to `.icm/runs/_done/<slug>/`
+(plus the epic archive when it completed — the script decides, the stage contracts say
+when) and commits it on the run's branch, so the squash-merge is what publishes it.
+
+A close-out pushed to `main` afterwards is the shape that breaks: a branch protected by
+required status checks refuses the direct push, and the archive commit strands where
+nobody merges it. Live folders hold only live work — a merged run still sitting in
+`runs/` is the alarm, not a state.
+
+The front (Scope and approve) is the exception that proves it: it opens no PR, so its
+markdown-only artifacts go straight to `main` as they are written, and `close-out.sh`
+archives the front run when the epic it cut is archived.

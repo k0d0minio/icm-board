@@ -1,9 +1,9 @@
 ---
 name: pipeline
 description: >-
-  The delivery pipeline (ICM). Use for /pipeline — to define, build or release work,
-  fix a bug, make a tweak, run a chore, or check status. Subcommands: new, define,
-  build, release, bug, tweak, chore, status.
+  The delivery pipeline (ICM). Use for /pipeline — to scope a request, define, build or
+  release work, fix a bug, make a tweak, run a chore, or check status. Subcommands:
+  scope, approve, new, define, build, release, bug, tweak, chore, status.
 ---
 
 # /pipeline — the delivery pipeline router
@@ -19,10 +19,12 @@ Argument form: `<subcommand> [slug, "request", or stub path]`. The argument is: 
 
 | Subcommand | Contract to read & follow |
 |---|---|
-| `new` (all forms — resolution below) | `.icm/stages/01_define/CONTEXT.md` |
-| `define "<request>"` / `define <slug>` | `.icm/stages/01_define/CONTEXT.md` |
-| `build <slug>` | `.icm/stages/02_build/CONTEXT.md` |
-| `release <slug>` | `.icm/stages/03_release/CONTEXT.md` |
+| `scope "<story>"` / `scope <slug>` | `.icm/stages/01_scope/CONTEXT.md` |
+| `approve <slug>` | `.icm/stages/01_scope/approve/CONTEXT.md` |
+| `new` (all forms — resolution below) | `.icm/stages/02_define/CONTEXT.md` |
+| `define "<request>"` / `define <slug>` | `.icm/stages/02_define/CONTEXT.md` |
+| `build <slug>` | `.icm/stages/03_build/CONTEXT.md` |
+| `release <slug>` | `.icm/stages/04_release/CONTEXT.md` |
 | `bug "<report>"` / `bug <slug-or-stub>` | `.icm/lanes/bug/CONTEXT.md` |
 | `tweak "<change>"` / `tweak <slug-or-stub>` | `.icm/lanes/tweak/CONTEXT.md` |
 | `chore "<task>"` / `chore <slug-or-stub>` | `.icm/lanes/chore/CONTEXT.md` |
@@ -30,8 +32,15 @@ Argument form: `<subcommand> [slug, "request", or stub path]`. The argument is: 
 | *(empty / unclear)* | read `.icm/CONTEXT.md`, show the help |
 
 Stages are discovered by folder order: `ls .icm/stages/` → `NN_<name>/CONTEXT.md`; a
-subcommand maps to the `<name>` part. Lanes likewise under `.icm/lanes/`. Adding a
+subcommand maps to the `<name>` part, and a substage folder inside a stage (here,
+`01_scope/approve/`) maps to its own name. Lanes likewise under `.icm/lanes/`. Adding a
 stage is a folder plus a routing row — never a new skill.
+
+**The front is optional.** `scope` + `approve` exist for work that arrives as someone
+else's written words: the story is committed verbatim, interrogated, settled, and cut
+into an intake epic. Work that arrives already agreed skips them — `/pipeline new` and
+Define picks the slug. A repo with no business author behind its work will never use
+them, and that is not a gap.
 
 ## How to run a stage or lane
 
@@ -39,17 +48,19 @@ stage is a folder plus a routing row — never a new skill.
 2. Resolve the `<slug>` (kebab-case).
 3. For the **adopting** stages — `build`, `release`, a lane resumed by slug — run the
    shared preamble first: `.icm/_shared/stage-preamble.md` ("resolve the run or STOP").
-   Never recreate a missing run.
+   Never recreate a missing run. `scope`, `approve` and `define` create rather than
+   adopt, and do not run it.
 4. **Read the matching contract in full and follow it exactly.** Load only the files
    its Inputs section names. **CI is read one way everywhere:**
    `.icm/scripts/ci-status.sh <slug>` → `GREEN | RED | PENDING` (`.icm/_shared/ci.md`).
    No stage hands off or merges on anything but a settled `GREEN`. **Pipeline PRs are
    never subscribed to PR activity** (`.icm/_shared/github.md`).
-5. **Respect gates — never auto-advance.** Two hard gates, both the owner's: **Spec
-   approved** and **Ready to merge** (PR checkboxes). You only ever **read** them —
-   never tick one, never start the next stage on your own. After each stage, say what's
-   done, where the output is, and which `/pipeline <next>` comes when the human is
-   ready.
+5. **Respect gates — never auto-advance.** Two hard gates on the PR, both the owner's:
+   **Spec approved** and **Ready to merge** (checkboxes). You only ever **read** them —
+   never tick one, never start the next stage on your own. The front has a third gate
+   with no checkbox: Scope stops until the author has answered, and the owner running
+   `/pipeline approve <slug>` is what closes it. After each stage, say what's done, where
+   the output is, and which `/pipeline <next>` comes when the human is ready.
 
 ## Resolving `new` (one procedure, three selectors)
 
@@ -81,8 +92,9 @@ argument as a resume slug.
 ## `status` subcommand
 
 - `status <slug>` → shared preamble if the run isn't in the checkout; then report:
-  lane, which stage outputs exist (spec.md → defined · notes.md → built · a
-  `## Release` section → released), each gate's state from the PR body, PR state, and
+  lane, which stage outputs exist (story.md → scoped · scope.md → approved · spec.md →
+  defined · notes.md → built · a `## Release` section → released), each gate's state
+  from the PR body (a front has none), PR state, and
   `ci-status.sh <slug> --no-wait`'s verdict (report `PENDING` as pending, never as
   green).
 - `status` (no slug) → the board: `.icm/runs/` (in flight) and `.icm/runs/_done/`
@@ -94,6 +106,9 @@ argument as a resume slug.
 
 ```
 /pipeline — delivery pipeline
+  Front (only when the work arrives as someone else's written words):
+  /pipeline scope "<story>"     commit the story verbatim, interrogate it, raise the questions
+  /pipeline approve <slug>      settle the answers into scope.md, cut the intake batch
   Spine (spec → build → gated merge):
   /pipeline new                 take the epic's next stub into Define (also: new <name> | <stub-path> | "<request>")
   /pipeline define <slug>       revise an existing spec

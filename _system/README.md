@@ -119,6 +119,10 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
   ladder rungs. Business state lives in Neon/Stripe, never mirrored into git.
 - **CI is the source of truth.** The agent never runs `build`/`lint`/`typecheck`/`test`
   locally; it pushes and reads the checks.
+- **PR events are not a verdict.** No session subscribes to a PR — one push is a burst of
+  deploy statuses and bot comment edits, not an answer — and a session the harness
+  subscribed for it unsubscribes and says so. Read state instead: one blocking
+  `gh pr checks --watch` per push; anything longer-running is a scheduled check-in.
 - **Gates are human checkboxes** — the agent reads them, never ticks them.
 - **Adopt or stop.** Resolve an existing run, register, deal folder or ticket set; never
   fabricate one.

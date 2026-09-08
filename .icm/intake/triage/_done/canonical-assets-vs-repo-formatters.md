@@ -14,8 +14,8 @@ No estate machinery. The bar this stub set for acting — a third repo, or
 `.claude/settings.json` flagged beyond `cafe-jardim` — is not met, and the survey that
 checked it shrank the problem rather than confirming it.
 
-Recorded as **D17** in [`project.md`](../../project.md); the rule and the surface are
-written into [`_system/template/README.md`](../../../_system/template/README.md), which
+Recorded as **D17** in [`project.md`](../../../project.md); the rule and the surface are
+written into [`_system/template/README.md`](../../../../_system/template/README.md), which
 is what someone seeding a canonical asset reads.
 
 ## What the survey found
@@ -55,7 +55,7 @@ diff, one of twelve Biome errors — the other eleven are that repo's own `.tsx`
 `package.json`.
 
 But **`settings.json` is not a drift-checked asset.** It is absent from `CANONICAL` in
-[`icm-check.sh`](../../../_system/scripts/icm-check.sh): required to exist, seeded when
+[`icm-check.sh`](../../../../_system/scripts/icm-check.sh): required to exist, seeded when
 missing, never compared. Every repo edits its own hook wiring, which is the point. So
 reformatting it costs nothing — there is no drift to go silent. It was reformatted to
 tabs in `cafe-jardim` rather than given a second exemption.

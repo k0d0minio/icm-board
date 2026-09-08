@@ -7,7 +7,7 @@
 ## Spec
 
 - slug: <!-- the run slug -->
-- Full spec (canonical — read here): <!-- link to .icm/runs/<slug>/01_define/output/spec.md -->
+- Full spec (canonical — read here): <!-- link to .icm/runs/<slug>/02_define/output/spec.md -->
 
 ## Acceptance criteria
 

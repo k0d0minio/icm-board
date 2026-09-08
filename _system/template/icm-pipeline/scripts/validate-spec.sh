@@ -9,7 +9,7 @@
 # as an advisory, never a failure. Requires no network. Pure awk/grep.
 #
 # Usage:
-#   .icm/scripts/validate-spec.sh <slug>            # resolves .icm/runs/<slug>/01_define/output/spec.md
+#   .icm/scripts/validate-spec.sh <slug>            # resolves .icm/runs/<slug>/02_define/output/spec.md
 #   .icm/scripts/validate-spec.sh <path-to-spec.md> # or validate a spec file directly
 #
 # Verdict (stdout, last line):
@@ -35,9 +35,9 @@ done
 if [ -f "$arg" ]; then
   spec="$arg"
 else
-  spec="$repo_root/.icm/runs/$arg/01_define/output/spec.md"
+  spec="$repo_root/.icm/runs/$arg/02_define/output/spec.md"
 fi
-[ -f "$spec" ] || die "no spec at .icm/runs/$arg/01_define/output/spec.md (write spec.md first, or pass an explicit path)"
+[ -f "$spec" ] || die "no spec at .icm/runs/$arg/02_define/output/spec.md (write spec.md first, or pass an explicit path)"
 
 # --- checks ----------------------------------------------------------------------------
 

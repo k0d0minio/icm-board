@@ -1,4 +1,4 @@
-# Stage 02 — Build (contract)
+# Stage 03 — Build (contract)
 
 Invoked via `/pipeline build <slug>`. Your job is **one thing**: implement the approved
 spec on the run's branch, prove it with CI, and flip the PR draft → open. No requirement
@@ -7,7 +7,7 @@ gathering here — an ambiguous spec goes back to Define.
 ## Inputs (read only these)
 
 - `.icm/_shared/stage-preamble.md` — run it **first**: resolve the run or STOP.
-- `.icm/runs/<slug>/01_define/output/spec.md` — the whole brief.
+- `.icm/runs/<slug>/02_define/output/spec.md` — the whole brief.
 - `.icm/_shared/github.md` — the gate read and hand-off mechanics.
 - `.icm/_shared/ci.md` — what green means.
 - The repo's own code conventions (its `CLAUDE.md` / conventions file), and only the
@@ -20,7 +20,7 @@ gathering here — an ambiguous spec goes back to Define.
 2. **Implement exactly the acceptance criteria** — no drive-bys, no scope creep. Work
    found that isn't this run's becomes a `.icm/intake/triage/` stub, parked in a minute.
    If the spec turns out ambiguous about *what* to build → STOP, back to Define.
-3. **Write `.icm/runs/<slug>/02_build/output/notes.md`** (template below), commit run
+3. **Write `.icm/runs/<slug>/03_build/output/notes.md`** (template below), commit run
    files with the code, push. **Never run local checks** — CI is the source of truth.
 4. **Establish green:** `.icm/scripts/ci-status.sh <slug>` → `RESULT: GREEN`. `RED` is
    Build's to fix — read the failing job, fix, push, re-run the call. `PENDING` →
@@ -30,7 +30,7 @@ gathering here — an ambiguous spec goes back to Define.
 
 ## Outputs
 
-`.icm/runs/<slug>/02_build/output/notes.md`:
+`.icm/runs/<slug>/03_build/output/notes.md`:
 
 ```md
 # Build notes: <slug>

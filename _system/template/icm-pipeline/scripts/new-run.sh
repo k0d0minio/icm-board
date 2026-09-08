@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # new-run.sh — scaffold a pipeline run: commit it, open its PR, consume the stub.
 # Estate pipeline template (icm-board _system/template/icm-pipeline/scripts/), adapted
-# from the sustentus reference implementation (label projection removed — that belongs
-# to the pipeline-full profile).
+# from the sustentus reference implementation. It does not project labels: that is
+# `project-labels.sh`, called separately, so a repo without the label vocabulary still
+# gets its run scaffolded.
 #
 # Two modes:
-#   • Spine (default) — the mechanical half of Define (.icm/stages/01_define/CONTEXT.md).
+#   • Spine (default) — the mechanical half of Define (.icm/stages/02_define/CONTEXT.md).
 #     Define writes spec.md and hands the one-line PR Summary in via --summary; this
 #     script commits the run + pushes, opens the DRAFT PR with a body projected from
 #     spec.md (both gate anchors + acceptance criteria mirrored unticked), writes/extends
@@ -74,8 +75,8 @@ run_md="$run_dir/run.md"
 
 spec=""
 if [ -z "$lane" ]; then
-  spec="$run_dir/01_define/output/spec.md"
-  [ -f "$spec" ] || die "no spec at .icm/runs/$slug/01_define/output/spec.md — Define must write spec.md first"
+  spec="$run_dir/02_define/output/spec.md"
+  [ -f "$spec" ] || die "no spec at .icm/runs/$slug/02_define/output/spec.md — Define must write spec.md first"
 fi
 
 # Guard the "exactly one PR per run" rule.

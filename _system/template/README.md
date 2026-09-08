@@ -14,7 +14,9 @@ Consumed by `_system/scripts/icm-check.sh`:
    fix never performs the move.
 
 Sustentus is exempt (its `.icm/` is authoritative — it is the source this template was
-extracted from, decision D12).
+extracted from, decision D12). The pipeline profile tracks that source: it was re-founded
+on sustentus's current four-stage shape (Scope → Define → Build → Release) in September
+2026, generalised rather than parameterised.
 
 ```
 root/                            → copied to <repo>/                (migrated repos only)
@@ -36,9 +38,14 @@ claude/                          → copied to <repo>/.claude/        (every liv
     ticket-craft/SKILL.md        ← the intake contract as working knowledge
     pr-conventions/SKILL.md     ← branches, commits, CI-is-truth, no secrets
 icm-pipeline/                    → copied to <repo>/.icm/           (pipeline profile only)
-  stages/{01_define,02_build,03_release}/   lanes/{bug,tweak,chore}/
+  stages/01_scope/ (+ approve/)   ← the optional front: story verbatim → questions →
+                                    settled scope.md → the intake cut
+  stages/{02_define,03_build,04_release}/   lanes/{bug,tweak,chore}/
   _shared/{github,ci,stage-preamble}.md   runs/README.md
   scripts/{resolve-run,validate-spec,validate-intake,new-run,ci-status}.sh
+  scripts/close-out.sh             ← archive the run (and the finished epic) on the
+                                     branch, so the squash-merge publishes the move
+  scripts/project-labels.sh        ← project type/stage/complexity onto the run's PR
 claude-pipeline/                 → copied to <repo>/.claude/        (pipeline profile only)
   skills/pipeline/SKILL.md       ← the /pipeline router
 github-pipeline/                 → copied to <repo>/.github/        (pipeline profile only)
@@ -84,7 +91,9 @@ Rules:
 - **No substitutions.** Nothing in the template is templated per repo: identity is the
   `epic/slug` path (no prefixes), and the pipeline scripts derive the GitHub repo from
   `origin` (override with `GITHUB_REPO`). A copy is exact, which is what makes the drift
-  report honest.
+  report honest. Generalising the pipeline profile out of sustentus therefore meant
+  *removing* its identity — the owner/repo literal, the people, the deploy-target counts,
+  its docs-app archive paths — never turning them into placeholders.
 - Template edits here propagate only to repos fixed *after* the edit; the script never
   retro-syncs existing files. That is deliberate — repos own their copies, and the
   drift report is how divergence stays honest.

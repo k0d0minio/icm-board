@@ -73,9 +73,11 @@ CANONICAL=(
 
 # Pipeline profile (template/icm-pipeline/…): paths relative to <repo>/.icm/.
 PIPELINE_ICM=(
-  "stages/01_define/CONTEXT.md"
-  "stages/02_build/CONTEXT.md"
-  "stages/03_release/CONTEXT.md"
+  "stages/01_scope/CONTEXT.md"
+  "stages/01_scope/approve/CONTEXT.md"
+  "stages/02_define/CONTEXT.md"
+  "stages/03_build/CONTEXT.md"
+  "stages/04_release/CONTEXT.md"
   "lanes/bug/CONTEXT.md"
   "lanes/tweak/CONTEXT.md"
   "lanes/chore/CONTEXT.md"
@@ -88,6 +90,8 @@ PIPELINE_ICM=(
   "scripts/validate-intake.sh"
   "scripts/new-run.sh"
   "scripts/ci-status.sh"
+  "scripts/close-out.sh"
+  "scripts/project-labels.sh"
 )
 PIPELINE_CLAUDE=( "skills/pipeline/SKILL.md" )
 PIPELINE_GITHUB=( "pull_request_template.md" )

@@ -101,6 +101,13 @@ Rules:
   files in scope at once and failed all five, `skills/pr-conventions/SKILL.md` among them
   (k0d0minio/courseday#277, 2026-09-08). Assume any canonical file that is not a shell
   script can collide in a repo that formats its whole tree.
+  **And the collision is a property of the repo's config, not of the asset.** The four
+  copies of `pr-conventions/SKILL.md` in the estate are byte-identical to this folder's:
+  the same bytes pass under Prettier's defaults and fail under courseday's `printWidth:
+  100`, while `ticket-craft/SKILL.md` passes under both. So there is no formatting of
+  these files that would end this — Biome-with-tabs and Prettier-with-defaults cannot
+  both be satisfied. Note also that **Biome does not format markdown**, so a Biome repo
+  can only ever collide on `opencode.jsonc`.
   **`.claude/settings.json` is not in that surface**, and the earlier note here that it
   was is wrong: it is seeded and required, never drift-compared (it is absent from
   `CANONICAL` in `icm-check.sh`, because every repo edits its own hook wiring). A

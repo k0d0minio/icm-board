@@ -15,8 +15,8 @@
 #
 # Nothing flows back up. A value never leaves Vercel for git, a note never leaves git for
 # a human's memory, and drift between them is a thing to report, not to silently
-# reconcile. `link` — the prerequisite for every other flow — plus `init`, `push-notes`
-# and `audit` exist so far; the rest of the epic fills in `pull` behind them.
+# reconcile. `link` — the prerequisite for every other flow — plus `init`, `push-notes`,
+# `pull` and `audit` are all here; only the cloud SessionStart hook is still to come.
 #
 # `link` writes the `.vercel/project.json` that `vercel env pull` needs, into every
 # directory the registry names — and then reads it back, because the CLI has been seen to
@@ -87,6 +87,40 @@
 # a row per target set — and each of them gets the note, because a key annotated in
 # production and bare in preview is a worse answer than either.
 #
+# `pull` runs the values flow, and it writes the one file in this system a human reads
+# every day. For each registry entry it asks the CLI for the development environment —
+# `vercel env pull`, the same command anyone would run by hand — and then rewrites what
+# lands, interleaving each key's note from that app's `.env.example` as `#` lines
+# directly above it. Nothing else is touched: the keys, their order and their values are
+# Vercel's, values are never parsed or reformatted on the way through, and a key the
+# manifest does not mention is written bare rather than guessed at. The result is the
+# manifest's own words, moved to where the value is. It reads the convention with its own
+# parser rather than `push-notes`' one, and deliberately: a Vercel comment wants the note
+# flattened to a sentence with the `[targets]` suffix stripped, while a `.env.local` wants
+# the `#` lines exactly as they were written, suffix and all — the suffix being the thing
+# that explains a key you cannot find below it.
+#
+# The whole file is regenerated on every run, so it is not a place to keep anything:
+# local-only overrides belong in `.env.development.local`, which Next.js reads and this
+# script never touches. Two absences are normal rather than broken — a variable Vercel
+# marks sensitive is write-only and never comes down at all, and a production-only
+# variable is not part of a development pull — and the generated header says so, because
+# the first instinct on a missing key is to assume the pull failed. `audit` counts both
+# kinds per app; this flow only has to stop them reading as a bug.
+#
+# `pull` fills a file with live credentials, so it refuses before writing rather than
+# after: an entry whose `.env.local` its repo does not ignore is skipped and reported,
+# and so is one that was never linked, since `vercel env pull` in an unlinked directory
+# has nothing to read. It also puts back the app's `.gitignore` afterwards, because the
+# CLI appends `.env*` to it unprompted — the same trick `vercel link` plays (stub 1),
+# and `.env*` hides the `.env.example` this system runs on. That is an edit the script
+# never asked for rather than drift it found, so it is reverted and reported, not left
+# for someone to notice in `git status` a week later. It is one-way like the rest — no
+# code path in it writes to Vercel or edits `.env.example` — and it reports what it could
+# not document rather than inventing prose: keys still carrying init's `# TODO: note`,
+# and keys Vercel has that the manifest has never heard of, are counted per repo and in
+# the total. Both are `audit`'s findings to chase, not pull's to fix.
+#
 # `audit` is the report the three one-way flows imply. Nothing syncs, so drift is the
 # expected state rather than the failure state, and one honest reading of it beats three
 # subcommands each disagreeing about what "current" means. It is read-only in the strong
@@ -149,13 +183,13 @@
 # is only a warning. Neither is repaired here: the .gitignore of a client repo belongs to
 # that repo, and this script reports.
 #
-# Usage: _system/scripts/vercel-env.sh <link|init|push-notes|audit> [--dry-run]
+# Usage: _system/scripts/vercel-env.sh <link|init|push-notes|pull|audit> [--dry-run]
 #          [--quiet] [--stale-days=N] [root]
 # Exit:  0 the flows: every entry done, already done, or absent from disk ·
 #          audit: no gaps found (warnings do not count — see above) ·
 #        1 the flows: one or more entries failed (missing token, unreachable team,
-#          unknown project, a failed link, a refused write) — these are actions, not
-#          reports, so failure stays red ·
+#          unknown project, a failed link or pull, a refused write) — these are actions,
+#          not reports, so failure stays red ·
 #          audit: gaps found. Unlike the scheduled estate-conformance report (D15), this
 #          one is a step in a ritual a human runs, and a wrap that cannot tell clean from
 #          drifted cannot gate on it ·
@@ -171,7 +205,7 @@ STALE_DAYS=14
 APPS_ROOT=""
 for arg in "$@"; do
   case "$arg" in
-    link|init|push-notes|audit) CMD="$arg" ;;
+    link|init|push-notes|pull|audit) CMD="$arg" ;;
     --dry-run) DRY=1 ;;
     --quiet) QUIET=1 ;;
     --stale-days=*) STALE_DAYS="${arg#*=}"
@@ -183,7 +217,7 @@ for arg in "$@"; do
 done
 
 if [[ -z "$CMD" ]]; then
-  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init|push-notes|audit> [--dry-run] [--quiet] [--stale-days=N] [root]" >&2
+  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init|push-notes|pull|audit> [--dry-run] [--quiet] [--stale-days=N] [root]" >&2
   exit 2
 fi
 
@@ -748,6 +782,329 @@ if [[ "$CMD" == "push-notes" ]]; then
   pushed="pushed"; setv="set"
   (( DRY )) && { pushed="to push"; setv="to set"; }
   echo "RESULT: $n_ok up to date · $n_pushed $pushed · $n_set comments $setv · $n_same already right · $n_todo TODO · $n_long too long · $n_missing not in Vercel · $n_absent absent · $n_fail failed"
+  (( n_fail == 0 )) || exit 1
+  exit 0
+fi
+
+# ---------------------------------------------------------------------------- pull ---
+
+# The CLI adds this to every file it writes, whether or not the project has a single
+# variable of its own. It is not a project variable and the manifest will never mention
+# it, so it gets its own note rather than being reported as undocumented forty times.
+PULL_OIDC_NOTE='# Short-lived token the Vercel CLI writes for local OIDC auth against this project.
+# Not a project variable, not part of the manifest, and replaced by the next pull.'
+
+# The interleave, as one awk program over two files: the manifest first, the file the CLI
+# just wrote second. It only ever inserts lines. A line it does not recognise as `KEY=`
+# — the continuation of a multi-line value, say — is passed through exactly as it came,
+# because guessing wrong about a value is worse than leaving it plain, and no value is
+# ever parsed, split or rewritten on its way through.
+ANNOTATE_AWK='
+FILENAME == exfile {
+  line = $0
+  sub(/\r$/, "", line)
+  if (line ~ /^[[:space:]]*#/) {
+    sub(/^[[:space:]]+/, "", line)
+    block = (block == "" ? line : block "\n" line)
+    next
+  }
+  if (line ~ /^[[:space:]]*$/) { block = ""; next }
+  if (match(line, /^[[:space:]]*(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=/)) {
+    k = line
+    sub(/^[[:space:]]*/, "", k)
+    sub(/^export[[:space:]]+/, "", k)
+    sub(/[[:space:]]*=.*$/, "", k)
+    listed[k] = 1
+    nlisted++
+    # A commented-out assignment is not prose about the key below it, however much the
+    # convention says the line above a key is its note. `push-notes` refuses to publish
+    # such a line as a sentence; there is no reason to interleave it here either.
+    if (block ~ /^#[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=/) block = ""
+    if (block != "") note[k] = block
+    block = ""
+    next
+  }
+  block = ""
+  next
+}
+{
+  # Everything above the first key is dropped and rewritten. The CLI replaces the file
+  # wholesale on every pull, so in practice that is only its own one-line header — but
+  # this also swallows a header left by a previous pull, which is the one way a file
+  # could arrive here already annotated. Nothing meaningful ever lives up there.
+  if (!seenkey && $0 ~ /^[[:space:]]*(#|$)/) next
+  if (match($0, /^[A-Za-z_][A-Za-z0-9_]*=/)) {
+    seenkey = 1
+    k = substr($0, 1, RLENGTH - 1)
+    n = ""
+    if (k in note) {
+      keys++
+      n = note[k]
+      # A key init has seeded but nobody has explained yet, and one the manifest lists
+      # with no note at all, are the same gap wearing different clothes.
+      if (n ~ /^#[[:space:]]*TODO:[[:space:]]*note/) todo++; else noted++
+    } else if (k in listed) {
+      keys++
+      todo++
+    } else if (k == "VERCEL_OIDC_TOKEN") {
+      n = oidc
+    } else {
+      keys++
+      unlisted++
+    }
+    print ""
+    if (n != "") print n
+    print $0
+    next
+  }
+  print $0
+}
+END { printf "\001COUNTS\t%d\t%d\t%d\t%d\t%d\n", keys+0, noted+0, todo+0, unlisted+0, nlisted+0 }
+'
+
+# What the generated file says about itself. Everything a reader needs in order not to
+# misread it: where the values came from, where the notes came from, that editing it is
+# pointless, and that a key they expected and cannot find is probably not a bug.
+pull_header() {
+  local team="$1" project="$2" exfile="$3" src="this app's .env.example"
+  [[ "$exfile" == "/dev/null" ]] && src="a .env.example this app does not have yet"
+  cat <<EOF
+# Generated by _system/scripts/vercel-env.sh pull on $(date -u '+%Y-%m-%d %H:%M UTC') — do not edit.
+#
+# The values are Vercel's, pulled from $team/$project (development environment). The
+# notes above each key come from $src, which is the manifest:
+# a note that is wrong or missing gets fixed there, never here.
+#
+# The whole file is rewritten on every pull, so nothing survives in it. Local-only
+# overrides belong in .env.development.local, which this script never touches.
+#
+# Two absences here are normal rather than broken: a variable Vercel marks sensitive is
+# write-only and never comes down at all, and a production-only variable is not part of a
+# development pull. \`# TODO: note\` means the manifest has not explained that key yet; a
+# key with no note at all is one Vercel has and the manifest does not mention.
+EOF
+}
+
+if [[ "$CMD" == "pull" ]]; then
+  n_pulled=0; n_absent=0; n_fail=0
+  t_keys=0; t_noted=0; t_todo=0; t_unlisted=0
+  fail_rows=""; warn_rows=""
+
+  say "${bold}vercel-env pull${off} — ${dim}$PROJECTS$( ((DRY)) && printf ' · dry run' )${off}"
+  # A dry run of a blocked team can still show which entries would be refused outright,
+  # since every refusal pull makes is a local one — but it cannot reach Vercel, so it is
+  # previewing an intention rather than a result.
+  report_blocked_teams "not pulled" "previewed without reaching Vercel"
+
+  # Read before the loop, never piped into it: `vercel` is a node process and drains the
+  # stdin it inherits, which once ate every entry after the first. See `link`.
+  mapfile -t ENTRIES < <(jq -r '.entries[] | [.path, .team, .project] | @tsv' "$REGISTRY")
+
+  for entry in "${ENTRIES[@]}"; do
+    IFS=$'\t' read -r path team project <<<"$entry"
+    [[ -n "$path" ]] || continue
+    dir="$PROJECTS/$path"
+    label=$(printf '%-38s' "$path")
+
+    if [[ ! -d "$dir" ]]; then
+      n_absent=$((n_absent + 1))
+      say "  ${dim}absent${off}   $label ${dim}not on disk — repo not cloned here${off}"
+      continue
+    fi
+
+    blocked="${TEAM_BLOCKED[$team]:-}"
+    if [[ -n "$blocked" ]] && (( ! DRY )); then
+      n_fail=$((n_fail + 1))   # already reported once, above, for the whole team
+      continue
+    fi
+
+    repo_dir="$PROJECTS/${path%%/*}"
+    rel="${path#"${path%%/*}"}"; rel="${rel#/}"
+    prefix=""; [[ -n "$rel" ]] && prefix="$rel/"
+
+    # Refuse before the write, not after it. This is the one file in the estate that ends
+    # up holding every development credential an app has, and `git add -A` does not ask.
+    if ! git_ignores "$repo_dir" "${prefix}.env.local"; then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|${prefix}.env.local is not gitignored in ${path%%/*}, and pull fills it with live credentials — add it to that repo's .gitignore, then re-run"$'\n'
+      say "  ${red}REFUSE${off}   $label ${red}${prefix}.env.local is not gitignored — would leave credentials in the working tree${off}"
+      continue
+    fi
+
+    # `vercel env pull` reads .vercel/project.json and has nothing to pull without it.
+    # An unlinked directory is `link`'s job, not a thing to fix quietly here.
+    linked=""
+    [[ -f "$dir/.vercel/project.json" ]] && \
+      linked=$(jq -r '.projectName // empty' "$dir/.vercel/project.json" 2>/dev/null)
+    if [[ "$linked" != "$project" ]]; then
+      n_fail=$((n_fail + 1))
+      if [[ -z "$linked" ]]; then
+        why="not linked to any Vercel project — run \`vercel-env.sh link\` first"
+      else
+        why="linked to '$linked', not '$project' — run \`vercel-env.sh link\` to correct it"
+      fi
+      fail_rows+="$path|$why"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}${why}${off}"
+      continue
+    fi
+
+    if [[ -z "$blocked" ]] && [[ "${TEAM_PROJECTS[$team]}" != *" $project "* ]]; then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|team '$team' has no project named '$project' — the registry and Vercel disagree, and guessing which is right is not this script's job"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}no project '$project' in $team${off}"
+      continue
+    fi
+
+    # No manifest is not a failure — 9 of the 40 entries have no variables to document —
+    # so the pull happens either way and every key is simply written bare.
+    exfile="$dir/.env.example"
+    if [[ -f "$exfile" ]]; then
+      # A manifest git cannot see is one a cloud session will never have, so the notes it
+      # holds stop at this machine. Said here as well as in `init`, because this is the
+      # flow whose output goes missing.
+      if git_ignores "$repo_dir" "${prefix}.env.example"; then
+        warn_rows+="$path|${prefix}.env.example is ignored by ${path%%/*}, so the notes interleaved below exist only on this disk — that repo needs \`!.env.example\` in its .gitignore"$'\n'
+      fi
+    else
+      exfile="/dev/null"
+    fi
+
+    if (( DRY )); then
+      n_pulled=$((n_pulled + 1))
+      if [[ "$exfile" == "/dev/null" ]]; then
+        manifest="no .env.example — every key bare"
+      else
+        manifest="annotated from .env.example"
+      fi
+      say "  ${yellow}would${off}    $label ${dim}pull $team/$project development -> ${prefix}.env.local · $manifest${off}"
+      continue
+    fi
+
+    envfile="$dir/.env.local"
+
+    # `vercel env pull` appends `.env*` to the .gitignore of the directory it runs in,
+    # unprompted — the same trick `vercel link` plays (stub 1), and the same damage:
+    # `.env*` swallows the `.env.example` this whole system treats as the manifest. It
+    # did it to ten files across seven repos the first time this ran. So the file is
+    # held before the call and put back after it: an edit the script never asked for,
+    # to a file it has no business touching, is a side effect to clean up rather than
+    # drift to report.
+    gitignore="$dir/.gitignore"
+    gi_existed=0; gi_before=""
+    [[ -f "$gitignore" ]] && { gi_existed=1; gi_before=$(cat "$gitignore"); }
+
+    if ! out=$( cd "$dir" && VERCEL_TOKEN="${TEAM_TOKEN[$team]}" \
+                  vercel env pull .env.local --environment development --yes \
+                    --scope "$team" </dev/null 2>&1 ); then
+      n_fail=$((n_fail + 1))
+      reason=$(printf '%s' "$out" | grep -iE '^\s*(error|warn)' | head -1 | sed 's/^[[:space:]]*//')
+      fail_rows+="$path|vercel env pull failed: ${reason:-see output}"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}${reason:-vercel env pull failed}${off}"
+      continue
+    fi
+
+    if (( gi_existed )); then
+      gi_after=$(cat "$gitignore" 2>/dev/null)
+      if [[ "$gi_after" != "$gi_before" ]]; then
+        added=$(comm -13 <(sort <<<"$gi_before") <(sort <<<"$gi_after") | tr '\n' ' ')
+        added="${added% }"
+        printf '%s\n' "$gi_before" > "$gitignore"
+        warn_rows+="$path|\`vercel env pull\` appended ${added:-lines} to ${prefix}.gitignore unprompted — reverted, because \`.env*\` hides the .env.example this system reads"$'\n'
+      fi
+    elif [[ -f "$gitignore" ]]; then
+      rm -f "$gitignore"
+      warn_rows+="$path|\`vercel env pull\` created a ${prefix}.gitignore that was not there before — removed"$'\n'
+    fi
+
+    if [[ ! -f "$envfile" ]]; then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|\`vercel env pull\` reported success but wrote no .env.local"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}reported success but wrote no .env.local${off}"
+      continue
+    fi
+
+    # The rewrite is held whole in a shell variable and never in a second file: a
+    # half-written temp file full of credentials, even one deleted a moment later, is a
+    # window this script does not need to open. `printf > "$envfile"` truncates in place,
+    # so the permissions the CLI chose are the permissions it keeps.
+    if ! body=$(awk -v exfile="$exfile" -v oidc="$PULL_OIDC_NOTE" "$ANNOTATE_AWK" "$exfile" "$envfile"); then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|could not read back the pulled .env.local to annotate it — the file is Vercel's, unannotated"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}pulled, but the annotation pass failed${off}"
+      continue
+    fi
+
+    counts="${body##*$'\n'}"
+    if [[ "$counts" != $'\001COUNTS'* ]]; then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|the annotation pass produced no summary line — refusing to overwrite the pulled file with output this script does not recognise"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}pulled, but the annotation pass produced nothing usable${off}"
+      continue
+    fi
+    body="${body%$'\n'*}"
+    IFS=$'\t' read -r _ k_keys k_noted k_todo k_unlisted k_listed <<<"$counts"
+
+    if ! { printf '%s\n' "$(pull_header "$team" "$project" "$exfile")"; printf '%s\n' "$body"; } > "$envfile"; then
+      n_fail=$((n_fail + 1))
+      fail_rows+="$path|could not write the annotated .env.local"$'\n'
+      say "  ${red}FAIL${off}     $label ${red}could not write the annotated .env.local${off}"
+      continue
+    fi
+
+    n_pulled=$((n_pulled + 1))
+    t_keys=$((t_keys + k_keys)); t_noted=$((t_noted + k_noted))
+    t_todo=$((t_todo + k_todo)); t_unlisted=$((t_unlisted + k_unlisted))
+
+    if [[ "$exfile" == "/dev/null" ]] && (( k_keys > 0 )); then
+      warn_rows+="$path|$k_keys keys pulled with no notes at all — this app has no .env.example, so run \`init\` before the next pull"$'\n'
+    fi
+
+    if (( k_keys == 0 )); then
+      # Three quite different silences, and only one of them is a project with nothing in
+      # it. Half the estate's static sites genuinely hold no variables; a good many more
+      # hold plenty, all of them scoped to production or marked sensitive, and neither
+      # kind comes down in a development pull. Reporting all of that as "no variables"
+      # would cry wolf about most of the estate — the manifest already knows the
+      # difference and costs nothing to ask.
+      if (( k_listed > 0 )); then
+        say "  ${green}pulled${off}   $label ${dim}no development values — none of the manifest's $k_listed keys comes down in a development pull${off}"
+      else
+        say "  ${green}pulled${off}   $label ${dim}no variables in Vercel — only the CLI's OIDC token${off}"
+      fi
+    else
+      detail="$k_keys keys · $k_noted noted"
+      (( k_todo )) && detail+=" · $k_todo awaiting a note"
+      (( k_unlisted )) && detail+=" · $k_unlisted not in the manifest"
+      say "  ${green}pulled${off}   $label ${dim}$detail${off}"
+    fi
+  done
+
+  if [[ -n "${warn_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Warnings${off} ${dim}— pulled, with something worth knowing${off}"
+    while IFS='|' read -r wpath why; do
+      [[ -n "$wpath" ]] || continue
+      printf '  %swarn%s %s\n       %s\n' "$yellow" "$off" "$wpath" "$why"
+    done <<<"$warn_rows"
+  fi
+
+  if [[ -n "${fail_rows//[$'\n']/}" ]] && (( ! QUIET )); then
+    echo
+    echo "${bold}Failures${off}"
+    while IFS='|' read -r fpath why; do
+      [[ -n "$fpath" ]] || continue
+      printf '  %s%s%s\n    %s\n' "$red" "$fpath" "$off" "$why"
+    done <<<"$fail_rows"
+  fi
+
+  say ""
+  pulled="pulled"
+  (( DRY )) && pulled="to pull"
+  if (( DRY )); then
+    echo "RESULT: $n_pulled $pulled · $n_absent absent · $n_fail failed"
+  else
+    echo "RESULT: $n_pulled $pulled · $t_keys keys ($t_noted noted · $t_todo awaiting a note · $t_unlisted not in the manifest) · $n_absent absent · $n_fail failed"
+  fi
   (( n_fail == 0 )) || exit 1
   exit 0
 fi

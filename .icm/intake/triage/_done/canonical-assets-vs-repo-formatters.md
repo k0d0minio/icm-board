@@ -8,7 +8,8 @@
 - settled: 2026-09-08 — stays per-repo (decision D17)
 - superseded in part: 2026-09-08, same day — both revisit triggers fired on
   `courseday`'s adoption. The ruling stands; the surface below was wrong.
-  Follow-up: `triage/canonical-assets-markdown-collision.md`
+  Follow-up: `triage/_done/canonical-assets-markdown-collision.md`, settled 2026-09-09 —
+  the ruling re-affirmed on the corrected surface as **D19**.
 
 ## Outcome
 
@@ -97,6 +98,9 @@ right, the consequence was not. Both are corrected.
 
 Both conditions this stub set were met within hours, by `courseday`'s adoption
 (k0d0minio/courseday#277): the markdown assets collide, and it is the third colliding
-repo. The case for a class-level exclusion is back on the table, and three repos have now
+repo. The case for a class-level exclusion went back on the table, and three repos have now
 independently hand-written one — `dungeons-dragons`, `courseday`, and `cafe-jardim` for
-the rails file. Carried in `triage/canonical-assets-markdown-collision.md`.
+the rails file. Carried in `triage/_done/canonical-assets-markdown-collision.md` and
+**closed 2026-09-09**: the ruling below stands, re-affirmed as **D19** on the corrected
+surface. Seeding the exclusion was rejected a second time — every repo whose CI actually
+formats the canonical assets already carries its own, so there was nothing left to protect.

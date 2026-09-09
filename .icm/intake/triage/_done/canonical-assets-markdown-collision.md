@@ -6,6 +6,48 @@
 - sources: courseday CI on k0d0minio/courseday#277, 2026-09-08 — found adopting
   courseday (`triage/courseday-pierpont-unadopted`) · supersedes the survey in
   `triage/canonical-assets-vs-repo-formatters` (D17)
+- settled: 2026-09-09 — D17 re-affirmed on the corrected surface, no estate
+  machinery (decision D19)
+
+## Outcome
+
+**Option 1: keep D17**, re-affirmed on the corrected surface and recorded as **D19** in
+[`project.md`](../../../project.md). The rule is unchanged — a canonical asset that loses to
+a repo's formatter stays a per-repo exclusion — but it now rests on a survey that counts
+capacity to collide rather than what a repo carries today.
+
+Both alternatives closed on evidence, not preference:
+
+- **Option 3 (format the assets clean) was already dead** on this stub's own re-check:
+  the four copies of `pr-conventions/SKILL.md` are byte-identical and simultaneously pass
+  Prettier's defaults and fail courseday's config.
+- **Option 2 (seed the exclusion) has nothing left to protect.** Checked on the machine,
+  2026-09-09: eight repos carry a formatter config, and every one that actually invokes
+  it over the canonical assets is already covered — `courseday`, `dungeons-dragons` and
+  `cafe-jardim` by hand; `remi-ai` green on its `**/*.{ts,tsx,md}` glob; `escondidinho`
+  runs `biome check` but Biome cannot format markdown, so its only reachable asset is
+  `opencode.jsonc` and its style agrees. `collabimmo` (CI runs ESLint) and `garmani`
+  (Prettier config, **no `format` script, no CI step**) carry configs their CI never
+  invokes. **Zero repos are exposed**, so `--fix` would seed ignore blocks only where
+  they already exist.
+
+`garmani` is the finding this stub did not have: it is the second latent config alongside
+`collabimmo`, and the one whose Prettier settings (`semi: false`, `singleQuote: true`) are
+closest to courseday's — the config that broke `SKILL.md`. It is latent because it runs
+nothing, not because it agrees.
+
+The honest cost is the one this stub named: nobody is watching for an adopted repo adding
+a formatter, so it will be found by a red check. Three hand-written exclusions are the
+precedent to copy, and `_system/template/README.md` carries the rule and the corrected
+surface for whoever hits it next.
+
+### Also fixed while recording
+
+The decision table in `project.md` carried **two `D16` rows** with contradictory text — a
+merge artifact from #40 and #41 landing on the same table — the stale one still asserting
+`.claude/settings.json` was flagged "for the same reason", which D17 had corrected. The
+stale row is dropped, `D17`/`D18` are back in sequence, and D17's forward reference to
+this stub now records that it was answered rather than reading as open.
 
 ## What this is
 
@@ -30,7 +72,7 @@ repo, and seeding the baseline put **five** files in scope, all failing at once:
 | `AGENTS.md` | no — repo-owned | none |
 
 **Corrected 2026-09-08**, by the canonical-assets-formatter-drift session and verified
-against [`icm-check.sh`](../../../_system/scripts/icm-check.sh) — this stub first listed
+against [`icm-check.sh`](../../../../_system/scripts/icm-check.sh) — this stub first listed
 `.icm/CONTEXT.md` as drift-checked. It is not. The script runs exactly **two** `cmp -s`
 comparisons (`:207` over `.claude/`'s `CANONICAL`, `:212` over `CANONICAL_ROOT`);
 everything else in the baseline — `.icm/CONTEXT.md`, `.icm/intake/README.md`,
@@ -120,12 +162,17 @@ what remains is keep D17 (option 1) or seed the exclusion (option 2).
 
 ## Acceptance criteria (rough)
 
-- [ ] D17 either re-affirmed with the corrected surface recorded, or superseded by a new
-      decision ID naming it
-- [ ] If the rule stays per-repo, the trigger is written where the next adopter reads it —
-      `_system/template/README.md` already carries the rule, not the symptom
-- [ ] `triage/canonical-assets-vs-repo-formatters`'s survey table corrected for courseday,
-      or explicitly left as a record of what was true on 2026-09-04
+- [x] D17 either re-affirmed with the corrected surface recorded, or superseded by a new
+      decision ID naming it — **re-affirmed**, recorded as D19, which names it and closes
+      its revisit
+- [x] If the rule stays per-repo, the trigger is written where the next adopter reads it —
+      `_system/template/README.md` already carries the rule, not the symptom. Left as it
+      stands (Jamie's call, 2026-09-09): it already holds the corrected two-file surface,
+      the courseday evidence and the Biome-cannot-format-markdown fact. Only its D17
+      citation was updated, so it no longer reads as the last word
+- [x] `triage/canonical-assets-vs-repo-formatters`'s survey table corrected for courseday,
+      or explicitly left as a record of what was true on 2026-09-04 — corrected in place
+      when it was retired, with the method trap named in the table's own last column
 
 ## Prompt
 

@@ -92,7 +92,8 @@ Rules:
   excludes it from formatting. `cafe-jardim` does that for `opencode.jsonc` in
   `biome.json`; `dungeons-dragons` does it in `.prettierignore`, alongside the `.icm/`
   and `.claude/` entries already there for the same reason. It stays a per-repo call,
-  discovered by that repo's CI — decision D17, settled 2026-09-08.
+  discovered by that repo's CI — decision D17, settled 2026-09-08, its revisit
+  fired and closed as D19 on 2026-09-09.
   **The exposed surface is two files: `opencode.jsonc` and `skills/*/SKILL.md`.** Of the
   drift-checked assets the three `hooks/*.sh` are shell, which no formatter in the estate
   touches; the rest are markdown and JSONC, and both collide. A first survey (2026-09-04)

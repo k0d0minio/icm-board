@@ -4,8 +4,8 @@
 branch, PR) plus each stage's `output/`. Spine runs carry
 `02_define/output/spec.md` and `03_build/output/notes.md` (Release appends its
 `## Release` record there); lane runs carry `lane/output/notes.md` instead. A **front**
-run — Scope, and the approve substage — carries `01_scope/_source/story.md` and
-`01_scope/output/{questions,scope}.md`, and opens no PR of its own.
+run — Scope — carries `01_scope/_source/story.md` and `01_scope/output/scope.md`, and
+opens no PR of its own.
 
 ```md
 # Run: <slug>

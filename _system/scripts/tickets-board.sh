@@ -89,10 +89,10 @@ for repo in "${repos[@]}"; do
   repo_has=0
 
   # --- runs in flight (pipeline repos) ---
-  # Estate pipeline repos move a merged run to runs/_done/ in the same close-out, so
-  # runs/ = in flight. Sustentus archives merged runs elsewhere (its own CI), so its
-  # runs/ holds history — skip it here; its intake stubs still show above.
-  if [[ -d "$repo/.icm/runs" && "$base" != "sustentus" ]]; then
+  # Every pipeline repo moves a merged run out of runs/ in the close-out that rides the
+  # run's own PR (into runs/_done/, or wherever its project.json points), so runs/ = in
+  # flight — sustentus included, since its close-out moved into the PR in September 2026.
+  if [[ -d "$repo/.icm/runs" ]]; then
     for rd in "$repo/.icm/runs"/*/; do
       [[ -d "$rd" ]] || continue
       slug="$(basename "$rd")"

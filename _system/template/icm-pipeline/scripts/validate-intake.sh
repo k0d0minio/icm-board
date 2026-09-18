@@ -1,24 +1,33 @@
 #!/usr/bin/env bash
-# validate-intake.sh — structural self-check on an intake epic (the cut).
-# Estate pipeline template (icm-board _system/template/icm-pipeline/scripts/), adapted
-# from the sustentus reference implementation. The invariants are the estate intake
-# spec's (contracts/TICKETS.md in icm-board):
+# validate-intake.sh — structural self-check on an intake batch (the cut).
+#
+# The cut (.icm/stages/01_scope/CONTEXT.md step 6; formats in .icm/intake/CONTEXT.md) states four invariants that are pure
+# bookkeeping, and today they are re-verified by the agent, conversationally, every time it re-reads
+# the batch — and silently breakable by a hand-edit to breakdown.md afterwards:
 #
 #   1. every stub carries '- sequence: n of m', unique and contiguous over 1..m;
-#   2. m agrees with how many stubs there actually are (including _done/);
-#   3. every 'depends-on:' names a stub in the same epic, sequenced BEFORE its dependent;
-#   4. '## Build order' in breakdown.md lists the same slugs, in the same order.
+#   2. m agrees with how many stubs there actually are;
+#   3. every 'depends-on:' names a stub in the same batch, sequenced BEFORE its dependent;
+#   4. '## Build order' in breakdown.md lists the same slugs, in the same order, as the sequences.
 #
-# Stubs already done/spun-out live in <epic>/_done/ — still part of the epic for every
-# check here: a partially consumed epic must still be a contiguous 1..m, or "next" stops
-# meaning anything. Requires no network. Pure bash/awk.
+# All four are deterministic, so the agent shouldn't be spending context on them. This script owns
+# them; the agent owns the judgement the contract also asks for (is each stub independently
+# shippable, does it sit on a real product seam, is anything stub-sized actually scope-sized).
+#
+# Stubs already spun out live in <scope>/_done/ (new-run.sh --stub git mv's them there). They are
+# still part of the batch for every check here — a partially consumed batch must still be a
+# contiguous 1..m, or "next" stops meaning anything.
+#
+# Runs in .github/workflows/pipeline.yaml on PRs touching .icm/intake/**, ADVISORY — like
+# spec-check, it warns to the job summary and never red-blocks a PR. Requires no network. Pure
+# bash/awk.
 #
 # Usage:
-#   .icm/scripts/validate-intake.sh <epic-slug>          # resolves .icm/intake/<epic-slug>/
-#   .icm/scripts/validate-intake.sh <path-to-intake-dir> # or point at the folder directly
+#   .icm/scripts/validate-intake.sh <scope-slug>          # resolves .icm/intake/<scope-slug>/
+#   .icm/scripts/validate-intake.sh <path-to-intake-dir>  # or point at the folder directly
 #
 # Verdict (stdout, last line):
-#   RESULT: OK        exit 0  — the epic's bookkeeping holds.
+#   RESULT: OK        exit 0  — the batch's bookkeeping holds.
 #   RESULT: SKIP      exit 0  — nothing to validate (no breakdown.md and no stubs).
 #   RESULT: INVALID   exit 2  — one or more problems (listed on stderr) — fix and re-cut.
 set -euo pipefail
@@ -27,7 +36,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 die() { echo "error: $*" >&2; exit 1; }
 
-# --- args → intake dir -----------------------------------------------------------------
+# --- args → intake dir -----------------------------------------------------------------------------
 
 arg=""
 while [ $# -gt 0 ]; do
@@ -36,17 +45,19 @@ while [ $# -gt 0 ]; do
     *)   [ -z "$arg" ] && arg="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$arg" ] || die "usage: validate-intake.sh <epic-slug | path-to-intake-dir>"
+[ -n "$arg" ] || die "usage: validate-intake.sh <scope-slug | path-to-intake-dir>"
 
 if [ -d "$arg" ]; then
   dir="${arg%/}"
 else
   dir="$repo_root/.icm/intake/$arg"
 fi
-[ -d "$dir" ] || die "no intake folder at '$dir' (cut the epic first — contracts/TICKETS.md)"
+[ -d "$dir" ] || die "no intake folder at '$dir' (cut the scope first — .icm/stages/01_scope/CONTEXT.md step 6)"
 
-# --- triage/ is a backlog, not a batch -------------------------------------------------
-# The only invariant is that every stub names the lane that will consume it.
+# --- triage/ is a backlog, not a batch -------------------------------------------------------------
+# .icm/intake/triage/ holds parked off-ticket findings (intake/CONTEXT.md → Triage): no breakdown,
+# no sequence, no depends-on. The only invariant is that every stub names the lane that will
+# consume it, so /pipeline bug|tweak|chore can route it.
 
 if [ "$(basename "$dir")" = "triage" ]; then
   shopt -s nullglob
@@ -75,7 +86,9 @@ fi
 
 breakdown="$dir/breakdown.md"
 
-# --- collect the stubs -----------------------------------------------------------------
+# --- collect the stubs -----------------------------------------------------------------------------
+# Every .md in the folder except breakdown.md, plus everything under _done/ (spun out, still in the
+# batch). Sorted for determinism; nullglob so an empty folder yields an empty list, not a literal.
 
 shopt -s nullglob
 stubs=()
@@ -96,7 +109,9 @@ add() { problems+=("$1"); }
 
 [ -f "$breakdown" ] || add "missing breakdown.md — the cut's single review surface"
 
-# --- header field reader (joins wrapped continuation lines) ----------------------------
+# --- header field reader ---------------------------------------------------------------------------
+# Header fields are '- <name>: <value>' and prettier wraps long ones onto indented continuation
+# lines (see vendor-metrics/vendor-dashboard-reconciliation.md → depends-on). Join them back up.
 
 field() { # <file> <field-name>
   awk -v want="$2" '
@@ -107,7 +122,7 @@ field() { # <file> <field-name>
   ' "$1"
 }
 
-# --- per-stub parse --------------------------------------------------------------------
+# --- per-stub parse --------------------------------------------------------------------------------
 
 declare -A seq_of=()      # feature-slug → sequence n
 declare -A slug_at=()     # sequence n   → feature-slug
@@ -123,7 +138,7 @@ for stub in "${stubs[@]}"; do
     add "$(basename "$stub"): missing '- feature-slug:' header"
     slug="$base"
   elif [ "$slug" != "$base" ]; then
-    add "$(basename "$stub"): '- feature-slug: $slug' doesn't match the filename ('$base.md') — everything resolves stubs by filename"
+    add "$(basename "$stub"): '- feature-slug: $slug' doesn't match the filename ('$base.md') — /pipeline new resolves stubs by filename"
     slug="$base"
   fi
 
@@ -153,7 +168,7 @@ for stub in "${stubs[@]}"; do
   if [ -z "$declared_m" ]; then
     declared_m="$m"
   elif [ "$m" != "$declared_m" ]; then
-    add "$slug: 'of $m' disagrees with 'of $declared_m' elsewhere in the epic — every stub sees the same total"
+    add "$slug: 'of $m' disagrees with 'of $declared_m' elsewhere in the batch — every stub sees the same total"
   fi
 done
 
@@ -161,7 +176,7 @@ count="${#batch_slugs[@]}"
 
 # 1. m agrees with the stub count.
 if [ -n "$declared_m" ] && [ "$declared_m" -ne "$count" ]; then
-  add "stubs say 'of $declared_m' but the epic holds $count stub(s) (including _done/) — re-cut, or a stub is missing"
+  add "stubs say 'of $declared_m' but the batch holds $count stub(s) (including _done/) — re-cut, or a stub is missing"
 fi
 
 # 2. sequences are contiguous 1..count.
@@ -171,9 +186,10 @@ while [ "$i" -le "$count" ]; do
   i=$((i + 1))
 done
 
-# 3. depends-on names an in-epic stub, sequenced before its dependent.
+# 3. depends-on names an in-batch stub, sequenced before its dependent.
 for slug in "${batch_slugs[@]}"; do
   deps="${deps_of[$slug]:-}"
+  # Normalise: strip backticks, treat 'none' (any case, alone) as no dependency, split on commas.
   deps="${deps//\`/}"
   printf '%s' "$deps" | grep -Eiq '^[[:space:]]*none[[:space:].]*$' && continue
   [ -n "$deps" ] || { add "$slug: missing '- depends-on:' header (write 'none' when there are none)"; continue; }
@@ -182,7 +198,7 @@ for slug in "${batch_slugs[@]}"; do
     dep="$(printf '%s' "$dep" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
     [ -n "$dep" ] && [ "$dep" != "none" ] || continue
     if [ -z "${seq_of[$dep]+x}" ]; then
-      add "$slug: depends-on '$dep', which isn't a stub in this epic (cross-epic dependencies belong in the stub's prose, not the header)"
+      add "$slug: depends-on '$dep', which isn't a stub in this batch (cross-scope dependencies belong in ## Notes for Define)"
     elif [ -n "${seq_of[$slug]+x}" ] && [ "${seq_of[$dep]}" -ge "${seq_of[$slug]}" ]; then
       add "$slug (sequence ${seq_of[$slug]}) depends-on '$dep' (sequence ${seq_of[$dep]}) — a dependency must be sequenced first"
     fi
@@ -190,6 +206,8 @@ for slug in "${batch_slugs[@]}"; do
 done
 
 # 4. '## Build order' agrees with the stubs' sequences.
+#    Numbered lines only ('1. <slug> — …'); the slug is the first token, backticks optional. Wrapped
+#    continuation lines don't start with a number, so they're ignored.
 if [ -f "$breakdown" ]; then
   order_section="$(awk '
     /^##[[:space:]]+Build order[[:space:]]*$/ { grab = 1; next }
@@ -198,7 +216,7 @@ if [ -f "$breakdown" ]; then
   ' "$breakdown")"
 
   if ! grep -Eq '^##[[:space:]]+Build order[[:space:]]*$' "$breakdown"; then
-    add "breakdown.md has no '## Build order' section — the order the epic is walked in"
+    add "breakdown.md has no '## Build order' section — the order /pipeline new walks"
   else
     order_lines="$(printf '%s\n' "$order_section" | grep -E '^[0-9]+\.[[:space:]]' || true)"
     order_n=0
@@ -218,12 +236,12 @@ if [ -f "$breakdown" ]; then
     done <<< "$order_lines"
 
     if [ "$order_n" -ne "$count" ]; then
-      add "breakdown.md ## Build order lists $order_n feature(s) but the epic holds $count stub(s) — every stub gets a line, including ones already in _done/"
+      add "breakdown.md ## Build order lists $order_n feature(s) but the batch holds $count stub(s) — every stub gets a line, including ones already in _done/"
     fi
   fi
 fi
 
-# --- verdict ---------------------------------------------------------------------------
+# --- verdict ---------------------------------------------------------------------------------------
 
 if [ "${#problems[@]}" -eq 0 ]; then
   echo "intake ok: $dir ($count stub(s), sequenced 1..$count)"

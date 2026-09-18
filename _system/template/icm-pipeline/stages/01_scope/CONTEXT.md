@@ -1,243 +1,181 @@
 # Stage 01 — Scope (contract)
 
-Invoked via `/pipeline scope "<story>"` (or `/pipeline scope <slug>` to revise). Your job is **one
-thing**: take the **written request** the work arrived as, commit it to the repo **verbatim**, and
-interrogate everything it leaves ambiguous until the business logic is settled or every open
-question is on the record. No spec, no code, no feature PR.
+Invoked via `/pipeline scope <input>` — the input is whatever the operator has (see Inputs). The
+`/pipeline` router reads this file and follows it. Your job is **one thing**: understand what is
+being asked — through the lens of the business _and_ the codebase — settle it with the operator in
+session, write it down plainly as `scope.md`, and cut it into an intake batch that `/pipeline new`
+walks into Define. No spec, no code, no feature branch, no feature PR.
 
-**Work arrives as a story.** Someone outside this session wrote it — call them **the author** — and
-the channel varies (a message, an email, notes from a call); this contract does not fix one. The
-owner supplies the text in-session: that text is the input, and it is the thing the author will be
-held to. You do not rewrite it, summarise it, or improve it — you commit it as it was written and
-then ask about what it doesn't say.
-
-**This stage is optional.** A repo with no business author behind its work does not need a front:
-plain-English work goes straight to `/pipeline new` and Define picks the slug. Scope is for the
-case where someone else's words are the requirement.
-
-**This stage ends at the gate.** The author answers in their own time, through the owner. Turning
-those answers into a settled scope, and cutting the intake batch from it, is the **Scope approved**
-substage, `/pipeline approve <slug>` (`stages/01_scope/approve/CONTEXT.md`). Don't do its work
-here: the answers are not in yet, and everything downstream is cut from the settled story, not from
-your reading of the draft.
-
-## Scope is business and product logic only — nothing else
-
-**This is the rule that governs every other rule in this contract.** The author wrote the story to
-say how things should work. They do not care what the system does today, what is already built, or
-how any of it is implemented — and telling them makes the questions harder to answer and biases the
-answer toward whatever happens to exist.
-
-So everything you write here — every question, every assumption, the whole settled scope that
-follows — describes **how it should work**, in the language the business uses, as if the system
-were being designed from nothing. Write the target logic, not the delta from today.
-
-Never put any of these in a question, an assumption, or the scope (or in the conversation you build
-them from):
-
-- File paths, line references, function/component/route/collection/field/table names, API
-  endpoints, schemas, env vars, or any identifier that only exists in the codebase.
-- Framework, library or vendor names — including "we already use X for this". If a capability
-  matters, name it in business terms ("the customer is notified by email").
-- Statements about the current implementation: "this already exists", "we'd extend the existing
-  table", "there's currently no endpoint for this".
-- Effort, sizing, sequencing or feasibility framing — "this is a small change", "phase 2",
-  "technically difficult". The cut (in the approve substage) handles sequencing; Define handles
-  feasibility.
-- Screens described as UI mechanics (button placement, modals, tabs). Name the surface and what a
-  person must be able to **decide or do** there — never the control they click.
-
-**Translation, not omission.** When something genuinely constrains the business logic, state the
-constraint in business terms — not "there's no vendor reference on the record" but "today a lead
-cannot be attributed to a vendor; the logic below assumes it must be able to be."
-
-If the honest answer to a question is "it depends what's already built", that's not a scope
-sentence — that's a question for the owner or for the author.
-
-**The author is not in the session.** They wrote the story and went back to their own work; the
-owner is the channel to them. So the interrogation has two lanes: questions the **owner** can
-answer are asked directly in-session; anything the owner can't settle — an unknown, an assumption,
-a fork only the author can pick — goes on the question sheet for the owner to put to them. Never
-silently assume an answer, and never block the stage waiting for one: write it down and move on.
+This is the whole front: the settle and the cut happen here, in one sitting, and the stage ends
+with the artifacts on `main` for the human to review. **No revision path either** — a scope that came out wrong is deleted and Scope is run
+again from the source.
 
 ## Inputs (read only these)
 
-- **The story** — the text the owner supplies as the argument or in the conversation. This is the
-  stage's subject; everything else frames it.
-- The repo's own business/product docs, if it has any — `.icm/CONTEXT.md` says where they live.
-  Read them for **vocabulary and direction** (the entities, journey steps and persona names the
-  business uses) so the questions read as one product — never for what is implemented.
-- If revising: the existing `.icm/runs/<slug>/01_scope/_source/story.md` and
-  `01_scope/output/questions.md`.
+- **The source** — whatever the operator supplies as the argument or in conversation: a pasted user
+  story, a prototype URL, a document, a prompt written after a call, a chat thread. Any medium.
+  This is the stage's subject; everything else frames it.
+- `.icm/_shared/knowledge-map.md` — the pages it names for Scope, the business pages first, for
+  vocabulary: which persona(s) this serves, the initiative or objective behind it (the why-now),
+  and the entities, journey steps, persona names and product seams the cut runs along.
+- **The repository, as needed.** Scope may read the whole codebase — `apps/**`, `packages/**`,
+  the docs tree, the repo's code rules (the file `_shared/conventions.md` points at), the
+  `AGENTS.md` files. Read code for three reasons only: to check that a requirement is clear enough
+  to build, to check that nothing here will break what already works, and to see that the feature
+  integrates with what exists rather than being forced in. Reading code to _design the
+  implementation_ is Define's and Build's job, not this stage's.
+- `.icm/_shared/scope-template.md` — the shape of `scope.md`.
+- The repo's voice/brand skill, where it ships one — the voice of anything the business will read.
 
-**Do not read source code at all** — no application source, no conventions file, no schemas, no
-config, and no other `.icm/runs/**`. Not to check a fact, not to "confirm a seam", not to see
-whether something already exists. There is no targeted-grep exception in this stage: the current
-state of the system is exactly what the scope must be free of, and every look at the code leaks
-into what you write.
+Context budget: the Inputs above are the budget (see `.icm/CONTEXT.md` → Layers). Reading the
+codebase is allowed, not free — load what the questions in front of you need, and record overruns
+on a one-line `context-budget:` note in `run.md`.
 
-Missing knowledge is resolved the same way every other unknown is: ask the owner, or put it on the
-question sheet. Never by reading the codebase.
+## The one writing rule: simplicity
 
-The Inputs above are the context budget.
+Everything this stage writes — `scope.md`, the breakdown, the stubs — reads plainly. Short
+sentences. Plain words. The bigger picture is fine; Define goes into detail later. Technical facts
+belong in the text **when they matter** to what is being decided ("today a lead has no vendor on
+it, so the first stub adds one"); jargon for its own sake does not. Name a surface by what a
+person must be able to decide or do there, not by the control they click. If a sentence needs a
+glossary to follow, rewrite it.
 
 ## Process
 
 1. **Pick the slug** — short kebab-case (e.g. `csv-export`). It names everything from here on: the
-   run folder, the intake epic, the branch and PR of every stub cut from it. One string traces the
-   work end to end across every surface. Reuse the given slug if revising.
+   run folder, the intake folder, every feature branch and PR cut from it. One string traces the
+   work end to end.
 
-2. **Commit the story verbatim.** Write the author's text, unedited, to
-   `.icm/runs/<slug>/01_scope/_source/story.md` under a two-line header:
-
-   ```md
-   <!-- The story as written by <author>, <YYYY-MM-DD>, via <channel>.
-        Verbatim. Never edited — corrections and answers land in scope.md at approve. -->
-   ```
-
-   **Verbatim means verbatim.** Don't fix the grammar, don't reorder it into sections, don't split
-   a paragraph into bullets, don't drop the aside that looks irrelevant. The whole point of this
-   file is that a reader three stages later can see exactly what was asked for, separately from
-   what we made of it. If the story arrived as several messages, concatenate them in order, each
-   under its own dated sub-heading; if it arrived as call notes, say so in the header and commit
-   the notes as they are.
-
-3. **Interrogate it — two lanes.** A story says what someone wants; a scope says how things work
-   when they have it. The gap between those is this step, and it is the whole stage.
-
-   Go deep on the logic itself: who acts, what starts it, what happens in what order, what the
-   rules and thresholds are, what state things are in and what moves them, who is told what and
-   when, what money/time is involved, and what happens when it goes wrong. Get concrete — real
-   amounts, real durations, real counts. Every number is either something the story states, or a
-   proposed default the author can overrule.
-
-   Where a rule is genuinely undetermined, **propose one and ask about it** — a proposal with a
-   question beats a blank, because the author can answer a proposal in one word and has to draft
-   from scratch to answer a blank. Never resolve a question by reasoning about what the system does
-   today.
-
-   The two lanes:
-   - **In-session:** ask the owner sharp questions about anything the story plausibly settles, or
-     that they know from the conversation behind it. Don't manufacture questions when the answer is
-     already on the table.
-   - **For the author, via the owner:** anything the owner can't settle — an unknown, an assumption
-     you'd otherwise have to make, a fork only the author can pick — goes on the question sheet
-     (step 4). Write each as a crisp, answerable question (yes/no or pick-one where possible),
-     never open-ended musing, and state the recommendation we'd take if they don't mind — that's
-     what they approve by not replying to it.
-
-   **Out of scope** is worked out here and stays business-level ("we are not handling refunds this
-   round"), never technical ("no API changes"). It prevents more rework than anything else.
-
-   For a spike or investigation, the same two lanes land findings + a recommendation + the decision
-   the author needs to make — findings about the business, not about the codebase.
-
-4. **Write the question sheet** to `.icm/runs/<slug>/01_scope/output/questions.md`. This is the
-   sheet the owner puts in front of the author, and the sheet the approve substage settles from:
+2. **Record the source.** Write `.icm/runs/<slug>/01_scope/_source/story.md` under a provenance
+   header saying who it came from, when, and in what medium:
 
    ```md
-   # Questions: <slug>
-
-   - story: 01_scope/_source/story.md
-   - author: <who wrote it>
-   - asked: <YYYY-MM-DD>
-
-   ## For the author
-
-   | ID  | Question                             | Recommendation if nothing comes back | Answer |
-   | --- | ------------------------------------ | ------------------------------------ | ------ |
-   | Q-1 | <crisp yes/no or pick-one, one line> | <what we'd do by default>            |        |
-
-   ## Settled in session
-
-   - <question> → <answer> · <owner, YYYY-MM-DD>
-
-   ## Assumptions taken
-
-   - <the assumption, in business terms — each one either has a Q-n above or is safe enough to state>
-
-   ## Out of scope
-
-   - <what this scope deliberately does not cover, in business terms>
+   <!-- Source: <who — the author | a call with … | …>, <YYYY-MM-DD>, via <chat | email | call notes | prototype | document>.
+        Recorded as received. Never edited — what was settled on top of it lives in scope.md. -->
    ```
 
-   **`Q-n` ids are permanent** — they are the trace from story → questions → scope → stub → spec.
-   Never renumber; a withdrawn question keeps its number and says so. The `Answer` column stays
-   empty here; the author's answers land in `scope.md` at approve, which is where the record lives.
+   Text is recorded **verbatim** — no grammar fixes, no reordering into sections, no dropped
+   asides. Several messages are concatenated in order, each under its own dated sub-heading.
+   Anything that is not text — a prototype URL, a document, a design file — is recorded **by link
+   plus a short description** of what it shows. The point of this file is that a reader three
+   stages later can see exactly what was asked for, separately from what we made of it.
 
-   No questions at all is a legitimate outcome for a fully-specified story — write
-   `None — the story settled in session.` under **For the author** and say so at the gate.
+3. **Understand it — business and codebase together.** A source says what someone wants; a scope
+   says how the business works when they have it, and how that lands in the product that exists.
+   Go deep on the logic: who acts, what starts it, what happens in what order, what the rules and
+   thresholds are, what state things are in and what moves them, who is told what and when, what
+   money or time is involved, what happens when it goes wrong. Get concrete — real amounts, real
+   durations, real counts.
 
-5. **Write `.icm/runs/<slug>/run.md`** (shape below) and **commit everything straight to `main` and
-   push** — `story.md`, `questions.md` and `run.md` are markdown-only artifacts, and landing them
-   immediately keeps every device in sync (no single-device front). Commit message:
-   `docs: <slug> — story committed, questions raised`. Touch nothing outside
-   `.icm/runs/<slug>/**`. If branch protection rejects the direct push, fall back to a tiny
-   docs-only PR merged green (`_shared/github.md`).
+   Then read the code the request touches, with the three questions from Inputs in mind: is each
+   requirement clear enough to build; does anything here break current behaviour; does the feature
+   fit what exists or fight it. What you find shapes the questions you ask next and the seams you
+   cut along — it does not go into `scope.md` as implementation design.
 
-   **Do not write `scope.md`, and do not cut the intake batch.** Both are the approve substage's
-   job, and both depend on answers you don't have yet — the author may strike a rule, add a persona
-   or move something out of scope, and anything cut now quietly carries work they removed.
-   `.icm/intake/<slug>/` stays empty until they have answered.
+4. **Interrogate the operator, in rounds.** Ask sharp questions with `AskUserQuestion` — several
+   rounds if needed — until you have what you need. Where a rule is genuinely undetermined,
+   **propose one and ask**: a proposal can be answered in one word. Every answer that settles
+   something becomes a decision with a stable id (`D-1`, `D-2`, …) in `scope.md`; the id is the
+   trace from decision to stub to spec, so never renumber one.
 
-6. **Gate — HARD, and it happens away from the session.** Hand over the story path, the `Q-n` list,
-   and **stop**. The author is never in this conversation: the owner puts the questions to them,
-   they answer in their own time, and then the owner runs `/pipeline approve <slug>`, which settles
-   the answers into `scope.md` and cuts the batch — **running it is what closes this gate.** There
-   is nothing to relay and nobody to wait on in-session.
+   There is no question sheet and no answering out of band: the operator answers here, now, with
+   whatever they know from the conversation behind the request. **Anything the operator cannot
+   settle is written down, never assumed** — as a line under `## Open for Define` in `scope.md`,
+   and as a line in the relevant stub's `Notes for Define`. Define picks those up.
 
-   On agreement the story **freezes**: `_source/story.md` is never edited again, and the canonical
-   scope passes to `scope.md` (at approve) and then to `spec.md` (at Define). Any later change is a
-   visible `spec.md` revision that re-opens the **Spec approved** tick. Scope never changes silently
-   — there is exactly one canonical scope per unit of work at every moment.
+   **Out of scope** is worked out here too — what this round deliberately does not cover. It
+   prevents more rework than anything else.
 
-7. **Stop.** Tell the owner: where the story landed, the `Q-n` list the author must answer, and
-   that the next step — once they have — is `/pipeline approve <slug>`, which settles the answers
-   into `01_scope/output/scope.md` and cuts the intake batch. Define comes after that.
+   For a spike or investigation, the same rounds land findings, a recommendation, and the decision
+   the operator needs to make.
+
+5. **Write `.icm/runs/<slug>/01_scope/output/scope.md`** — the settled scope, per
+   `_shared/scope-template.md`: the pointer header, the source reproduced, then
+   `## Assumptions` · `## Decisions` (the `D-n` table) · `## Out of scope` · `## Open for Define`.
+   Re-read it once against the writing rule above.
+
+6. **Cut the intake batch from `scope.md`.** The batch is `.icm/intake/<slug>/` — `breakdown.md`
+   plus one stub per future feature PR, in a strict build order (formats: `.icm/intake/CONTEXT.md`).
+   **Every scope gets an intake folder, however small** — a single-PR scope gets exactly one stub
+   whose `feature-slug` is the scope slug itself.
+   - **Cut along product seams.** Read `scope.md` for the distinct capabilities asked for, group
+     each one's rules and personas into a stub, and treat anything the scope defers as a candidate
+     for a later stub rather than padding for this batch. The entity and journey pages the map
+     names give the natural boundaries; the code you read in step 3 says where the seams really
+     are today. Each stub must map to **exactly one** future run / one PR —
+     however many stubs that takes. If a candidate is too big to be one PR, **flag it** in the
+     breakdown; never nest a scope inside a stub.
+   - **Cut-level ambiguity is resolved from `scope.md`, not re-asked.** If the scope leaves a hole
+     that affects the cut, go back to step 4 — don't guess.
+   - **Strict build order.** Every stub gets a unique `sequence: n of m`, contiguous `1..m`; the
+     order is a topological linearization of `depends-on` (a stub's number always exceeds every
+     in-batch stub it depends on). Where the graph allows parallelism, still pick a deterministic
+     tie-break (foundation first, then impact) and capture the parallel shape under
+     `## Parallelizable`.
+   - **Trace decisions.** Where a stub rests on a decision, name its `D-n` in `Notes for Define`;
+     where it rests on an open point, copy that point into `Notes for Define` too.
+   - **`breakdown.md` leads with What I understood**, so a misread is caught before the stubs:
+     What I understood · Where it sits · Build order · Parallelizable · Out of scope.
+   - **The bookkeeping is a script, not an eyeball:** `.icm/scripts/validate-intake.sh <slug>` →
+     `RESULT: OK` before moving on. It owns the order invariants (`sequence` unique and contiguous,
+     `of m` matching the stub count, every `depends-on` in-batch and sequenced first, `## Build
+order` agreeing with the stubs). What it cannot judge, you still must: each stub is
+     independently shippable, names a persona, carries the initiative/objective link, and sits on a
+     real seam; re-cutting the same graph reproduces the same order.
+
+7. **Write `.icm/runs/<slug>/run.md`** (Outputs below) and **commit straight to `main` and push**
+   — `story.md`, `scope.md`, `run.md` and `.icm/intake/<slug>/**`, nothing else. Commit message:
+   `docs: <slug> — story committed, intake cut`. **The path guard:** touch nothing outside
+   `.icm/runs/<slug>/**` and `.icm/intake/<slug>/**`. There is no PR and no docs-only-PR
+   fallback: `main`'s ruleset lets only its bypass list push directly, and the identities that can
+   are recorded in `_shared/github.md` → PR regimes. **If the push is refused, STOP** and report it
+   as a ruleset problem to fix — do not open a PR, do not retry under another identity, do not
+   leave the artifacts local-only and carry on.
+
+8. **Stop.** Return the `main`-branch links for `story.md`, `scope.md` and `breakdown.md` for the
+   human to review, the stub count and order, and the `## Open for Define` list. The next step,
+   when they are happy, is `/pipeline new`, which walks the batch into Define. A scope they are not
+   happy with is deleted (the run folder and the intake folder) and Scope is run again from the
+   source — there is no revise path and nothing to patch in place.
+
+On the push the source **freezes**: `_source/story.md` is never edited again, and the canonical
+scope is `scope.md` until Define writes `spec.md`. Any later change to the substance is a visible
+`spec.md` revision that re-opens the **Spec approved** tick. Scope never changes silently.
 
 ## Outputs
 
-- `.icm/runs/<slug>/01_scope/_source/story.md` — the story as written. **Verbatim, never edited.**
-- `.icm/runs/<slug>/01_scope/output/questions.md` — the question sheet (step 4).
+- `.icm/runs/<slug>/01_scope/_source/story.md` — the source, verbatim or by link. **Never edited.**
+- `.icm/runs/<slug>/01_scope/output/scope.md` — the settled scope. **The canonical scope** until
+  Define writes `spec.md`.
+- `.icm/intake/<slug>/` — `breakdown.md` + one stub per future feature PR, `validate-intake.sh` →
+  `RESULT: OK`.
 - `.icm/runs/<slug>/run.md` — the run's pointer index:
 
   ```md
   # Run: <slug>
 
-  - lane: front
-  - story: 01_scope/_source/story.md
-  - author: <who wrote it>
+  - lane: feature
+  - story: 01_scope/\_source/story.md
+  - author/source: <the author | call with … | prototype | …>
+  - personas: <from the repo's persona vocabulary — `personas` in .icm/project.json>
+  - scope-agreed: <YYYY-MM-DD — the day Scope settled it in session>
+  - stubs: <n> (.icm/intake/<slug>/)
   ```
 
-The approve substage appends `scope-agreed:` + `stubs:`. A front run opens **no PR of its own** —
-that is what marks it a front, and it is how `close-out.sh` recognises one.
+  `new-run.sh` appends `branch:` + `pr:` at Define — see the full template in `.icm/CONTEXT.md`.
 
-**No settled scope is written by this stage** — not `scope.md`, not `.icm/intake/<slug>/`. The
-story is the author's words and the questions are ours; reconciling the two is the approve
-substage's job, and it needs answers this stage does not have.
+All of it on `main`. No spec, no code, no feature branch, no feature PR.
 
 ## Verify (before handing off)
 
-- `_source/story.md` exists, carries the provenance header (author, date, channel), and is the
-  author's text **unedited** — no tidying, no restructuring, nothing dropped. Read it against what
-  the owner supplied, line for line.
-- **The interrogation is real.** The questions cover the actual gaps — who acts, what the rules and
-  thresholds are, what state moves what, who is told what, what happens when it goes wrong. If the
-  author could read the sheet and only reply "yes, all fine", it wasn't worth their time.
-- **Every unknown is either answered in-session or raised as a `Q-n` — nothing was silently
-  assumed.** Every `Q-n` states the recommendation taken by default; every assumption in
-  **Assumptions taken** either has a `Q-n` or is safe enough to state without one.
-- **Out of scope is filled**, in business terms.
-- **Everything is pure business and product logic.** Re-read the question sheet end to end against
-  the top-of-contract rule: no file paths, no function/component/route/field names, no framework or
-  vendor names, no "already exists / currently doesn't", no effort or feasibility talk. One
-  offending sentence → rewrite it in business terms before handing over.
-- **No source code was read this stage.**
-- You stopped at the gate and handed over the story path plus the `Q-n` list — you did not
-  self-advance into the settle or the cut.
-- `run.md` exists, carries `story:` and `author:`, and is committed on `main` and pushed — without
-  the push the front is stuck on one device.
-- **No `scope.md` was written and no intake folder was cut** — `.icm/intake/<slug>/` is still
-  empty. Both are `/pipeline approve <slug>`'s to produce, from the answers the author actually
-  gave.
-- No spec, no code, no feature branch, no feature PR was created.
+- **The source is recorded as received** — text verbatim under the provenance header, anything
+  else by link plus a description. Read it against what the operator supplied.
+- **Nothing was assumed silently.** Every point the operator could not settle is under
+  `## Open for Define` and in the relevant stub's `Notes for Define`; every settled point has a
+  `D-n`.
+- **Every stub maps to exactly one future PR** and `validate-intake.sh <slug>` printed
+  `RESULT: OK`.
+- **`scope.md` reads plainly** — short sentences, technical facts only where they matter, no jargon
+  for its own sake; the operator could hand it to the business as-is.
+- **The artifacts are on `main` and nothing was built** — no spec, no code, no feature branch, no
+  feature PR, and nothing touched outside `.icm/runs/<slug>/**` and `.icm/intake/<slug>/**`.

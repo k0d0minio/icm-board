@@ -17,7 +17,9 @@ uncommitted for Jamie to review per repo.
 
 **1. Check.** Run `_system/scripts/icm-check.sh` (no flags) and show the report —
 including its **drift** lines, where a repo's copy of a canonical asset has diverged
-from [`_system/template/claude/`](../../../../_system/template/README.md).
+from [`_system/template/claude/`](../../../../_system/template/README.md), and its
+**pipeline drift** lines, where a pipeline repo's template-owned file has diverged from
+[`_system/template/icm-pipeline/`](../../../../_system/template/icm-pipeline/MANIFEST).
 
 **2. Populate.** If the check found gaps, run `icm-check.sh --fix` and report what was
 created.
@@ -31,6 +33,12 @@ created.
 - Drift is **reported, never repaired** — repos own their copies. Where a drifted copy
   looks deliberate, propose registering the divergence in the repo's own docs; where it
   looks like rot, propose updating from canonical — Jamie decides per repo.
+- **Pipeline drift has a repair, and it is Jamie's call per repo**: template-owned files
+  (the `T` lines of the manifest) are meant to be identical everywhere, so a diverged
+  copy is either the template behind the repo (fold the repo's change into the template
+  first) or the repo behind the template. Show the diff with
+  `_system/scripts/icm-sync.sh --dry-run <repo>`; only on Jamie's word run `--apply`,
+  then the repo's own PR carries the change. Project-owned files are never synced (D20).
 
 **3. Review each repo's `.claude` and Layer 0.** For every non-exempt repo listed,
 assess how well its Claude setup serves *that* project — the estate deliberately does

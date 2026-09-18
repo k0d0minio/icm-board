@@ -1,6 +1,6 @@
 ---
 description: Check every estate repo against the .icm/.claude baseline, populate gaps from _system/template, then review each repo's .claude setup
-allowed-tools: Bash(_system/scripts/icm-check.sh:*), Bash(/home/jamie-nisbet/Apps/_system/scripts/icm-check.sh:*), Read, Glob, Grep, Agent
+allowed-tools: Bash(_system/scripts/icm-check.sh:*), Bash(/home/jamie-nisbet/Apps/_system/scripts/icm-check.sh:*), Bash(_system/scripts/icm-sync.sh:*), Bash(/home/jamie-nisbet/Apps/_system/scripts/icm-sync.sh:*), Read, Glob, Grep, Agent
 ---
 
 # /icm-check — thin entry point

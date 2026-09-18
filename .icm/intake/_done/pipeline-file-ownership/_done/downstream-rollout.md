@@ -54,9 +54,22 @@ Run from a single session with no worktree sweeper active — four worktrees sha
 `projects/` tree. The directive's session boundary (icm-board + sustentus only) ends with
 the sustentus PR; this stub is the next session.
 
+Done 2026-09-18 — remi-ai k0d0minio/remi-ai#105
+(https://github.com/k0d0minio/remi-ai/pull/105), Jamie's to merge from GitHub. The four steps
+ran as written: project-owned files first (`notify.sh` wired to what `send-ship-note.sh` did,
+reduced to the one-line summary the contract now sends, `SKIPPED` where the secrets are absent),
+`--apply` (28 files, 0 differ afterwards), `approve/` · `send-ship-note.sh` · `_design/` removed,
+the three merged runs closed out with `close-out.sh` (`nutrition-knowledge` archived as a
+completed epic), the allowlist mirrored on sustentus's, `pipeline.yaml` on the
+`origin/$BASE_REF...$HEAD_SHA` spelling; `env-check.sh` → `PASS`, second `--apply` →
+`UNCHANGED`, `icm-check.sh --repo` → no gaps, no drift. Two extras the rollout surfaced: the
+template's `validate-spec.sh` carried sustentus's persona vocabulary (fixed here, read from
+`project.json` now); a gates workflow that projects the PR body is renamed `(advisory)` so the
+template's rule-based classification never reds on it. remi-ai's backlog was retriaged into the
+template's stub shape in the same PR. **No other repo declares `- profile: pipeline`**, so there
+is no further downstream target and the epic is complete.
+
 ## Prompt
 
-Read `.icm/intake/pipeline-file-ownership/downstream-rollout.md`, then `.icm/project.md`
-D20–D21 and `_system/contracts/PIPELINE.md` § ownership. Start with `projects/remi-ai`:
-follow the four steps in the stub, one PR on a `claude/` branch in that repo, and report the
-`icm-sync.sh` and `icm-check.sh` output before and after.
+Read `.icm/intake/_done/pipeline-file-ownership/_done/downstream-rollout.md`. The work shipped
+on a remi-ai branch; the PR is Jamie's to merge. Nothing to do here.

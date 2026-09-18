@@ -49,6 +49,13 @@ the deal's documents already there), `CLAUDE.md`, `README.md`, requirements docs
 with provenance cited — those decisions are made and must not be re-asked. Only genuine
 gaps become questions.
 
+**1b. Re-run — reconcile before asking.** Read `.icm/project.md`; from its run log take
+the last commit and get what happened since (`git -C <repo> log <sha>..HEAD --oneline`
+plus changed paths). Then state the **posture** out loud so Jamie can correct it:
+*launch* (no v1; unshipped essentials) · *maintenance* (v1 shipped; defects, health,
+drift) · *expansion* (stable; new features). Posture decides where interrogation and
+lenses aim. Do not guess silently.
+
 **1c. Pipeline profile — set the repo up when Jamie declares it.** Declaring the profile
 is Jamie's act ([`PIPELINE.md`](../../../../_system/contracts/PIPELINE.md); the fix never
 upgrades one): on a first run, or whenever `.icm/CONTEXT.md` lacks the line and the repo
@@ -81,13 +88,6 @@ the onboarding — the mechanical half here, the questions in §3, the writing i
    as they name themselves and whether drafts build previews; `package.json` for the
    formatter and linter; the docs tree and its roles page for `docs_path` and the persona
    vocabulary; the mail or chat vendor already wired for what `notify.sh` can send with.
-
-**1b. Re-run — reconcile before asking.** Read `.icm/project.md`; from its run log take
-the last commit and get what happened since (`git -C <repo> log <sha>..HEAD --oneline`
-plus changed paths). Then state the **posture** out loud so Jamie can correct it:
-*launch* (no v1; unshipped essentials) · *maintenance* (v1 shipped; defects, health,
-drift) · *expansion* (stable; new features). Posture decides where interrogation and
-lenses aim. Do not guess silently.
 
 **2. Scan — cheap, structural, no fan-out.** Enough to ask good questions: the stack,
 routes/entry points, ticket state (every epic's stubs, `_done/` and build order; the

@@ -70,8 +70,9 @@ asks.
 
 - Reviews and commits (or discards) what `--fix` seeded, per repo.
 - Rules on each drift line: deliberate divergence or rot.
-- Declares (or declines) profile upgrades; decides when an unmigrated repo gets its
-  `/project` re-cut.
+- Declares (or declines) profile upgrades — a declared one is set up by `/project <repo>`
+  ([its § 1c](../project/CONTEXT.md)), never here; decides when an unmigrated repo gets
+  its `/project` re-cut.
 
 ## Outputs
 

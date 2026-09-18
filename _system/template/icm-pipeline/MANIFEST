@@ -1,0 +1,48 @@
+# MANIFEST — file-level ownership for the pipeline profile (decision D20, .icm/project.md).
+#
+# One line per file, relative to <repo>/.icm/. The first column is the owner:
+#   T  template-owned  — byte-identical in every pipeline repo. `icm-sync.sh --apply` overwrites
+#                        the repo's copy from this folder; `icm-check.sh` reports it as drift
+#                        until it does. Never carries a repo's identity — project specifics are
+#                        read at runtime from `.icm/project.json` and `_shared/project-rules.md`.
+#   P  project-owned   — seeded ONCE by `icm-check.sh --fix` when missing (the file here is the
+#                        stub), then the repo's forever: neither script ever touches it again.
+#
+# Both scripts read this file; nothing outside it can ever be synced. Add a file here to have it
+# seeded (and, for T, synced). The MANIFEST itself is neither — it stays in the template.
+T stages/01_scope/CONTEXT.md
+T stages/02_define/CONTEXT.md
+T stages/03_build/CONTEXT.md
+T stages/04_release/CONTEXT.md
+T lanes/bug/CONTEXT.md
+T lanes/tweak/CONTEXT.md
+T lanes/chore/CONTEXT.md
+T lanes/knowledge/CONTEXT.md
+T intake/CONTEXT.md
+T _shared/github.md
+T _shared/ci.md
+T _shared/stage-preamble.md
+T _shared/scope-template.md
+T _shared/conventions.md
+T scripts/lib/gh.sh
+T scripts/lib/changed-files.sh
+T scripts/lib/project.sh
+T scripts/resolve-run.sh
+T scripts/validate-spec.sh
+T scripts/validate-intake.sh
+T scripts/validate-decisions.sh
+T scripts/new-run.sh
+T scripts/project-body.sh
+T scripts/project-labels.sh
+T scripts/ci-status.sh
+T scripts/close-out.sh
+T scripts/triage-report.sh
+T scripts/env-check.sh
+P project.json
+P _shared/project-rules.md
+P _shared/knowledge-map.md
+P scripts/format.sh
+P scripts/lint.sh
+P scripts/validate-knowledge-map.sh
+P scripts/notify.sh
+P runs/README.md

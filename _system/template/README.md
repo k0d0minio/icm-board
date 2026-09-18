@@ -13,10 +13,14 @@ Consumed by `_system/scripts/icm-check.sh`:
    `AGENTS.md` (epic `opencode-sidecar`). Migrating a repo's Layer 0 is Jamie's act; the
    fix never performs the move.
 
-Sustentus is exempt (its `.icm/` is authoritative — it is the source this template was
-extracted from, decision D12). The pipeline profile tracks that source: it was re-founded
-on sustentus's current four-stage shape (Scope → Define → Build → Release) in September
-2026, generalised rather than parameterised.
+Sustentus is exempt from the estate walk (its `.icm/` is authoritative — it is the source
+this template was extracted from, decision D12); `icm-check.sh --repo` measures it
+voluntarily. The pipeline profile tracks that source: it was re-founded on sustentus's
+current four-stage shape (Scope → Define → Build → Release, no substage) on 2026-09-18,
+generalised rather than parameterised, and split at file level into **template-owned**
+and **project-owned** files (decision D20, `icm-pipeline/MANIFEST`). Template-owned files
+are byte-identical in every pipeline repo — sustentus included — and `icm-sync.sh` is how
+they get there; project-owned files are seeded once and never touched again.
 
 ```
 root/                            → copied to <repo>/                (migrated repos only)
@@ -40,16 +44,23 @@ claude/                          → copied to <repo>/.claude/        (every liv
     ticket-craft/SKILL.md        ← the intake contract as working knowledge
     pr-conventions/SKILL.md     ← branches, commits, CI-is-truth, no secrets
 icm-pipeline/                    → copied to <repo>/.icm/           (pipeline profile only)
-  stages/01_scope/ (+ approve/)   ← the optional front: story verbatim → questions →
-                                    settled scope.md → the intake cut
-  stages/{02_define,03_build,04_release}/   lanes/{bug,tweak,chore}/
-  _shared/{github,ci,stage-preamble}.md   runs/README.md
-  scripts/{resolve-run,validate-spec,validate-intake,new-run,ci-status}.sh
-  scripts/close-out.sh             ← archive the run (and the finished epic) on the
-                                     branch, so the squash-merge publishes the move
-  scripts/project-labels.sh        ← project type/stage/complexity onto the run's PR
+  MANIFEST                       ← the ownership list: T template-owned · P project-owned.
+                                    Read by icm-check.sh AND icm-sync.sh; never copied
+  stages/01_scope/               ← the front: source verbatim → settled live in session →
+                                    scope.md (D-n decisions) → the intake cut. No substage
+  stages/{02_define,03_build,04_release}/   lanes/{bug,tweak,chore,knowledge}/     (T)
+  intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
+  _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
+  _shared/{project-rules,knowledge-map}.md   ← this repo's rules and doc pages         (P)
+  project.json                   ← the project manifest (name, docs_path, archives,
+                                    required checks/env, smoke check) — --fix fills name (P)
+  runs/README.md                 ← the repo's own note on its runs                     (P)
+  scripts/lib/{gh,changed-files,project}.sh                                           (T)
+  scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
+           project-body,project-labels,ci-status,close-out,triage-report,env-check}.sh (T)
+  scripts/{format,lint,validate-knowledge-map,notify}.sh   ← the repo's own hooks      (P)
 claude-pipeline/                 → copied to <repo>/.claude/        (pipeline profile only)
-  skills/pipeline/SKILL.md       ← the /pipeline router
+  skills/pipeline/SKILL.md       ← the /pipeline router (seeded; drift-reported)
 github-pipeline/                 → copied to <repo>/.github/        (pipeline profile only)
   pull_request_template.md       ← carries both gate anchors
 ```
@@ -114,15 +125,26 @@ Rules:
   `CANONICAL` in `icm-check.sh`, because every repo edits its own hook wiring). A
   formatter may reformat it freely — which is what `cafe-jardim` did, rather than carry
   a second exemption.
-- **Drift is a report line, not a repair.** `icm-check.sh` compares each repo's copy of
-  a canonical asset against this folder and warns on divergence. Deliberate divergence
-  is fine — the repo wins — but it should be visible, not silent.
+- **Drift is a report line, not a repair — with one narrow, explicit exception.**
+  `icm-check.sh` compares each repo's copy of a canonical asset against this folder and
+  warns on divergence. Deliberate divergence is fine — the repo wins — but it should be
+  visible, not silent. The exception is the pipeline profile's **template-owned** files
+  (the `T` lines of `icm-pipeline/MANIFEST`): those are the estate's contracts, identical
+  by design, and `_system/scripts/icm-sync.sh --apply <repo>` overwrites a repo's copy
+  from here — invoked by a human, dry-run by default, moving nothing outside the
+  manifest, deleting nothing (a retired file is reported for `git rm`). Canonical
+  `.claude/` assets and every `P` file keep the old rule: reported, never repaired
+  (decision D20).
 - **No substitutions.** Nothing in the template is templated per repo: identity is the
   `epic/slug` path (no prefixes), and the pipeline scripts derive the GitHub repo from
   `origin` (override with `GITHUB_REPO`). A copy is exact, which is what makes the drift
-  report honest. Generalising the pipeline profile out of sustentus therefore meant
-  *removing* its identity — the owner/repo literal, the people, the deploy-target counts,
-  its docs-app archive paths — never turning them into placeholders.
-- Template edits here propagate only to repos fixed *after* the edit; the script never
-  retro-syncs existing files. That is deliberate — repos own their copies, and the
-  drift report is how divergence stays honest.
+  report — and the sync — honest. Generalising the pipeline profile out of sustentus
+  therefore meant *removing* its identity — the owner/repo literal, the people, the
+  check names, the deploy targets, its docs-app archive paths, its channels — never
+  turning them into placeholders. What a template-owned file needs to know about one
+  repo it reads at runtime from that repo's project-owned `.icm/project.json` and
+  `_shared/project-rules.md`.
+- Baseline and canonical-asset edits here propagate only to repos fixed *after* the
+  edit; the fix never retro-syncs existing files. Pipeline template-owned edits
+  propagate by a human running `icm-sync.sh` per repo — the drift report says which
+  repos are behind.

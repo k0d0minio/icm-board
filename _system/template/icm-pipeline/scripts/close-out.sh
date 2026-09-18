@@ -1,52 +1,63 @@
 #!/usr/bin/env bash
-# close-out.sh — move the work to done: archive the run, and the epic if this stub finished it.
-# Estate pipeline template (icm-board _system/template/icm-pipeline/scripts/), adapted from the
-# sustentus reference implementation (which archives into its docs app; here the archive is the
-# estate's own `_done/` convention — contracts/TICKETS.md).
+# close-out.sh — move the ticket to done: archive the run, and the epic if this stub finished it.
 #
-# RUN BY THE RELEASE STAGE, ON THE RUN'S OWN BRANCH, BEFORE THE MERGE. The archive move rides in
-# the run's own PR, so the squash-merge is what publishes it. Nothing is pushed to `main` here and
-# nothing runs after the merge.
+# RUN BY THE RELEASE STAGE (AND EVERY LANE), ON THE RUN'S OWN BRANCH, BEFORE THE MERGE. The archive
+# move rides in the run's own PR, so the squash-merge is what publishes it. Nothing is pushed to
+# `main` here and nothing runs after the merge — a project that verifies or announces after the
+# merge does so in its own CI workflow (`_shared/project-rules.md` → Announcing).
 #
-# Why before the merge and not after: a close-out that pushes straight to `main` cannot succeed on
-# a branch protected by required status checks — no direct push carries them — and the archive
-# commit strands on a branch nobody merges, leaving every shipped run still sitting in
-# `.icm/runs/`. Moving the archive into the PR removes the second commit and the whole class of
-# problem: no push to a protected branch, no bypass, no token, no fallback PR.
+# It used to work the other way — CI ran it after the merge and pushed a second commit straight to
+# `main`. That push cannot succeed on a branch protected by required status checks: no direct push
+# carries them, and GitHub refuses the Actions bot as a ruleset bypass actor. Every merged run was
+# left in `.icm/runs/` with its archive commit stranded on a chore branch. Moving the archive into
+# the PR removes the second commit, and with it the whole class of problem: no push to a protected
+# branch, no bypass, no token, no fallback PR.
 #
-# The objection to this shape is that "a run folder moved before the squash is a claim about a
+# The old objection to this shape was that "a run folder moved before the squash is a claim about a
 # merge that hasn't happened". It isn't: the move reaches `main` only if the PR merges, and if the
-# PR never merges the move never happened.
+# PR never merges the move never happened. That is the same standing as a changelog page, which
+# also says "this shipped" and is also written on the branch before the merge.
+#
+# Where the archives are: `runs_archive` and `intake_archive` in `.icm/project.json` (lib/project.sh),
+# defaulting to the estate's own `.icm/runs/_done/` and `.icm/intake/_done/`. A project that serves
+# its archive from a docs tree points both keys there; nothing else changes.
 #
 # What it does, in order:
 #   1. Refuses to run on `main` — this commits to the run's branch, and only there.
 #   2. Establishes the run may be closed out:
 #        - its PR is OPEN            → the normal path: this run is about to merge.
-#        - its PR is already MERGED  → recovery for a run that merged without its archive; the
-#                                      move is committed here for a sweep PR to carry.
+#        - its PR is already MERGED  → a Release that merged without its close-out — a fault the
+#                                      project's verify job (if it has one) has already reported.
+#                                      The move is still committed here; the ruleset means it
+#                                      reaches main on its own PR.
 #        - its PR is CLOSED unmerged → STOP. An abandoned run is not history.
-#        - no `- pr:` line at all    → a FRONT (Scope + approve, which open no PR). Its epic
-#                                      stands in for a merge: it archives once
-#                                      `.icm/intake/<slug>/` has moved to `.icm/intake/_done/`,
-#                                      and is refused while that epic is still live.
-#   3. Moves .icm/runs/<slug>/ -> .icm/runs/_done/<slug>/.
+#        - no `- pr:` line at all    → a FRONT (Scope, which opens no PR). Its epic stands in for a
+#                                      merge: it archives once `.icm/intake/<slug>/` has moved to
+#                                      the intake archive, and is refused while that epic is live.
+#   3. Moves .icm/runs/<slug>/ -> <runs_archive>/<slug>/.
 #   4. If the run came from an intake stub, and that epic now has no active stubs left AND every
-#      one of its OTHER spun-out runs has merged, moves .icm/intake/<epic>/ ->
-#      .icm/intake/_done/<epic>/ — and with it the front run .icm/runs/<epic>/ that cut the epic,
-#      if one is still here, in the same commit. This run is excluded from that sibling test
-#      because it is the one merging now. `_done/` alone is not the signal: it means spun out,
-#      not shipped, which is why each sibling's PR is checked.
-#      .icm/intake/triage/ is exempt: it is a permanent backlog, never an epic to archive.
+#      one of its OTHER spun-out stubs is settled — its run's PR merged, or the stub itself retired
+#      with a `> Dropped:` / `superseded-by:` line — moves .icm/intake/<epic>/ ->
+#      <intake_archive>/<epic>/ — and with it the front run .icm/runs/<epic>/ that cut the epic, if
+#      one is still here, in the same commit. This run is excluded from that sibling test because it
+#      is the one merging now. `_done/` alone is not the signal: it means spun out, not shipped,
+#      which is why each sibling's PR is checked. .icm/intake/triage/ is exempt: it is a permanent
+#      backlog (intake/CONTEXT.md -> Triage), never an epic to archive.
 #   5. Commits the move on the current branch.
 #
-# It is idempotent: a run already archived is reported and skipped, so a re-run after a partial
-# close-out finishes the job rather than doubling it.
+# It is idempotent: a run already archived is reported and skipped, and the epic step still runs —
+# so a re-run after a partial close-out (run moved, epic not) finishes the job rather than doubling
+# it, and a re-run after a complete one changes nothing.
 #
-# Config from the process environment (no .env loading):
-#   GITHUB_TOKEN / GH_TOKEN  (one required)  GitHub token with repo scope — reads this run's PR
-#                                            state and each sibling's.
-#   GITHUB_REPO              (optional)      owner/repo; default: derived from `origin`.
-#   GITHUB_API_URL           (optional)      API base. Default: https://api.github.com.
+# Config is read straight from the process environment — this script does NOT load any .env file.
+# The PR reads go through .icm/scripts/lib/gh.sh (curl with the token, else a logged-in `gh` CLI,
+# else one die naming what this environment is missing):
+#
+#   GITHUB_TOKEN          (one*)      GitHub token (contents, pull-requests, issues) — reads this
+#                                     run's PR state and each sibling's.
+#   GH_TOKEN              (one*)      Alternative name for the token (*one of the two, or a gh login).
+#   GITHUB_REPO           (optional)  owner/repo. Default: derived from `origin` (lib/gh.sh).
+#   GITHUB_API_URL        (optional)  API base. Default: https://api.github.com.
 #
 # Usage:
 #   .icm/scripts/close-out.sh <slug> [--dry-run]
@@ -68,7 +79,7 @@ cd "$repo_root"
 die()  { echo "error: $*" >&2; exit 1; }
 stop() { echo "$*" >&2; echo "RESULT: STOP"; exit 3; }
 
-# --- args ------------------------------------------------------------------------------
+# --- args ------------------------------------------------------------------------------------------
 
 slug=""; dry_run=0
 while [ $# -gt 0 ]; do
@@ -80,26 +91,19 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$slug" ] || die "usage: close-out.sh <slug> [--dry-run]"
 
-# --- config from env (repo derived from origin when unset) -----------------------------
+# --- config from env (lib/gh.sh: GH_API, repo, gh_token + the curl→gh fallback) --------------------
 
-GH_API="${GITHUB_API_URL:-https://api.github.com}"
-repo="${GITHUB_REPO:-$(git -C "$repo_root" remote get-url origin 2>/dev/null \
-  | sed -E 's#^(git@[^:]+:|https?://[^/]+/)##; s#\.git$##' || true)}"
-[ -n "$repo" ] || die "GITHUB_REPO is not set and no origin remote to derive it from"
-gh_token="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
-[ -n "$gh_token" ] || die "GITHUB_TOKEN (or GH_TOKEN) is not set — needed to read the PR's state"
+# shellcheck source=lib/gh.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/gh.sh"
+# shellcheck source=lib/project.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"
+gh_require "reading the PR's state"
 
-gh_get() {
-  curl -sS -m 30 -w $'\n%{http_code}' \
-    -H "Authorization: Bearer $gh_token" \
-    -H "Accept: application/vnd.github+json" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    "$GH_API$1"
-}
+gh_get() { gh_api GET "$1"; }
 
 run_dir="$repo_root/.icm/runs/$slug"
-runs_archive="$repo_root/.icm/runs/_done"
-intake_archive="$repo_root/.icm/intake/_done"
+runs_archive="$runs_archive_rel"       # repo-relative, from .icm/project.json (lib/project.sh)
+intake_archive="$intake_archive_rel"
 
 # The `- pr:` line carries anything from "#456" to a full URL with a trailing "# comment".
 pr_from_run_md() {
@@ -107,11 +111,17 @@ pr_from_run_md() {
     | sed -E 's/^- pr:[[:space:]]*//; s/[[:space:]]+#.*$//; s#^.*/pull/##; s/^#//; s/[^0-9].*$//'
 }
 
-# A front run (Scope + approve only) never opens a PR of its own — the front pushes straight to
+# A front run (Scope only) never opens a PR of its own — the front pushes straight to
 # main — so a run.md with no usable `- pr:` line is the whole test for one.
 front_only() {
   [ -f "$1" ] || return 1
   [ -z "$(pr_from_run_md "$1")" ]
+}
+
+# A stub retired without a run: `> Dropped: <reason, date>` (the estate's convention) or
+# `superseded-by:` (a triage batch folded it into another stub). Settled, not unshipped.
+stub_retired() {
+  grep -qE '^> *Dropped:|^- *superseded-by:' "$1" 2>/dev/null
 }
 
 # Echoes "merged" / "open" / "closed"; empty when the PR could not be read at all.
@@ -125,24 +135,28 @@ pr_status() {
   printf '%s' "$body" | jq -r 'if .merged then "merged" else .state end'
 }
 
-# --- 1. this commits to the run's branch, and only there -------------------------------
+# --- 1. this commits to the run's branch, and only there ---------------------------------------------
 
 branch="$(git symbolic-ref --quiet --short HEAD || echo '')"
-if [ "$dry_run" = "0" ] && { [ "$branch" = "main" ] || [ "$branch" = "master" ] || [ -z "$branch" ]; }; then
+if [ "$dry_run" = "0" ] && { [ "$branch" = "main" ] || [ -z "$branch" ]; }; then
   die "close-out commits to the run's own branch (currently: ${branch:-detached HEAD}). The archive rides in the run's PR — it is never pushed to main."
 fi
 
-# --- 2. the run must be closable -------------------------------------------------------
+# --- 2. the run must be closable ---------------------------------------------------------------------
 
-if [ ! -d "$run_dir" ]; then
-  if [ -d "$runs_archive/$slug" ]; then
-    echo "run '$slug' is already archived — nothing to move" >&2
-    echo "RESULT: CLOSED"; exit 0
-  fi
-  die "no .icm/runs/$slug/ and no archive entry for it — wrong slug?"
+# The run's record is read from wherever it is — live, or already archived by an earlier pass.
+# An archived run is not the end of the job: its epic may still be waiting (step 4).
+run_md=""
+if [ -d "$run_dir" ]; then
+  run_md="$run_dir/run.md"
+elif [ -d "$runs_archive/$slug" ]; then
+  run_md="$runs_archive/$slug/run.md"
+  echo "run '$slug' is already archived — checking whether its epic still needs moving" >&2
+else
+  die "no .icm/runs/$slug/ and no $runs_archive/$slug/ — wrong slug?"
 fi
 
-pr_number="$(pr_from_run_md "$run_dir/run.md" || true)"
+pr_number="$(pr_from_run_md "$run_md" || true)"
 
 front_close=0
 if [ -z "$pr_number" ]; then
@@ -152,10 +166,10 @@ if [ -z "$pr_number" ]; then
   if [ -d "$intake_archive/$slug" ]; then
     front_close=1
     echo "front-only run '$slug' — its epic is archived, so the front is history too" >&2
-  elif [ -d "$repo_root/.icm/intake/$slug" ]; then
+  elif [ -d ".icm/intake/$slug" ]; then
     stop "'$slug' is a front-only run and its epic .icm/intake/$slug/ is still live — the front stays until the epic is archived with it."
   else
-    stop "run.md for '$slug' has no usable '- pr:' line and there is no '$slug' epic in .icm/intake/ or .icm/intake/_done/ — nothing here says this run is finished."
+    stop "run.md for '$slug' has no usable '- pr:' line and there is no '$slug' epic in .icm/intake/ or $intake_archive/ — nothing here says this run is finished."
   fi
 else
   status="$(pr_status "$pr_number")"
@@ -164,9 +178,10 @@ else
     open)
       echo "PR #$pr_number is open — archiving on '$branch' so the squash-merge publishes it" >&2 ;;
     merged)
-      # A run that merged before its archive rode along: a Release that skipped this step. The
-      # move still belongs in a PR — a sweep branch, this time.
-      echo "PR #$pr_number already merged — archiving late; carry this commit in a sweep PR" >&2 ;;
+      # A Release that merged without its close-out: a fault (fix the contract or the run, not a
+      # sweep chore); the move itself still reaches main only on its own PR, because a protected
+      # main refuses a direct push.
+      echo "PR #$pr_number already merged — Release merged without its close-out (a fault: fix the contract or the run). Archiving late; this commit reaches main on its own PR" >&2 ;;
     closed)
       stop "PR #$pr_number for '$slug' was closed without merging. An abandoned run is not history — delete the folder deliberately or reopen the PR." ;;
     *)
@@ -174,24 +189,25 @@ else
   esac
 fi
 
-# --- 3. archive the run ----------------------------------------------------------------
+# --- 3. archive the run --------------------------------------------------------------------------------
 
 moved_run=0
 if [ -d ".icm/runs/$slug" ]; then
-  [ -d ".icm/runs/_done/$slug" ] && die ".icm/runs/_done/$slug already exists — resolve by hand"
-  mkdir -p ".icm/runs/_done"
+  [ -d "$runs_archive/$slug" ] && die "$runs_archive/$slug already exists — resolve by hand"
+  mkdir -p "$runs_archive"
   if [ "$dry_run" = "1" ]; then
-    echo "[dry-run] would move .icm/runs/$slug/ → .icm/runs/_done/$slug/" >&2
+    echo "[dry-run] would move .icm/runs/$slug/ → $runs_archive/$slug/" >&2
   else
-    git mv ".icm/runs/$slug" ".icm/runs/_done/$slug" || die "could not archive the run folder"
-    echo "archived run: .icm/runs/$slug/ → .icm/runs/_done/$slug/" >&2
+    git mv ".icm/runs/$slug" "$runs_archive/$slug" \
+      || die "could not archive the run folder"
+    echo "archived run: .icm/runs/$slug/ → $runs_archive/$slug/" >&2
   fi
   moved_run=1
 else
   echo "run '$slug' already archived on this branch — skipping" >&2
 fi
 
-# --- 4. archive the epic, if this stub finished it -------------------------------------
+# --- 4. archive the epic, if this stub finished it -------------------------------------------------------
 
 epic=""
 moved_epic=0
@@ -203,10 +219,12 @@ if [ "$front_close" = "1" ]; then
   epic_note="'$slug' is the front for the already-archived '$slug' epic"
 else
   for d in .icm/intake/*/; do
-    # triage/ is the permanent parking lane, not an epic — a lane run spun out of one of its
-    # stubs must never cause the folder to be archived, however empty it gets. _done/ is the
-    # archive itself.
-    case "$(basename "$d")" in triage|_done) continue ;; esac
+    [ -d "$d" ] || continue
+    # triage/ is the permanent parking lane, not an epic — a lane run spun out of one of its stubs
+    # must never cause the folder to be archived, however empty it gets. The intake archive itself
+    # (when it lives inside intake/, as the default `_done/` does) is not an epic either.
+    case "$(basename "$d")" in triage) continue ;; esac
+    [ "${d%/}" = "$intake_archive" ] && continue
     [ -e "$d/_done/$slug.md" ] && { epic="$(basename "$d")"; break; }
   done
 fi
@@ -225,9 +243,11 @@ if [ -n "$epic" ]; then
       [ "$sib" = "$slug" ] && continue
       sib_run_md=""
       [ -f ".icm/runs/$sib/run.md" ] && sib_run_md=".icm/runs/$sib/run.md"
-      [ -z "$sib_run_md" ] && [ -f ".icm/runs/_done/$sib/run.md" ] \
-        && sib_run_md=".icm/runs/_done/$sib/run.md"
+      [ -z "$sib_run_md" ] && [ -f "$runs_archive/$sib/run.md" ] \
+        && sib_run_md="$runs_archive/$sib/run.md"
       if [ -z "$sib_run_md" ]; then
+        # No run ever spun out of it: settled only if the stub itself says it was retired.
+        stub_retired "$stub" && continue
         unmerged="${unmerged:+$unmerged, }$sib (no run folder)"; continue
       fi
       sib_pr="$(pr_from_run_md "$sib_run_md" || true)"
@@ -236,12 +256,13 @@ if [ -n "$epic" ]; then
     if [ -n "$unmerged" ]; then
       epic_note="epic '$epic' is fully spun out but not fully shipped — waiting on: $unmerged"
     else
-      [ -d ".icm/intake/_done/$epic" ] && die ".icm/intake/_done/$epic already exists — resolve by hand"
-      mkdir -p ".icm/intake/_done"
+      [ -d "$intake_archive/$epic" ] && die "$intake_archive/$epic already exists — resolve by hand"
+      mkdir -p "$intake_archive"
       if [ "$dry_run" = "1" ]; then
-        echo "[dry-run] would move .icm/intake/$epic/ → .icm/intake/_done/$epic/" >&2
+        echo "[dry-run] would move .icm/intake/$epic/ → $intake_archive/$epic/" >&2
       else
-        git mv ".icm/intake/$epic" ".icm/intake/_done/$epic" || die "could not archive the intake epic"
+        git mv ".icm/intake/$epic" "$intake_archive/$epic" \
+          || die "could not archive the intake epic"
       fi
       moved_epic=1
       epic_note="epic '$epic' shipped in full — archived"
@@ -251,14 +272,14 @@ if [ -n "$epic" ]; then
       # along in this commit. A run folder at that slug WITH a PR is a spine run, not a front —
       # left alone, for rule 2 to close out on its own Release.
       if [ -d ".icm/runs/$epic" ] && front_only ".icm/runs/$epic/run.md"; then
-        [ -d ".icm/runs/_done/$epic" ] && die ".icm/runs/_done/$epic already exists — resolve by hand"
-        mkdir -p ".icm/runs/_done"
+        [ -d "$runs_archive/$epic" ] && die "$runs_archive/$epic already exists — resolve by hand"
+        mkdir -p "$runs_archive"
         if [ "$dry_run" = "1" ]; then
-          echo "[dry-run] would move the front .icm/runs/$epic/ → .icm/runs/_done/$epic/" >&2
+          echo "[dry-run] would move the front .icm/runs/$epic/ → $runs_archive/$epic/" >&2
         else
-          git mv ".icm/runs/$epic" ".icm/runs/_done/$epic" \
+          git mv ".icm/runs/$epic" "$runs_archive/$epic" \
             || die "could not archive the front run behind the epic"
-          echo "archived front run: .icm/runs/$epic/ → .icm/runs/_done/$epic/" >&2
+          echo "archived front run: .icm/runs/$epic/ → $runs_archive/$epic/" >&2
         fi
         moved_front=1
       fi
@@ -267,7 +288,7 @@ if [ -n "$epic" ]; then
 fi
 echo "$epic_note" >&2
 
-# --- 5. commit on this branch ----------------------------------------------------------
+# --- 5. commit on this branch ----------------------------------------------------------------------------
 
 if [ "$dry_run" = "1" ]; then
   echo "[dry-run] nothing committed"
@@ -279,9 +300,10 @@ if [ "$moved_run" = "0" ] && [ "$moved_epic" = "0" ] && [ "$moved_front" = "0" ]
   echo "RESULT: CLOSED"; exit 0
 fi
 
-msg="Wrap: close out $slug — archive the shipped run"
-[ "$front_close" = "1" ] && msg="Wrap: close out $slug — archive the front behind the archived epic"
-[ "$moved_epic" = "1" ] && msg="$msg and the completed $epic epic"
+msg="chore: close out $slug — archive the shipped run"
+[ "$front_close" = "1" ] && msg="chore: close out $slug — archive the front behind the archived epic"
+[ "$moved_run" = "0" ] && [ "$moved_epic" = "1" ] && msg="chore: close out $slug — archive the completed $epic epic"
+[ "$moved_run" = "1" ] && [ "$moved_epic" = "1" ] && msg="$msg and the completed $epic epic"
 [ "$moved_front" = "1" ] && msg="$msg (front included)"
 
 git commit -q -m "$msg" || die "nothing staged to commit — the git mv did not take"

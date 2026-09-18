@@ -1,38 +1,35 @@
 #!/usr/bin/env bash
 # project-labels.sh — project a run's labels onto its PR from spec.md (one direction: file → PR).
-# Estate pipeline template (icm-board _system/template/icm-pipeline/scripts/), adapted from the
-# sustentus reference implementation (its persona vocabulary removed — personas are that repo's
-# spec header, not the template's).
 #
-# Replaces the conversational "build the label set and write it" step. The label set is a pure
-# function of the spec header plus the stage, so a script can project it exactly — no "mostly". It
-# reads the PR number from run.md and the complexity from spec.md, assembles the FULL label set,
-# and PUTs it (the GitHub labels API replaces the whole set, which is what we want).
+# Replaces the conversational "build the full label set and call issue_write" step. The label set is
+# a pure function of the spec header + the stage, so a script can project it exactly — no "mostly".
+# It reads the PR number from run.md and the personas/complexity from spec.md, assembles the FULL
+# label set, and PUTs it (the GitHub labels API replaces the whole set, which is what we want — the
+# fixed vocabulary lives in .github/labels.yml). CI is the normal caller (the labels job in
+# .github/workflows/pipeline.yaml, with --stage auto, on every push touching .icm/runs/**);
+# new-run.sh calls it once at Define; by hand it's the manual fallback. Requires curl + jq.
 #
-# Callers: the Define stage once, by hand after a spec revision, and CI on every push touching
-# `.icm/runs/**` if the repo wires a labels job. Spine runs only — a lane run has no spec, so
-# there is nothing to project.
+# Config is read straight from the process environment — this script does NOT load any .env file.
+# The label write goes through .icm/scripts/lib/gh.sh (curl with the token, else a logged-in `gh`
+# CLI, else one die naming what this environment is missing):
 #
-# The label vocabulary is the repo's own. This script writes `type:feature`, `stage:<name>` and
-# `complexity:<name>`; a repo that wants them coloured and described defines them (a
-# `.github/labels.yml` is the usual shape). Nothing here creates or curates them.
-#
-# Config from the process environment (no .env loading):
-#   GITHUB_TOKEN / GH_TOKEN  (one required)  GitHub token with repo scope.
-#   GITHUB_REPO              (optional)      owner/repo; default: derived from `origin`.
-#   GITHUB_API_URL           (optional)      API base. Default: https://api.github.com.
+#   GITHUB_TOKEN          (one*)      GitHub token (contents, pull-requests, issues) — the label write.
+#   GH_TOKEN              (one*)      Alternative name for the token (*one of the two, or a gh login).
+#   GITHUB_REPO           (optional)  owner/repo the PR lives in. Default: derived from `origin` (lib/gh.sh).
+#   GITHUB_API_URL        (optional)  API base. Default: https://api.github.com.
 #
 # Usage:
 #   .icm/scripts/project-labels.sh <slug> --stage <define|build|release|auto> [--pr <n>]
 #
-#   --stage auto   derive the stage from which run outputs exist on disk (define → build →
-#                  release), so an automated caller doesn't have to know the stage.
-#   --pr <n>       use this PR number instead of reading it from run.md — for CI, where the PR
-#                  number comes from the event and run.md's pointer may not be the one being
-#                  labelled.
+#   --stage auto   derive the stage from which run outputs exist on disk (`## Release` in
+#                  notes.md → release; notes.md exists → build; else define), so an automated
+#                  caller (the .github/workflows/pipeline.yaml labels job) doesn't have to know
+#                  the stage.
+#   --pr <n>       use this PR number instead of reading it from run.md — for CI, where the PR number
+#                  comes from the event and run.md's pointer may not be the one being labelled.
 #
 # Verdict (stdout, last line):
-#   RESULT: APPLIED   exit 0  — the full label set was written to the PR (the set is echoed above).
+#   RESULT: APPLIED   exit 0  — the full label set was written to the PR (the set is echoed above it).
 set -euo pipefail
 
 command -v curl >/dev/null || { echo "curl not found" >&2; exit 1; }
@@ -42,7 +39,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 die() { echo "error: $*" >&2; exit 1; }
 
-# --- args ------------------------------------------------------------------------------
+# --- args ------------------------------------------------------------------------------------------
 
 slug=""; stage=""; pr_override=""
 while [ $# -gt 0 ]; do
@@ -58,11 +55,11 @@ done
 
 run_dir="$repo_root/.icm/runs/$slug"
 spec="$run_dir/02_define/output/spec.md"
-[ -f "$spec" ] || die "no spec at .icm/runs/$slug/02_define/output/spec.md — spine runs only (a lane run has no spec to project from)"
+[ -f "$spec" ] || die "no spec at $spec — Define must write spec.md first"
 
 # --stage auto: derive the current stage from which run outputs exist on disk. Newest wins.
-# Release writes no run-folder file of its own — it appends a `## Release` section to Build's
-# notes.md, and that section is the signal.
+# Release is marked by the `## Release` section Release appends to Build's notes.md (the stage
+# writes no run-folder file of its own — its artifact is the repo's changelog page, where it has one).
 if [ "$stage" = "auto" ]; then
   notes="$run_dir/03_build/output/notes.md"
   if [ -f "$notes" ] && grep -q '^## Release' "$notes"; then
@@ -80,16 +77,15 @@ if [ -z "$pr_override" ]; then
   [ -f "$run_md" ] || die "no run.md at $run_md — resolve the run first (resolve-run.sh), or pass --pr <n>"
 fi
 
-# --- config from env (repo derived from origin when unset) -----------------------------
+# --- config from env (lib/gh.sh: GH_API, repo, gh_token + the curl→gh fallback) --------------------
 
-GH_API="${GITHUB_API_URL:-https://api.github.com}"
-repo="${GITHUB_REPO:-$(git -C "$repo_root" remote get-url origin 2>/dev/null \
-  | sed -E 's#^(git@[^:]+:|https?://[^/]+/)##; s#\.git$##' || true)}"
-[ -n "$repo" ] || die "GITHUB_REPO is not set and no origin remote to derive it from"
-gh_token="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
-[ -n "$gh_token" ] || die "GITHUB_TOKEN (or GH_TOKEN) is not set — needed to write PR labels"
+# shellcheck source=lib/gh.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/gh.sh"
+# shellcheck source=lib/project.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"
+gh_require "writing PR labels"
 
-# --- PR number: explicit --pr wins, else read it from run.md ---------------------------
+# --- PR number: explicit --pr wins, else read it from run.md ---------------------------------------
 
 if [ -n "$pr_override" ]; then
   pr_number="$(printf '%s' "$pr_override" | grep -oE '[0-9]+' | head -n1 || true)"
@@ -101,32 +97,49 @@ else
   [ -n "$pr_number" ] || die "could not read a PR number from $run_md ('- pr:' line)"
 fi
 
-# --- spec header → label set -----------------------------------------------------------
+# --- spec header → label set -----------------------------------------------------------------------
 
 complexity="$(grep -m1 '^- complexity:' "$spec" | sed -E 's/^- complexity:[[:space:]]*//; s/[[:space:]]*$//' | tr '[:upper:]' '[:lower:]')"
 case "$complexity" in trivial|standard|complex) : ;; *) die "spec complexity must be trivial|standard|complex, found: '$complexity'" ;; esac
 
+personas_raw="$(grep -m1 '^- personas:' "$spec" | sed -E 's/^- personas:[[:space:]]*//; s/[[:space:]]*$//')"
+[ -n "$personas_raw" ] || die "spec has no '- personas:' header to project persona labels from"
+
+# Persona headers are free-form prose in practice — parentheticals, semicolons, role notes, even
+# non-vocabulary words like "platform" or "Partner". So we don't tokenise the line; we scan it for
+# each keyword of the repo's persona vocabulary (`personas` in .icm/project.json, mirrored in its
+# labels file) as a whole word, case-insensitive, and
+# emit those in canonical order. Anything outside the vocabulary is ignored, so the projection is
+# deterministic regardless of wording. Any persona NAMED in this control-point header is projected.
 labels=("type:feature" "stage:${stage}" "complexity:${complexity}")
+found_persona=0
+# The persona vocabulary is the repo's own: the `personas` array in .icm/project.json (matching
+# its labels file). A repo that declares none projects no persona labels and is not wrong.
+persona_vocab="$(project_list '.personas')"
+for vocab in $persona_vocab; do
+  if printf '%s' "$personas_raw" | grep -iqwE "$vocab"; then
+    labels+=("persona:${vocab}")
+    found_persona=1
+  fi
+done
+if [ -n "$persona_vocab" ] && [ "$found_persona" -eq 0 ]; then
+  die "no known persona in '- personas: $personas_raw' — valid (personas in .icm/project.json): $(printf '%s' "$persona_vocab" | paste -sd', ' -)"
+fi
 
-# --- write the full set (PUT replaces every label on the PR) ---------------------------
+deduped=("${labels[@]}")  # type/stage/complexity are distinct and personas are emitted once each
 
-payload="$(printf '%s\n' "${labels[@]}" | jq -R . | jq -s '{labels: .}')"
-echo "Projecting labels onto PR #$pr_number: ${labels[*]}" >&2
+# --- write the full set (PUT replaces every label on the PR) ---------------------------------------
 
-resp="$(curl -sS -m 30 -w $'\n%{http_code}' -X PUT \
-  -H "Authorization: Bearer $gh_token" \
-  -H "Accept: application/vnd.github+json" \
-  -H "X-GitHub-Api-Version: 2022-11-28" \
-  -H "Content-Type: application/json" \
-  -d "$payload" \
-  "$GH_API/repos/${repo}/issues/${pr_number}/labels")" \
-  || die "label write request failed (network/egress)"
+payload="$(printf '%s\n' "${deduped[@]}" | jq -R . | jq -s '{labels: .}')"
+echo "Projecting labels onto PR #$pr_number: ${deduped[*]}" >&2
+
+resp="$(gh_api PUT "/repos/${repo}/issues/${pr_number}/labels" "$payload")" || exit 1
 
 http="$(printf '%s' "$resp" | tail -n1)"
 body="$(printf '%s' "$resp" | sed '$d')"
 if [ "$http" != "200" ]; then
   reason="$(printf '%s' "$body" | jq -r '.message // empty' 2>/dev/null || true)"
-  die "label write returned HTTP $http — ${reason:-no message}"
+  die "label write returned HTTP $http — ${reason:-no message} (do the labels exist in the repo? see .github/labels.yml)"
 fi
 
 echo "RESULT: APPLIED"

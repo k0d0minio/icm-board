@@ -73,7 +73,11 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
 - **This repo is held to its own baseline**, and to its own workspace grammar. A rule it
   exempts itself from is a rule it should delete.
 - **Conformance reports, it does not repair.** `--fix` seeds only what is missing and
-  never overwrites; drift from canonical assets is reported, never auto-synced.
+  never overwrites; drift from canonical assets is reported, never auto-synced. The one
+  exception is explicit and human-invoked: a pipeline repo's **template-owned** files
+  (`_system/template/icm-pipeline/MANIFEST`) are brought up to the template by
+  `icm-sync.sh --apply <repo>` — dry-run by default, nothing outside the manifest, no
+  deletions (D20).
 - **CI is the source of truth.** Never run `build`/`lint`/`typecheck` locally; push and
   read the checks.
 - **Sustentus is exempt** from the estate baseline — its `.icm/` is authoritative. Gates

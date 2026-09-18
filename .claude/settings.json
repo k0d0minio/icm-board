@@ -4,6 +4,7 @@
     "allow": [
       "Bash(_system/scripts/estate-conformance.sh:*)",
       "Bash(_system/scripts/icm-check.sh:*)",
+      "Bash(_system/scripts/icm-sync.sh:*)",
       "Bash(_system/scripts/pull-all.sh:*)",
       "Bash(_system/scripts/self-check.sh:*)",
       "Bash(_system/scripts/ticket-hygiene.sh:*)",

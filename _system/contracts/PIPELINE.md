@@ -12,7 +12,11 @@ D20–D21, [`.icm/project.md`](../../.icm/project.md).*
 Every repo declares **one profile** in its `.icm/CONTEXT.md` (a `- profile:` line;
 missing means `intake`). The profile decides what the folder tree carries and what the
 conformance tooling expects. A repo moves up a profile by declaring it and running
-`icm-check.sh --fix` — the folders arrive; nothing starts running by itself.
+`icm-check.sh --fix` — the folders arrive; nothing starts running by itself. The
+project-owned files are then filled by **`/project <repo>`**, whose setup step
+([`deliver/project` § 1c](../../workspaces/deliver/stages/project/CONTEXT.md)) reads the
+repo for what a file can answer, asks Jamie the rest in the same rounds that establish
+intent, syncs, and proves the result before its PR opens — one ritual, not a guide.
 
 ## The profiles
 

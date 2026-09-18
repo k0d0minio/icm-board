@@ -5,7 +5,8 @@
 # conversationally. It checks only the DETERMINISTIC, non-AI properties of the spec — header fields,
 # required sections, acceptance criteria written as checkboxes. Whether an open question actually
 # *blocks* a criterion is a judgement the agent still owns; this script surfaces open questions as an
-# advisory line, it does not fail on them. Requires no network. Pure awk/grep.
+# advisory line, it does not fail on them. Requires no network. awk/grep, plus jq to read the
+# repo's persona vocabulary from .icm/project.json.
 #
 # This is a Define-time call, not a CI check (see issue #548, open question 1) — it runs in the
 # Define stage before the gate, never as a GitHub Action.
@@ -22,6 +23,10 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 die() { echo "error: $*" >&2; exit 1; }
+
+command -v jq >/dev/null || die "jq not found — needed to read the persona vocabulary from .icm/project.json"
+# shellcheck source=lib/project.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"
 
 # --- args → spec path ------------------------------------------------------------------------------
 
@@ -59,15 +64,19 @@ case "$complexity" in
   *) add "complexity must be trivial|standard|complex, found: '$complexity'" ;;
 esac
 
-# personas must name at least one of the six vocabulary words — project-labels.sh hard-fails
-# without one, and by then the PR is already open. Catch it here, before any side effect.
+# personas must name at least one word of the repo's own persona vocabulary — the `personas`
+# array in .icm/project.json (lib/project.sh), the same list project-labels.sh projects from.
+# project-labels.sh hard-fails without a match, and by then the PR is already open; catch it
+# here, before any side effect. A repo that declares no vocabulary projects no persona labels
+# and is not wrong, so the check is skipped for it.
 personas_raw="$(grep -m1 '^- personas:' "$spec" | sed -E 's/^- personas:[[:space:]]*//; s/[[:space:]]*$//' || true)"
-if [ -n "$personas_raw" ]; then
+persona_vocab="$(project_list '.personas')"
+if [ -n "$personas_raw" ] && [ -n "$persona_vocab" ]; then
   persona_hit=0
-  for vocab in admin csm sdm expert vendor customer; do
+  for vocab in $persona_vocab; do
     printf '%s' "$personas_raw" | grep -iqwE "$vocab" && persona_hit=1
   done
-  [ "$persona_hit" -eq 1 ] || add "personas must name at least one of: admin, csm, sdm, expert, vendor, customer — found: '$personas_raw'"
+  [ "$persona_hit" -eq 1 ] || add "personas must name at least one of the repo's vocabulary (personas in .icm/project.json): $(printf '%s' "$persona_vocab" | paste -sd', ' -) — found: '$personas_raw'"
 fi
 
 # 2. Required sections present.

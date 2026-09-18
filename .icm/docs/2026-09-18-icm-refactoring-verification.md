@@ -131,4 +131,11 @@ template-owned files; the generalised router and PR template.
   pipeline-only mode is a one-flag addition.
 - **Formatter collisions downstream**: a repo that formats `.icm/**/*.md` (remi-ai's glob covers
   it) needs the same `.prettierignore` entries in its rollout PR, or its first commit re-drifts.
-- Both PRs are Jamie's to merge from GitHub; CI is the verdict on each.
+- Both PRs are Jamie's to merge from GitHub; CI is the verdict on each. **CI at hand-off:**
+  sustentus #1138's `Quality` and `Pipeline` jobs were *not started* — GitHub's annotation on
+  both: "recent account payments have failed or your spending limit needs to be increased"
+  (the sustentus org's Actions billing; nothing in the PR ran). icm-board #42's self-check
+  first failed on one shellcheck warning (`tickets-board.sh`: `base` unused after the premise
+  fix), corrected in the follow-up commit; the template scripts are not shellchecked by
+  icm-board's CI (`_system/scripts/*.sh` only) — sustentus's CI is where they would be, once
+  its Actions run again.

@@ -81,7 +81,6 @@ stub_title() { # H1 minus "Stub: "
 }
 
 for repo in "${repos[@]}"; do
-  base="$(basename "$repo")"
   intake="$repo/.icm/intake"
   [[ -d "$intake" ]] || continue
   name="${repo#"$APPS_ROOT"/}"

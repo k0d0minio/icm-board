@@ -129,6 +129,24 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    `.icm/runs/<slug>/` itself is a STOP** — someone else wrote to this run, and you do not guess
    which record is true.
 
+   **Then check the migration order, every time `main` was merged in** — runs are built in
+   parallel, and a sibling that merged first can leave this run's migrations stamped *before*
+   `main`'s newest, which no diff shows and no merge conflict catches:
+
+   ```bash
+   .icm/scripts/check-migrations.sh
+   ```
+
+   `RESULT: OK` or `SKIP` → carry on. `RESULT: STALE <n>` → this is the deploy-breaking class
+   (stop class 3) with a mechanical, in-ticket fix, so fix it here: re-run with `--apply`, read
+   the renames it lists (and anything it says "also mentions" an old stamp — that file is yours
+   to correct), and commit them on the branch as their own commit
+   (`fix: <slug> — re-stamp migrations after main`). A rename is code — that push takes the full
+   CI path. If the repo keeps a persistent preview database that already applied the old stamps,
+   reset it the way the repo says (`_shared/project-rules.md` → The factory) before trusting a
+   preview again. The script renames and never commits; it never touches a migration `main`
+   already has.
+
    **(b) Append the `## Release` record to `notes.md`** (template below), commit it **with the
    docs edits and the changelog page**, and push. This push is the one the Pipeline workflow's
    release-completeness step reads — it sees `notes.md` at its `.icm/runs/` path, with the
@@ -169,6 +187,10 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
 
 ## Outputs
 
+**Run-scoped, without exception** (`.icm/_shared/stage-preamble.md` → Run-scoped isolation): Release has no folder of its own — its record is appended
+inside the run's folder, on the run's own branch `claude/<slug>`, and anything else it drafts
+while working goes under `.icm/runs/<slug>/` too, before the close-out moves the folder.
+
 Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 
 ```md
@@ -178,6 +200,7 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 - ci: GREEN on <sha> (ci-status.sh, after the last push)
 - reviews: code <effort> · security <run — result | n/a> · readiness <run — result | n/a>
 - parked: <triage stub filename(s) | none>
+- migrations: <ok | skip — none of this run's own | re-stamped <n> after main (check-migrations.sh --apply)>
 - docs: <pages updated | no docs impact> · announce: <public | internal | none>
 ```
 
@@ -191,6 +214,8 @@ all in the one PR.
 - The merge rested on a **settled `GREEN` from `ci-status.sh` on the exact head that merged** —
   established after your last push, never inherited, never read off a Vercel event or the
   `Vercel Preview Comments` check. Merged once; never on RED, never on PENDING.
+- `check-migrations.sh` read `OK` or `SKIP` on the head that merged — after the merge of `main`,
+  and after any re-stamp it asked for. A `STALE` was fixed on the branch, never merged past.
 - The only holds you applied were the three stop classes. Every other finding is a triage stub
   (named in the record), not an unmerged PR and not a widened diff.
 - The conditional passes ran whenever `touches:`/the diff matched — "n/a" is recorded with the

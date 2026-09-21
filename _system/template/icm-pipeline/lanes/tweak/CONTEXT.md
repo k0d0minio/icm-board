@@ -72,6 +72,9 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 
 ## Outputs
 
+**Run-scoped, without exception** (`.icm/_shared/stage-preamble.md` → Run-scoped isolation): everything this lane writes while working lands under
+`.icm/runs/<slug>/lane/`, on the run's own branch `claude/<slug>`.
+
 `.icm/runs/<slug>/run.md` (with `- lane: tweak`) and
 `.icm/runs/<slug>/lane/output/notes.md` — both archived to the runs archive (`runs_archive` in
 `.icm/project.json`; `.icm/runs/_done/` by default) under `<slug>/` by step 4:

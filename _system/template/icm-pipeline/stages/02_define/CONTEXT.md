@@ -99,6 +99,10 @@ overruns on a one-line `Context budget:` note in `spec.md`.
 
 ## Outputs
 
+**Run-scoped, without exception** (`.icm/_shared/stage-preamble.md` → Run-scoped isolation): every working artifact of this stage lands under
+`.icm/runs/<slug>/02_define/`, on the run's own branch `claude/<slug>` — the branch `new-run.sh`
+creates (or the harness-named one it records), never `main`, never another run's branch.
+
 `.icm/runs/<slug>/02_define/output/spec.md`:
 
 ```md

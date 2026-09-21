@@ -6,9 +6,9 @@ Consumed by `_system/scripts/icm-check.sh`:
 2. **The canonical Claude-asset library** — the estate-wide hooks and skills every repo
    should carry. Seeded when missing; **drift is reported, never repaired** — repos own
    their copies (decision D7, [`.icm/project.md`](../../.icm/project.md)).
-3. **The pipeline profile** — seeded *only* into repos whose `.icm/CONTEXT.md` declares
-   `- profile: pipeline` ([contracts/PIPELINE.md](../contracts/PIPELINE.md)). Declaring
-   the profile is Jamie's act; the fix never upgrades one.
+3. **The pipeline** — seeded into **every** repo ([contracts/PIPELINE.md](../contracts/PIPELINE.md);
+   decision D22 retired the `- profile:` gate). What varies per repo is `complexity` in
+   its own `.icm/project.json`, never which files it carries.
 4. **The new-shape root assets** — seeded *only* into repos that already carry an
    `AGENTS.md` (epic `opencode-sidecar`). Migrating a repo's Layer 0 is Jamie's act; the
    fix never performs the move.
@@ -27,7 +27,7 @@ root/                            → copied to <repo>/                (migrated 
   CLAUDE.md                      ← the one-line `@AGENTS.md` importer
   opencode.jsonc                 ← the estate's OpenCode rails (deny local checks, ask on push)
 icm/                             → copied to <repo>/.icm/           (every live repo)
-  CONTEXT.md                     ← the repo's .icm map; carries the `- profile:` line
+  CONTEXT.md                     ← the repo's .icm map
   intake/
     README.md                    ← micro-copy of contracts/TICKETS.md
     triage/_done/.gitkeep        ← the parking lane
@@ -43,7 +43,7 @@ claude/                          → copied to <repo>/.claude/        (every liv
   skills/
     ticket-craft/SKILL.md        ← the intake contract as working knowledge
     pr-conventions/SKILL.md     ← branches, commits, CI-is-truth, no secrets
-icm-pipeline/                    → copied to <repo>/.icm/           (pipeline profile only)
+icm-pipeline/                    → copied to <repo>/.icm/           (every repo — D22)
   MANIFEST                       ← the ownership list: T template-owned · P project-owned.
                                     Read by icm-check.sh AND icm-sync.sh; never copied
   stages/01_scope/               ← the front: source verbatim → settled live in session →
@@ -52,16 +52,21 @@ icm-pipeline/                    → copied to <repo>/.icm/           (pipeline 
   intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
   _shared/{project-rules,knowledge-map}.md   ← this repo's rules and doc pages         (P)
-  project.json                   ← the project manifest (name, docs_path, archives,
-                                    required checks/env, smoke check) — --fix fills name (P)
+  project.json                   ← the project manifest (name, complexity, docs_path,
+                                    archives, required checks/env, smoke check) — --fix
+                                    fills name                                         (P)
   runs/README.md                 ← the repo's own note on its runs                     (P)
+  raw/README.md  raw/_processed/.gitkeep  processed/.gitkeep
+                                 ← the drop folder for what a client sent, its archive,
+                                    and where process-raw.sh writes the extracted text (T)
   scripts/lib/{gh,changed-files,project}.sh                                           (T)
   scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
-           project-body,project-labels,ci-status,close-out,triage-report,env-check}.sh (T)
+           project-body,project-labels,ci-status,close-out,triage-report,env-check,
+           select-model,check-migrations,process-raw}.sh                              (T)
   scripts/{format,lint,validate-knowledge-map,notify}.sh   ← the repo's own hooks      (P)
-claude-pipeline/                 → copied to <repo>/.claude/        (pipeline profile only)
+claude-pipeline/                 → copied to <repo>/.claude/        (every repo — D22)
   skills/pipeline/SKILL.md       ← the /pipeline router (seeded; drift-reported)
-github-pipeline/                 → copied to <repo>/.github/        (pipeline profile only)
+github-pipeline/                 → copied to <repo>/.github/        (every repo — D22)
   pull_request_template.md       ← carries both gate anchors
 ```
 

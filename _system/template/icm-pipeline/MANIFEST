@@ -38,6 +38,12 @@ T scripts/ci-status.sh
 T scripts/close-out.sh
 T scripts/triage-report.sh
 T scripts/env-check.sh
+T scripts/select-model.sh
+T scripts/check-migrations.sh
+T scripts/process-raw.sh
+T raw/README.md
+T raw/_processed/.gitkeep
+T processed/.gitkeep
 P project.json
 P _shared/project-rules.md
 P _shared/knowledge-map.md

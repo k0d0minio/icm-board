@@ -16,6 +16,11 @@ opens no PR of its own.
 - pr: #456                 # the ONE PR — written by new-run.sh (a front has none)
 ```
 
+**A run only ever writes inside its own folder, on its own branch** — that is what lets several
+runs be in flight at once: each stage's working artifacts land under `runs/<slug>/<stage>/`, the
+run is bound to `claude/<slug>`, and no two live runs share a working tree
+(`.icm/_shared/stage-preamble.md` → Run-scoped isolation).
+
 **Live folders hold only live work.** The session that merges a run moves it to
 `runs/_done/<slug>/` — `.icm/scripts/close-out.sh <slug>`, run on the branch as the last
 commit before the merge, so the squash publishes it (`stages/04_release/CONTEXT.md`). A

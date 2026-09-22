@@ -118,6 +118,10 @@ everything except the source files you actually edit. Record overruns on a one-l
 
 ## Outputs
 
+**Run-scoped, without exception** (`.icm/_shared/stage-preamble.md` → Run-scoped isolation): every working artifact of this stage — notes, scratch
+lists, intermediate results — lands under `.icm/runs/<slug>/03_build/`, on the run's own branch
+`claude/<slug>` and in a working tree no other live run is using.
+
 - Code on the run's branch, small conventional commits (`feat: <slug> — <what>`).
 - A settled `GREEN` from `ci-status.sh` on the pushed head.
 - The PR flipped from draft to open, satisfied acceptance criteria ticked.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# icm-sync.sh — bring one pipeline repo's TEMPLATE-OWNED files up to the template (decision D20).
+# icm-sync.sh — bring one repo's TEMPLATE-OWNED pipeline files up to the template (decisions D20, D22).
 #
-# The pipeline profile is split at file level (template/icm-pipeline/MANIFEST): template-owned
+# The pipeline is split at file level (template/icm-pipeline/MANIFEST): template-owned
 # files — the stage and lane contracts, the shared doctrine, the factory scripts and their lib —
 # are byte-identical in every pipeline repo and carry no repo's identity; project-owned files —
 # `.icm/project.json`, `_shared/project-rules.md`, `_shared/knowledge-map.md`, the local feedback
@@ -15,8 +15,10 @@
 # is the repair, and only on `--apply`. Canonical `.claude/` assets keep D7: never synced.
 #
 # Guards, all of which refuse rather than proceed:
-#   • the target's `.icm/CONTEXT.md` must declare `- profile: pipeline` — an intake repo, a repo
-#     with no `.icm/`, or a repo on another shape is never a target (nothing is mkdir'd here);
+#   • the target must be a git repository that carries `.icm/CONTEXT.md` — an adopted estate repo.
+#     There is no profile gate (decision D22): every adopted repo is a pipeline repo, so a leftover
+#     `- profile: intake` line is ignored rather than refused. A repo with no `.icm/` is still
+#     never a target — nothing is mkdir'd for a repo the estate has not adopted;
 #   • the target's `.icm/` must have no uncommitted changes on `--apply` — a sync over local
 #     edits makes the resulting diff unreadable; commit or discard first (dry runs don't care);
 #   • rsync, jq and git must be present.
@@ -26,7 +28,7 @@
 # `projects/` tree, so run it from one session with no sweeper active.
 #
 # Usage: _system/scripts/icm-sync.sh [--apply|--dry-run] <path-to-target-repo>
-# Exit:  0 synced, or simulated · 2 refused (usage, not a pipeline repo, dirty .icm/, missing tool)
+# Exit:  0 synced, or simulated · 2 refused (usage, not an adopted repo, dirty .icm/, missing tool)
 #        · 1 rsync itself failed
 # Last line on stdout: RESULT: DRY-RUN <n> | SYNCED <n> | UNCHANGED  (n = files that changed)
 set -euo pipefail
@@ -67,17 +69,14 @@ echo "  Template Source: $TEMPLATE_DIR"
 echo "  Target Repo:     $TARGET_REPO"
 echo "  Execution Mode:  $([ "$DRY_RUN" -eq 1 ] && echo "DRY-RUN (simulated — nothing is written)" || echo "APPLY (live changes)")"
 
-# --- profile guard: only a repo that declares the pipeline profile is a target ------------------------
+# --- adoption guard: a git repo the estate has adopted, and nothing else ------------------------------
+# No profile is read (D22): the pipeline is every repo's shape, weighted by `complexity` in its own
+# `.icm/project.json`. What still refuses is a target the estate never adopted.
 TARGET_CONTEXT="$ICM_TARGET/CONTEXT.md"
 git -C "$TARGET_REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
   || refuse "$TARGET_REPO is not a git repository"
 [ -f "$TARGET_CONTEXT" ] \
   || refuse "$TARGET_REPO has no .icm/CONTEXT.md — not an ICM repo, or not adopted yet (icm-check.sh --fix seeds the baseline)"
-if grep -qE '^- *profile: *intake' "$TARGET_CONTEXT"; then
-  refuse "target declares 'profile: intake' — the pipeline profile is never synced into an intake repo"
-fi
-grep -qE '^- *profile: *pipeline' "$TARGET_CONTEXT" \
-  || refuse "target's .icm/CONTEXT.md does not declare '- profile: pipeline' — declaring the profile is the operator's act, not this script's"
 
 # --- clean-tree guard: an apply over uncommitted .icm/ edits is unreadable afterwards ------------------
 if [ "$DRY_RUN" -eq 0 ]; then

@@ -1,8 +1,8 @@
 {
   "name": "",
-  "profile": "pipeline",
-  "docs_path": "",
-  "required_env": [],
+  "complexity": "standard",
+  "docs_path": "docs",
+  "required_env": ["GH_TOKEN"],
   "required_checks": [],
   "personas": [],
   "runs_archive": ".icm/runs/_done",

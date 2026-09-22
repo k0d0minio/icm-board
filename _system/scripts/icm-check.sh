@@ -6,7 +6,7 @@
 # (its .icm/ carries its own pipeline semantics; it is the source the template was
 # extracted from), and checks each repo against _system/template/:
 #
-#   .icm/CONTEXT.md          the repo's .icm map; carries the `- profile:` line
+#   .icm/CONTEXT.md          the repo's .icm map
 #   .icm/intake/README.md    micro-copy of the intake contract (epics + stubs + triage)
 #   .icm/intake/triage/      the parking lane
 #   .icm/intake/_done/       the archive (completed epics + legacy tickets)
@@ -27,11 +27,12 @@
 # AGENTS.md + importer pair, and only a repo carrying neither warns. AGENTS.md itself is
 # never templated — each repo writes its own Layer 0, exactly as CLAUDE.md was.
 #
-# A repo whose .icm/CONTEXT.md declares `- profile: pipeline` (contracts/PIPELINE.md) is
-# additionally checked — and with --fix, seeded — against the pipeline profile:
-# template/icm-pipeline/ → .icm/, template/claude-pipeline/ → .claude/,
-# template/github-pipeline/ → .github/. Declaring the profile is Jamie's act; the fix
-# never upgrades one. The pipeline file list is NOT hardcoded here: it is read from
+# EVERY repo is additionally checked — and with --fix, seeded — against the pipeline
+# (contracts/PIPELINE.md): template/icm-pipeline/ → .icm/, template/claude-pipeline/ →
+# .claude/, template/github-pipeline/ → .github/. There is no profile to declare any more
+# (decision D22): the `- profile:` line an older .icm/CONTEXT.md carries is not read, and
+# how much of the pipeline a repo leans on is its own `complexity` in .icm/project.json
+# (`micro` | `standard`). The pipeline file list is NOT hardcoded here: it is read from
 # template/icm-pipeline/MANIFEST, the one file icm-sync.sh reads too (decision D20), so the
 # two can never disagree. `T` entries are template-owned — required, seeded when missing,
 # and DRIFT-REPORTED against the template (the repair is `icm-sync.sh --apply`, a human's
@@ -110,7 +111,7 @@ CANONICAL=(
 CANONICAL_KODOMINIO=( "hooks/vercel-env-hydrate.sh" )
 SEPARATE_TEAM=("remi-ai")
 
-# Pipeline profile (template/icm-pipeline/…): paths relative to <repo>/.icm/, read from the
+# The pipeline (template/icm-pipeline/…): paths relative to <repo>/.icm/, read from the
 # MANIFEST — `T` template-owned (drift-reported), `P` project-owned (seeded once). One list
 # for this script and for icm-sync.sh, so the checker and the repair cannot disagree.
 mapfile -t PIPELINE_ICM     < <(awk '$1=="T"{print $2}' "$MANIFEST")
@@ -167,9 +168,6 @@ for repo in "${repos[@]}"; do
   total=$((total + 1))
   missing=(); warns=(); actions=(); repo_fixed=0
 
-  pipeline=0
-  grep -qE '^- *profile: *pipeline' "$repo/.icm/CONTEXT.md" 2>/dev/null && pipeline=1
-
   # The canonical Claude assets this particular repo should carry.
   assets=("${CANONICAL[@]}")
   separate=0
@@ -212,27 +210,25 @@ for repo in "${repos[@]}"; do
   [[ -f "$repo/opencode.json" ]] && \
     warns+=("legacy opencode.json at root — the rails file is opencode.jsonc (a .json copy is strict JSON to Biome and breaks \`biome check\`)")
 
-  # --- pipeline profile (only when the repo declares it) ---
-  if (( pipeline )); then
-    for p in "${PIPELINE_ICM[@]}";     do [[ -f "$repo/.icm/$p"     ]] || missing+=(".icm/$p"); done
-    for p in "${PIPELINE_PROJECT[@]}"; do [[ -f "$repo/.icm/$p"     ]] || missing+=(".icm/$p (project-owned — seeded once)"); done
-    for p in "${PIPELINE_CLAUDE[@]}";  do [[ -f "$repo/.claude/$p"  ]] || missing+=(".claude/$p"); done
-    for p in "${PIPELINE_GITHUB[@]}";  do [[ -f "$repo/.github/$p"  ]] || missing+=(".github/$p"); done
-    # Template-owned files are drift-reported against the template. The repair is
-    # `icm-sync.sh --apply <repo>` — a human's call, never made here (D20).
-    for p in "${PIPELINE_ICM[@]}"; do
-      if [[ -f "$repo/.icm/$p" ]] && ! cmp -s "$TEMPLATE/icm-pipeline/$p" "$repo/.icm/$p"; then
-        warns+=("pipeline drift: .icm/$p differs from the template — icm-sync.sh --dry-run shows it, --apply repairs it")
-      fi
-    done
-    # A stage or lane contract the manifest does not list is either the repo's own addition
-    # (fine — its project-rules.md should say so) or a file the template retired (git rm it).
-    while IFS= read -r f; do
-      rel="${f#"$repo/.icm/"}"
-      printf '%s\n' "${PIPELINE_ICM[@]}" | grep -qxF "$rel" \
-        || warns+=("not in the template's manifest: .icm/$rel — the repo's own addition, or a retired file to git rm (never removed here)")
-    done < <(find "$repo/.icm/stages" "$repo/.icm/lanes" -name 'CONTEXT.md' 2>/dev/null | sort)
-  fi
+  # --- the pipeline (every repo — there is no profile to declare, D22) ---
+  for p in "${PIPELINE_ICM[@]}";     do [[ -f "$repo/.icm/$p"     ]] || missing+=(".icm/$p"); done
+  for p in "${PIPELINE_PROJECT[@]}"; do [[ -f "$repo/.icm/$p"     ]] || missing+=(".icm/$p (project-owned — seeded once)"); done
+  for p in "${PIPELINE_CLAUDE[@]}";  do [[ -f "$repo/.claude/$p"  ]] || missing+=(".claude/$p"); done
+  for p in "${PIPELINE_GITHUB[@]}";  do [[ -f "$repo/.github/$p"  ]] || missing+=(".github/$p"); done
+  # Template-owned files are drift-reported against the template. The repair is
+  # `icm-sync.sh --apply <repo>` — a human's call, never made here (D20).
+  for p in "${PIPELINE_ICM[@]}"; do
+    if [[ -f "$repo/.icm/$p" ]] && ! cmp -s "$TEMPLATE/icm-pipeline/$p" "$repo/.icm/$p"; then
+      warns+=("pipeline drift: .icm/$p differs from the template — icm-sync.sh --dry-run shows it, --apply repairs it")
+    fi
+  done
+  # A stage or lane contract the manifest does not list is either the repo's own addition
+  # (fine — its project-rules.md should say so) or a file the template retired (git rm it).
+  while IFS= read -r f; do
+    rel="${f#"$repo/.icm/"}"
+    printf '%s\n' "${PIPELINE_ICM[@]}" | grep -qxF "$rel" \
+      || warns+=("not in the template's manifest: .icm/$rel — the repo's own addition, or a retired file to git rm (never removed here)")
+  done < <(find "$repo/.icm/stages" "$repo/.icm/lanes" -name 'CONTEXT.md' 2>/dev/null | sort)
 
   # --- canonical drift (report-only, never repaired — repos own their copies) ---
   for asset in "${assets[@]}"; do
@@ -294,7 +290,7 @@ for repo in "${repos[@]}"; do
     fi
     if [[ ! -f "$repo/.icm/CONTEXT.md" ]]; then
       cp "$TEMPLATE/icm/CONTEXT.md" "$repo/.icm/CONTEXT.md"
-      actions+=("created .icm/CONTEXT.md (profile: intake)")
+      actions+=("created .icm/CONTEXT.md")
     fi
     if [[ ! -f "$repo/.icm/intake/README.md" ]]; then
       cp "$TEMPLATE/icm/intake/README.md" "$repo/.icm/intake/README.md"
@@ -326,36 +322,34 @@ for repo in "${repos[@]}"; do
         fi
       done
     fi
-    if (( pipeline )); then
-      for p in "${PIPELINE_ICM[@]}" "${PIPELINE_PROJECT[@]}"; do
-        if [[ ! -f "$repo/.icm/$p" ]]; then
-          mkdir -p "$(dirname "$repo/.icm/$p")"
-          if [[ "$p" == "project.json" && -n "$JQ" ]]; then
-            # The one stub with a value to fill: the repo's own name. Everything else in it
-            # stays the template's default until the repo edits it.
-            "$JQ" --arg n "$base" '.name = $n' "$TEMPLATE/icm-pipeline/$p" > "$repo/.icm/$p"
-          else
-            cp "$TEMPLATE/icm-pipeline/$p" "$repo/.icm/$p"
-          fi
-          case "$p" in scripts/lib/*) ;; scripts/*) chmod +x "$repo/.icm/$p" ;; esac
-          actions+=("created .icm/$p")
+    for p in "${PIPELINE_ICM[@]}" "${PIPELINE_PROJECT[@]}"; do
+      if [[ ! -f "$repo/.icm/$p" ]]; then
+        mkdir -p "$(dirname "$repo/.icm/$p")"
+        if [[ "$p" == "project.json" && -n "$JQ" ]]; then
+          # The one stub with a value to fill: the repo's own name. Everything else in it
+          # stays the template's default until the repo edits it.
+          "$JQ" --arg n "$base" '.name = $n' "$TEMPLATE/icm-pipeline/$p" > "$repo/.icm/$p"
+        else
+          cp "$TEMPLATE/icm-pipeline/$p" "$repo/.icm/$p"
         fi
-      done
-      for p in "${PIPELINE_CLAUDE[@]}"; do
-        if [[ ! -f "$repo/.claude/$p" ]]; then
-          mkdir -p "$(dirname "$repo/.claude/$p")"
-          cp "$TEMPLATE/claude-pipeline/$p" "$repo/.claude/$p"
-          actions+=("created .claude/$p")
-        fi
-      done
-      for p in "${PIPELINE_GITHUB[@]}"; do
-        if [[ ! -f "$repo/.github/$p" ]]; then
-          mkdir -p "$repo/.github"
-          cp "$TEMPLATE/github-pipeline/$p" "$repo/.github/$p"
-          actions+=("created .github/$p")
-        fi
-      done
-    fi
+        case "$p" in scripts/lib/*) ;; scripts/*) chmod +x "$repo/.icm/$p" ;; esac
+        actions+=("created .icm/$p")
+      fi
+    done
+    for p in "${PIPELINE_CLAUDE[@]}"; do
+      if [[ ! -f "$repo/.claude/$p" ]]; then
+        mkdir -p "$(dirname "$repo/.claude/$p")"
+        cp "$TEMPLATE/claude-pipeline/$p" "$repo/.claude/$p"
+        actions+=("created .claude/$p")
+      fi
+    done
+    for p in "${PIPELINE_GITHUB[@]}"; do
+      if [[ ! -f "$repo/.github/$p" ]]; then
+        mkdir -p "$repo/.github"
+        cp "$TEMPLATE/github-pipeline/$p" "$repo/.github/$p"
+        actions+=("created .github/$p")
+      fi
+    done
     fixed=$((fixed + 1)); repo_fixed=1
     missing=()
     # re-verify what we just created
@@ -371,11 +365,9 @@ for repo in "${repos[@]}"; do
         [[ -f "$repo/$asset" ]] || missing+=("$asset (fix failed)")
       done
     fi
-    if (( pipeline )); then
-      for p in "${PIPELINE_ICM[@]}" "${PIPELINE_PROJECT[@]}"; do [[ -f "$repo/.icm/$p" ]] || missing+=(".icm/$p (fix failed)"); done
-      for p in "${PIPELINE_CLAUDE[@]}"; do [[ -f "$repo/.claude/$p" ]] || missing+=(".claude/$p (fix failed)"); done
-      for p in "${PIPELINE_GITHUB[@]}"; do [[ -f "$repo/.github/$p" ]] || missing+=(".github/$p (fix failed)"); done
-    fi
+    for p in "${PIPELINE_ICM[@]}" "${PIPELINE_PROJECT[@]}"; do [[ -f "$repo/.icm/$p" ]] || missing+=(".icm/$p (fix failed)"); done
+    for p in "${PIPELINE_CLAUDE[@]}"; do [[ -f "$repo/.claude/$p" ]] || missing+=(".claude/$p (fix failed)"); done
+    for p in "${PIPELINE_GITHUB[@]}"; do [[ -f "$repo/.github/$p" ]] || missing+=(".github/$p (fix failed)"); done
   fi
 
   # --- hook registration (D18) ---
@@ -441,8 +433,13 @@ for repo in "${repos[@]}"; do
   fi
 
   # --- report ---
+  # Every repo is a pipeline repo (D22); what is worth showing beside the name is the one thing
+  # that still varies — a repo that has declared itself `micro` in its own project.json.
   label="$name"
-  (( pipeline )) && label="$name ${dim}(pipeline)${off}"
+  if [[ -n "$JQ" && -f "$repo/.icm/project.json" ]] && \
+     [[ "$("$JQ" -r '.complexity // empty' "$repo/.icm/project.json" 2>/dev/null)" == "micro" ]]; then
+    label="$name ${dim}(micro)${off}"
+  fi
   if (( ${#missing[@]} == 0 && ${#warns[@]} == 0 && ${#actions[@]} == 0 )); then
     echo "${green}ok${off}   $label"
     conformant=$((conformant + 1))

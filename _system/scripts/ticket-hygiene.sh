@@ -74,7 +74,7 @@ for repo in "${repos[@]}"; do
   [[ -e "$repo/.icm/dormant" ]] && dormant=1
 
   has_pipeline=0
-  grep -qE '^- *profile: *pipeline' "$repo/.icm/CONTEXT.md" 2>/dev/null && has_pipeline=1
+  [[ -f "$repo/.claude/skills/pipeline/SKILL.md" ]] && has_pipeline=1
 
   issues=()
   open_keys=()   # slugs (and legacy IDs) used by possibly-done

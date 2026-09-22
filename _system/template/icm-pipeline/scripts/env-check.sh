@@ -78,9 +78,13 @@ if [ -f ".icm/project.json" ]; then
   if command -v jq >/dev/null 2>&1 && jq -e . .icm/project.json >/dev/null 2>&1; then
     ok ".icm/project.json parses"
     name="$(jq -r '.name // empty' .icm/project.json)"
-    profile="$(jq -r '.profile // empty' .icm/project.json)"
+    complexity="$(jq -r '.complexity // empty' .icm/project.json)"
     [ -n "$name" ]    && ok "name: $name"    || warn ".icm/project.json has no \"name\""
-    [ "$profile" = "pipeline" ] && ok "profile: pipeline" || warn ".icm/project.json profile is \"${profile:-unset}\" (expected \"pipeline\")"
+    case "$complexity" in
+      micro|standard) ok "complexity: $complexity" ;;
+      "")             info "no \"complexity\" in .icm/project.json — read as \"standard\"" ;;
+      *)              warn ".icm/project.json complexity is \"$complexity\" (expected \"micro\" or \"standard\" — read as \"standard\")" ;;
+    esac
     REQ_ENVS="$(jq -r '.required_env[]?' .icm/project.json 2>/dev/null || true)"
     if [ -n "$REQ_ENVS" ]; then
       for var in $REQ_ENVS; do
@@ -100,7 +104,8 @@ else
   warn ".icm/project.json not found — the scripts run on defaults; seed it with icm-check.sh --fix"
 fi
 
-# 4. The folder shape the profile promises, and the profile line the tooling keys on.
+# 4. The folder shape the pipeline promises. No profile line is read — every repo carries the one
+#    pipeline, and `complexity` (step 3) is the only weight.
 echo "[4/6] Checking Local ICM Directory Integrity..."
 if [ -d ".icm" ]; then
   ok "Local .icm directory present"
@@ -111,11 +116,13 @@ if [ -d ".icm" ]; then
       fail "Missing expected subdirectory: .icm/$sub"
     fi
   done
-  if grep -qE '^- *profile: *pipeline' .icm/CONTEXT.md 2>/dev/null; then
-    ok ".icm/CONTEXT.md declares '- profile: pipeline'"
-  else
-    warn ".icm/CONTEXT.md does not declare '- profile: pipeline' — icm-check.sh and icm-sync.sh will not treat this repo as a pipeline repo"
-  fi
+  for sub in raw raw/_processed processed; do
+    if [ -d ".icm/$sub" ]; then
+      ok "Subdirectory present: .icm/$sub"
+    else
+      info "No .icm/$sub yet — process-raw.sh creates it on first use"
+    fi
+  done
 else
   fail "Current directory lacks an .icm folder"
 fi

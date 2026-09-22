@@ -8,9 +8,12 @@
 # script reads it, with a default for every key so a repo that has not filled the manifest in
 # still runs on the estate's own conventions (`.icm/runs/_done/`, `.icm/intake/_done/`).
 #
-# Keys (all optional except `name` and `profile`, which `env-check.sh` reports on):
+# Keys (all optional except `name`, which `env-check.sh` reports on):
 #   name            the repo's short name (its folder name under projects/)
-#   profile         "pipeline" — the same word `.icm/CONTEXT.md` declares
+#   complexity      how much of the pipeline this project leans on: "standard" (the default —
+#                   absent reads as standard) or "micro" (a one-page site, a script repo: the
+#                   knowledge-map check returns 0 at once). There is no `profile` key any more —
+#                   every repo carries the one pipeline; an old `"profile"` value is ignored.
 #   docs_path       root of the docs tree the stages read through _shared/knowledge-map.md
 #   required_env    array of environment variable names the pipeline needs in this repo
 #   required_checks array of check-run names ci-status.sh must see completed before GREEN
@@ -21,6 +24,10 @@
 #   intake_archive  where close-out.sh moves a finished epic    (default .icm/intake/_done)
 #   smoke_check     object {name, workflow, preview_status} — a conditionally required preview
 #                   walk (see ci-status.sh); absent means the repo has none
+#   migrations_path string or array — where `YYYYMMDDHHMMSS_*.sql` migrations live, for
+#                   check-migrations.sh; absent means it looks for tracked `migrations/` folders
+#   models          object {sonnet, opus, fable} → the model id this repo's harness wants for
+#                   each alias select-model.sh prints; absent means the alias is all it prints
 #
 # Contract for callers (source after die() is defined; needs jq):
 #   source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"

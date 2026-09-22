@@ -54,6 +54,15 @@ glossary to follow, rewrite it.
         Recorded as received. Never edited — what was settled on top of it lives in scope.md. -->
    ```
 
+   **A source that came through `.icm/raw/`** — an email, a chat export, a voice note, a PDF or a
+   deck that `.icm/scripts/process-raw.sh` turned into `.icm/processed/<id>.txt`
+   (`.icm/raw/README.md`) — is recorded from that extracted text, with the processed file and the
+   archived original both named in the provenance header. Recording it **retires the pointer
+   stub** the script parked: `git mv .icm/intake/triage/<id>.md .icm/intake/triage/_done/` with a
+   `- superseded-by: runs/<slug>/01_scope/` line added under its `found-by:`, in the same push.
+   An extraction is a machine's reading — where the original is a recording or a scan, say so in
+   the header, and check anything a decision rests on against the original.
+
    Text is recorded **verbatim** — no grammar fixes, no reordering into sections, no dropped
    asides. Several messages are concatenated in order, each under its own dated sub-heading.
    Anything that is not text — a prototype URL, a document, a design file — is recorded **by link
@@ -143,6 +152,10 @@ scope is `scope.md` until Define writes `spec.md`. Any later change to the subst
 `spec.md` revision that re-opens the **Spec approved** tick. Scope never changes silently.
 
 ## Outputs
+
+**Run-scoped, without exception** (`.icm/_shared/stage-preamble.md` → Run-scoped isolation): every working artifact of this stage lands under
+`.icm/runs/<slug>/01_scope/` — nothing is drafted in a shared file or another run's folder — and
+the only other paths a front writes are its own `run.md` and its own `.icm/intake/<slug>/`.
 
 - `.icm/runs/<slug>/01_scope/_source/story.md` — the source, verbatim or by link. **Never edited.**
 - `.icm/runs/<slug>/01_scope/output/scope.md` — the settled scope. **The canonical scope** until

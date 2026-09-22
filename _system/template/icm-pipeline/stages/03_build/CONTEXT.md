@@ -35,6 +35,8 @@ everything except the source files you actually edit. Record overruns on a one-l
 ## Process
 
 1. **Run the shared preamble** (`.icm/_shared/stage-preamble.md`) — resolve the run or STOP.
+   Then the first act of every stage: `.icm/scripts/usage-snapshot.sh <slug> build start`
+   (`SKIP` is fine, never a stop).
 2. **Gate-check.** Read the PR body (GitHub MCP, per `_shared/github.md`): the **Spec approved**
    checkbox must be ticked. **If it isn't, STOP** — do not build against an unapproved spec, and
    never tick the box yourself. Tell the user to settle the spec (`revise <slug> "…"` if it
@@ -84,6 +86,12 @@ everything except the source files you actually edit. Record overruns on a one-l
    current state.
 9. **Establish a settled cheap-tier verdict on the draft head — Build does not flip an unread run.**
 
+   First, the environment this branch changed, measured: `.icm/scripts/env.sh audit --changed`
+   → `RESULT: OK`. `GAPS` names a key this branch added that is missing from a surface it is
+   scoped to — declare it in `.env.example` (`env.sh doc <KEY>` prints the block) and tell the
+   operator where the value must exist; the value is never yours. Release re-asks the same call
+   as stop class 3, so a gap left here is a gap that stops the merge.
+
    ```bash
    .icm/scripts/ci-status.sh <slug>
    ```
@@ -101,20 +109,35 @@ everything except the source files you actually edit. Record overruns on a one-l
      as green, and never read the verdict off a Vercel deployment event — those arrive per push
      and none of them is the verdict.
 
-10. **Flip ready, then push.** `update_pull_request`, `draft: false` (per `_shared/github.md`),
+10. **Bring `main` in before the flip — a merge commit, never a rebase (D26).**
+
+    ```bash
+    git fetch origin main && git merge --no-edit origin/main
+    ```
+
+    Runs are cut for disjoint surfaces, but `main` has moved since this branch was cut, and
+    the place to meet it is here — on the cheap tier, before the full gate and the previews
+    spend anything — not at Release step 7, where a conflict costs a full gate and a smoke.
+    Resolve conflicts on this branch; **a conflict inside `.icm/runs/<slug>/` itself is a
+    STOP** (someone else wrote to this run — the preamble's run-folder rule). Release's step
+    7(a) stays as the final merge and is usually a no-op after this. A merge that changed
+    code takes the cheap tier again: re-run step 9's `ci-status.sh` before flipping.
+
+11. **Flip ready, then push.** `update_pull_request`, `draft: false` (per `_shared/github.md`),
     **then push** — an empty commit (`git commit --allow-empty -m "chore: <slug> — ready"`) when
     nothing is pending. The flip itself produces no push, and previews build per push: the
     post-flip push is what makes the full-tier run and the affected product-app previews
     materialise on a fresh head, so the full verdict can never rest on a stale draft-era green.
     Open means "reviewable"; it is not the merge authorisation.
-11. **Settle the full verdict on the post-flip head** — the same `ci-status.sh <slug>` call, which
+12. **Settle the full verdict on the post-flip head** — the same `ci-status.sh <slug>` call, which
     now reports the **full gate**: the checks the repo adds on a ready head
     (`_shared/project-rules.md` → The factory) and the affected product-app previews with their
     URLs. RED here is still yours to fix.
-12. **Stop.** Tell the user Build is done, the PR is open **with the full gate green**, and pass
-    on the preview URLs the script listed. The path onward is: smoke-test those previews, tick
-    **Ready to merge**, then `/pipeline release <slug>` — the tick attests the manual testing, so
-    nothing after it re-asks.
+13. **Stop.** Last act: `.icm/scripts/usage-snapshot.sh <slug> build end`. Tell the user Build
+    is done, the PR is open **with the full gate green**, and pass on the preview URLs the
+    script listed. The path onward is: smoke-test those previews, tick **Ready to merge**, then
+    `/pipeline release <slug>` — the tick attests the manual testing, so nothing after it
+    re-asks.
 
 ## Outputs
 
@@ -123,7 +146,8 @@ lists, intermediate results — lands under `.icm/runs/<slug>/03_build/`, on the
 `claude/<slug>` and in a working tree no other live run is using.
 
 - Code on the run's branch, small conventional commits (`feat: <slug> — <what>`).
-- A settled `GREEN` from `ci-status.sh` on the pushed head.
+- A settled `GREEN` from `ci-status.sh` on the pushed head; `env.sh audit --changed` → `OK`.
+- `.icm/runs/<slug>/usage.md` with the `build start` and `build end` lines.
 - The PR flipped from draft to open, satisfied acceptance criteria ticked.
 - `.icm/runs/<slug>/03_build/output/notes.md`:
 

@@ -1,15 +1,17 @@
-# Billy Carlson — deal
+# Billy Carlson (Vinecliff) — client
 
-| | |
-|---|---|
-| Ladder | talking |
-| Stage | 02_discovery — async: merge vinecliff PR #11, send the two questionnaires |
-| Adopted | 2026-08-26, at 01_intake |
-| Shape | fixed-price build — decided 2026-08-29 (retainer considered, dropped) |
-| Value | — not yet priced |
-| Source | pre-system — direct conversation |
-| Company | Vinecliff — vineyard estate, Brocton NY: farmhouse, carriage house, barn + whole-estate rentals |
-| Repo | k0d0minio/vinecliff |
+- client: billy-carlson
+- company: Vinecliff — vineyard estate, Brocton NY
+- contacts: Billy (owner)
+- repo: k0d0minio/vinecliff
+- language: en
+- engagement: vinecliff-site
+- source: adopted
+
+## Engagements
+| slug | shape | started | ended | outcome |
+|---|---|---|---|---|
+| vinecliff-site | one-off (fixed-price build — decided 2026-08-29) | 2026-07-14 |  | discovery running async through two forms (vinecliff PR #11); not yet priced |
 
 ## Log
 - 2026-07-14 → 2026-07-16 — booking platform built as a **speculative pitch** — a
@@ -31,6 +33,11 @@
   of both forms; content (the ten videos, photos, house rules) is a separate ask.
   Known already, so not re-asked: domain is on GoDaddy; one other person works the
   estate but won't operate the app; nothing is pre-booked ahead.
+- 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
+
+## Notes (adopted)
+
+*The sections below are the adopted `DEAL.md`'s (before the 2026-09-22 re-cut), kept verbatim; the Ladder, Stage and Value rows of its table were retired — the rung is Neon's, the value lives in the quote.*
 
 ## Open
 - **The forms are the critical path now**: merge vinecliff PR #11, then Jamie sends

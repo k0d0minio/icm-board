@@ -25,7 +25,7 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 
 ## Process
 
-1. **Pick a slug** (kebab-case) and state the invariant: what must be true before and after
+1. **Pick a slug** — then the first act of every lane: `.icm/scripts/usage-snapshot.sh <slug> chore start` (`SKIP` is fine, never a stop). Pick it (kebab-case) and state the invariant: what must be true before and after
    (behaviour unchanged; only <X> differs). A dep bump names the version delta; a refactor names
    the shape change; a migration names the data delta and its `down`.
 2. **Do the work** with the matching capability skill where one exists. Keep it single-purpose —
@@ -60,9 +60,9 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 
 5. **STOP.** Report the preview URLs `ci-status.sh` printed (if any product app built) and say:
    "smoke-test, then squash-merge from GitHub". You do not merge lane PRs and you do not
-   re-invoke the lane — the operator's merge click is the gate. After their merge a CI workflow
-   the repo owns, where it has one (`_shared/project-rules.md` → Announcing), verifies the
-   archive landed (there is no announcement for a chore); don't run it, don't wait. If you
+   re-invoke the lane — the operator's merge click is the gate. A chore announces nothing (the reporting hook
+   is for user-visible change — `_shared/project-rules.md` → Reporting); nothing watches the
+   merge. Last act before the stop: `.icm/scripts/usage-snapshot.sh <slug> chore end`. If you
    parked a finding in `.icm/intake/triage/` on the way and the folder now holds more than 60
    active stubs (`ls .icm/intake/triage/*.md | wc -l`; `intake/CONTEXT.md` → Triage → cap), say
    so here — `triage/ holds N active stubs (cap 60) — run triage report` — and name
@@ -73,7 +73,7 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 **Run-scoped, without exception** (`.icm/_shared/stage-preamble.md` → Run-scoped isolation): everything this lane writes while working lands under
 `.icm/runs/<slug>/lane/`, on the run's own branch `claude/<slug>`.
 
-`.icm/runs/<slug>/run.md` (with `- lane: chore`) and
+`.icm/runs/<slug>/run.md` (with `- lane: chore`), `.icm/runs/<slug>/usage.md` (the `chore start`/`end` lines) and
 `.icm/runs/<slug>/lane/output/notes.md` — both archived to the runs archive (`runs_archive` in
 `.icm/project.json`; `.icm/runs/_done/` by default) under `<slug>/` by step 4:
 
@@ -82,14 +82,18 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 
 - invariant: <behaviour unchanged; what differs>
 - change: <file/area>: <what and why>
-- rollback: <migration down / revert — how this is undone if needed>
+- rollback: <migration down / revert — how this is undone if needed. Not a revert by a
+  session's own decision: a revert is the hotfix lane's, prepared by `rollback.sh` and merged
+  by the operator (`lanes/hotfix/CONTEXT.md`); a forward-only repo (`migrations.reversible:
+  false`) names how the reverted code tolerates the newer schema instead of a `down`>
 ```
 
 ## Verify
 
-- No user-facing behaviour changed; the invariant holds. Migrations have a working `down`; new
-  env vars are declared wherever the repo's build reads them (`_shared/project-rules.md` → The
-  factory).
+- No user-facing behaviour changed; the invariant holds. Migrations have a working `down` where
+  the repo declares `migrations.reversible: true` (forward-only repos say how the code tolerates
+  the schema instead); new env vars are declared and present where they are scoped —
+  `.icm/scripts/env.sh audit --changed` → `OK` before the flip.
 - One PR, `type:chore`, no gate checkboxes in its body; you never merged it and never re-invoked
   the lane.
 - Everything the run owed was committed **before** the flip, and the push followed it

@@ -5,6 +5,12 @@ of these criteria by ID; "seems nice" is not a criterion. Calibrated by
 [`target-profile.md`](target-profile.md) and [`services.md`](../../../_system/knowledge/services.md);
 sharpened by ICM-009's questionnaire answers and by every decline that later proves wrong.*
 
+**The intake form answers are the first evidence.** A lead who arrived through the
+portfolio's `/start` form has already said what the business does, what eats the week,
+which tools, what done would look like, and a budget band — the dashboard snapshots those
+into the engagement's `answers/intake-diagnostic.md`. Read them before the row's message;
+cite them beside the criterion they answer.
+
 ## Take — all four hold
 
 | ID | Criterion |

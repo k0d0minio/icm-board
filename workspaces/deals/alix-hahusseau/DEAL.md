@@ -1,15 +1,17 @@
-# Alix Hahusseau — deal
+# Alix Hahusseau (Berceo) — client
 
-| | |
-|---|---|
-| Ladder | talking |
-| Stage | 03_quote — quote written, awaiting Jamie's gate |
-| Adopted | 2026-08-26, at 01_intake |
-| Shape | fixed-price |
-| Value | €7,500 — 50% at start, 50% at traction milestone or 120 days post-launch |
-| Source | pre-system — not recorded |
-| Company | Berceo — SRL, BCE 0801 875 541 |
-| Repo | k0d0minio/berceo |
+- client: alix-hahusseau
+- company: Berceo — SRL
+- contacts: Alix and Jordane (founders — decide jointly)
+- repo: k0d0minio/berceo
+- language: fr
+- engagement: berceo-platform
+- source: adopted
+
+## Engagements
+| slug | shape | started | ended | outcome |
+|---|---|---|---|---|
+| berceo-platform | one-off (fixed, €7,500 quoted; Jamie-hosted; support presented as the equity conversation) | 2026-08-27 |  | quoted 2026-08-27 (`03-quote.md`, client devis `04-devis-berceo.md`); awaiting the gate and their answer |
 
 ## Log
 - 2026-08-12 — last touched, per the dashboard at adoption.
@@ -21,8 +23,14 @@
   answers document, declared the source of truth. Both live in the repo at
   `projects/berceo/.icm/docs/`; no `02-discovery-notes.md` was written because the
   discovery ran there instead. Quoted at **€7,500 fixed** for the full answered V1, 5 h/week over 16 weeks —
-  see [`03-quote.md`](03-quote.md), client-facing version
-  [`04-devis-berceo.md`](04-devis-berceo.md). Largest deal the business has priced;
+  see [`03-quote.md`](berceo-platform/03-quote.md), client-facing version
+  [`04-devis-berceo.md`](berceo-platform/04-devis-berceo.md). Largest deal the business has priced;
   the number is set from scope and capacity, not precedent, because none is comparable.
   Section 5 of the discovery questionnaire — the whole legal chapter — came back
   unanswered and is carried as a launch blocker, not a build blocker.
+- 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
+- 2026-09-22 — `04-devis-berceo.pdf` stays where it was committed (nothing is deleted); binaries are no longer committed — rendered documents live under `out/` (gitignored) and in the client's Drive folder from now on.
+
+## Notes (adopted)
+
+*The sections below are the adopted `DEAL.md`'s (before the 2026-09-22 re-cut), kept verbatim; the Ladder, Stage and Value rows of its table were retired — the rung is Neon's, the value lives in the quote.*

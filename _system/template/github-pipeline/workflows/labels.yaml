@@ -1,0 +1,64 @@
+name: Pipeline labels
+
+# The reference label-projection workflow (agency brief §4.7, item 9) — seeded ONCE by /setup,
+# never by the estate walk. On every push to a PR that touches `.icm/runs/**` it re-projects each
+# changed spine run's labels from its spec.md and from which run outputs exist
+# (`.icm/scripts/project-labels.sh <slug> --stage auto --pr <n>` — `.icm/_shared/github.md` →
+# Labels). Lane runs (bug, tweak, chore, hotfix, handover) have no spec: their `type:<lane>` was
+# written once by new-run.sh and is left alone here.
+#
+# WHICH FILES THIS PR CHANGED has one correct spelling — `git diff --name-only
+# "origin/$BASE_REF...$HEAD_SHA"` — because `pull_request.base.sha` is the base tip from when the
+# PR was opened and actions/checkout leaves HEAD on refs/pull/N/merge; the obvious two-dot diff
+# against $BASE_SHA reports everything main did in the meantime as this PR's.
+#
+# Same-repo PRs only: a forked PR gets a read-only token that cannot write labels. The label
+# vocabulary itself is the repo's `.github/labels.yml` (add `type:hotfix` and `type:handover`
+# when adopting the lanes).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - ".icm/runs/**"
+
+concurrency:
+  group: pipeline-labels-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write  # the labels REST API writes to the PR as an issue
+
+jobs:
+  labels:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    name: Project run labels
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Project labels for each changed run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -uo pipefail
+          slugs="$(git diff --name-only "origin/$BASE_REF...$HEAD_SHA" | grep -oE '^\.icm/runs/[^/]+/' | cut -d/ -f3 | sort -u || true)"
+          if [ -z "$slugs" ]; then echo "No changed runs — nothing to label."; exit 0; fi
+          rc=0
+          for slug in $slugs; do
+            if [ ! -f ".icm/runs/$slug/02_define/output/spec.md" ]; then
+              echo "::notice::run '$slug' has no spec.md (lane run?) — its type label was set by new-run.sh; skipping"
+              continue
+            fi
+            echo "::group::labels for $slug"
+            .icm/scripts/project-labels.sh "$slug" --stage auto --pr "$PR_NUMBER" || { echo "::error::could not project labels for '$slug' — check spec.md's header"; rc=1; }
+            echo "::endgroup::"
+          done
+          exit "$rc"

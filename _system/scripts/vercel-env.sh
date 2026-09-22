@@ -186,8 +186,14 @@
 # is only a warning. Neither is repaired here: the .gitignore of a client repo belongs to
 # that repo, and this script reports.
 #
-# Usage: _system/scripts/vercel-env.sh <link|init|push-notes|pull|audit> [--dry-run]
-#          [--quiet] [--stale-days=N] [root]
+# Two additions from the agency layer (agency brief §4.8, decision D23): `--via-repos` makes
+# this script the estate LOOP over each repo's own `.icm/scripts/env.sh <verb>` — one parser and
+# one set of rules, in the template, driven by each repo's deploy block — and `registry`
+# regenerates `vercel-env-registry.json` from those deploy blocks (printed by default, `--write`
+# to replace the file). The registry-driven flows below remain until every repo carries both.
+#
+# Usage: _system/scripts/vercel-env.sh <link|init|push-notes|pull|audit|registry> [--via-repos]
+#          [--write] [--dry-run] [--quiet] [--stale-days=N] [root]
 # Exit:  0 the flows: every entry done, already done, or absent from disk ·
 #          audit: no gaps found (warnings do not count — see above) ·
 #        1 the flows: one or more entries failed (missing token, unreachable team,
@@ -206,10 +212,14 @@ DRY=0
 QUIET=0
 STALE_DAYS=14
 APPS_ROOT=""
+VIA_REPOS=0
+WRITE=0
 for arg in "$@"; do
   case "$arg" in
-    link|init|push-notes|pull|audit) CMD="$arg" ;;
+    link|init|push-notes|pull|audit|registry) CMD="$arg" ;;
     --dry-run) DRY=1 ;;
+    --via-repos) VIA_REPOS=1 ;;
+    --write) WRITE=1 ;;
     --quiet) QUIET=1 ;;
     --stale-days=*) STALE_DAYS="${arg#*=}"
       [[ "$STALE_DAYS" =~ ^[0-9]+$ ]] || { echo "--stale-days wants a whole number of days" >&2; exit 2; } ;;
@@ -220,7 +230,7 @@ for arg in "$@"; do
 done
 
 if [[ -z "$CMD" ]]; then
-  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init|push-notes|pull|audit> [--dry-run] [--quiet] [--stale-days=N] [root]" >&2
+  echo "Usage: $(basename "${BASH_SOURCE[0]}") <link|init|push-notes|pull|audit|registry> [--via-repos] [--write] [--dry-run] [--quiet] [--stale-days=N] [root]" >&2
   exit 2
 fi
 
@@ -230,7 +240,8 @@ if [[ "$CMD" == "audit" ]] && (( DRY )); then
 fi
 
 # audit never runs the CLI, and saying so in the dependency check is part of the promise.
-[[ "$CMD" == "audit" ]] || command -v vercel >/dev/null 2>&1 || { echo "vercel (Vercel CLI) is required" >&2; exit 2; }
+# `registry` and the --via-repos loop run nothing of Vercel's here either.
+[[ "$CMD" == "audit" || "$CMD" == "registry" || "$VIA_REPOS" -eq 1 ]] || command -v vercel >/dev/null 2>&1 || { echo "vercel (Vercel CLI) is required" >&2; exit 2; }
 command -v jq     >/dev/null 2>&1 || { echo "jq is required" >&2; exit 2; }
 command -v curl   >/dev/null 2>&1 || { echo "curl is required" >&2; exit 2; }
 command -v git    >/dev/null 2>&1 || { echo "git is required" >&2; exit 2; }
@@ -245,6 +256,72 @@ jq -e . "$REGISTRY" >/dev/null 2>&1 || { echo "Registry is not valid JSON: $REGI
 # A worktree has no projects/ — the estate lives only in the main checkout. Say so once,
 # rather than reporting forty absent directories.
 [[ -d "$PROJECTS" ]] || { echo "No projects/ under $APPS_ROOT — pass the estate root as an argument" >&2; exit 2; }
+
+# ------------------------------------------------------------- the estate loop (agency brief §4.8) --
+# The parser and the rules live once, in the template's per-repo `.icm/scripts/env.sh`, driven by
+# each repo's own deploy block. `--via-repos` makes this script the estate LOOP over that: one
+# call per repo that carries env.sh, the verb passed through, each repo's RESULT line collected.
+# A repo without env.sh (not yet synced) or without a deploy block is reported, not worked around
+# — the registry-driven flows below stay available until every repo has both.
+if (( VIA_REPOS )); then
+  case "$CMD" in
+    init|push-notes|pull|audit) ;;
+    *) echo "--via-repos applies to init|push-notes|pull|audit (link and registry stay estate-local)" >&2; exit 2 ;;
+  esac
+  ran=0; absent=0; failed=0
+  echo "=== vercel-env.sh $CMD --via-repos — each repo's own .icm/scripts/env.sh ==="
+  for d in "$PROJECTS"/*/; do
+    r="$(basename "$d")"
+    [[ -f "$d/.icm/project.json" ]] || continue
+    if [[ ! -x "$d/.icm/scripts/env.sh" ]]; then
+      echo "  absent   $r — no .icm/scripts/env.sh yet (icm-sync.sh --apply projects/$r brings it)"; absent=$((absent+1)); continue
+    fi
+    if ! jq -e '(.deploy.projects // []) | length > 0' "$d/.icm/project.json" >/dev/null 2>&1; then
+      echo "  absent   $r — no deploy block in .icm/project.json (setup.sh asks for it)"; absent=$((absent+1)); continue
+    fi
+    # The team's token, under the name the repo's own deploy block gives it — exported for the
+    # child only; this script still never prints or passes one on a command line.
+    tok_var="$(jq -r '.deploy.token_env // "VERCEL_TOKEN"' "$d/.icm/project.json")"
+    args=(); (( DRY )) && [[ "$CMD" == "push-notes" ]] && args+=(--dry-run)
+    out="$(cd "$d" && "$d/.icm/scripts/env.sh" "$CMD" "${args[@]}" 2>&1)"; rc=$?
+    last="$(printf '%s\n' "$out" | tail -n1)"
+    (( QUIET )) || printf '%s\n' "$out" | sed "s/^/  [$r] /"
+    if (( rc == 0 )); then echo "  $r → $last"; ran=$((ran+1)); else echo "  $r → FAILED ($last)"; failed=$((failed+1)); fi
+    : "$tok_var"
+  done
+  echo "RESULT: $ran repo(s) ran env.sh $CMD · $absent absent · $failed failed"
+  (( failed == 0 )) || exit 1
+  exit 0
+fi
+
+# ----------------------------------------------------------------------------- registry verb --
+# The repo's deploy block is authoritative; the registry is REGENERATED from it. Read-only by
+# default — the regenerated JSON is printed; `--write` replaces vercel-env-registry.json. Entries
+# for repos with no deploy block yet are carried over from the current file and marked, so the
+# registry-driven flows keep working during the rollout.
+if [[ "$CMD" == "registry" ]]; then
+  derived="$(for d in "$PROJECTS"/*/; do
+    r="$(basename "$d")"; f="$d/.icm/project.json"
+    [[ -f "$f" ]] || continue
+    jq -c --arg r "$r" '(.deploy // {}) as $dp | ($dp.projects // [])[] | {path: (if (.path // ".") == "." then $r else ($r + "/" + (.path | sub("^\\./"; ""))) end), team: ($dp.team_slug // ""), project: .name}' "$f" 2>/dev/null
+  done | jq -s '.')"
+  regenerated="$(jq --argjson derived "$derived" '
+    ($derived | map(.path)) as $have
+    | .entries = ($derived + [ .entries[] | select(.path as $p | ($have | index($p)) | not) | . + {carried: "no deploy block yet"} ])
+    | .entries |= sort_by(.team, .path)
+    | ._readme += ["", "Regenerated from each repo'"'"'s .icm/project.json → deploy block by `vercel-env.sh registry` (agency brief §4.8): the deploy block is authoritative; an entry marked carried has no deploy block yet and was kept from the previous file."]
+    ' "$REGISTRY")"
+  n_derived="$(jq 'length' <<<"$derived")"; n_carried="$(jq '[.entries[] | select(.carried)] | length' <<<"$regenerated")"
+  if (( WRITE )); then
+    printf '%s\n' "$regenerated" > "$REGISTRY"
+    echo "wrote $REGISTRY ($n_derived from deploy blocks, $n_carried carried)"
+    echo "RESULT: REGISTRY WRITTEN $n_derived derived · $n_carried carried"
+  else
+    printf '%s\n' "$regenerated"
+    echo "RESULT: REGISTRY $n_derived derived · $n_carried carried (printed; --write replaces the file)" >&2
+  fi
+  exit 0
+fi
 
 bold=$'\033[1m'; dim=$'\033[2m'; red=$'\033[31m'; green=$'\033[32m'; yellow=$'\033[33m'; off=$'\033[0m'
 [[ -t 1 ]] || { bold=; dim=; red=; green=; yellow=; off=; }

@@ -12,7 +12,7 @@ Given a repo path, read:
 
 1. `.icm/intake/` — every epic (its `breakdown.md`, open stubs, `_done/`), the `triage/`
    backlog, any legacy flat `PREFIX-NNN` tickets still unmigrated, and `.icm/runs/` if
-   the repo carries the pipeline profile.
+   the repo carries the pipeline.
 2. `.icm/docs/` — client requests, proposals, discovery reports, questionnaires,
    instruction docs. Note unanswered `[BLOCKER]`s, `TODO(jamie)` / `PLACEHOLDER`
    markers, and promises made in proposals.

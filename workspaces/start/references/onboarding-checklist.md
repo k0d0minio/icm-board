@@ -1,15 +1,19 @@
-# Onboarding checklist — what is collected before work starts
+# Onboarding checklist — what is collected before the clock starts
 
-*Layer-3 reference for [`05_onboarding`](../stages/05_onboarding/CONTEXT.md). Copied into
-the deal's `05-onboarding.md` as a needed/asked/received table; rows that don't apply
+*Layer-3 reference for [`06_onboarding`](../stages/06_onboarding/CONTEXT.md). Copied into
+the engagement's `06-onboarding.md` as a needed/asked/received table; rows that don't apply
 are struck, not deleted. Access is recorded as existing, never as values.*
 
 ## Answers
 
-- Client questionnaire sent (dashboard Forms card, from `jamienisbet` `.icm/onboarding/`)
-  and returned.
-- "Done looks like" confirmed unchanged since discovery — one line, theirs.
+- `onboarding` form sent from the dashboard's Forms card
+  ([`sell/references/forms/onboarding.md`](../../sell/references/forms/onboarding.md))
+  and returned → `answers/onboarding.md`.
+- `content-and-brand` form sent, for anything with a public face
+  ([`content-and-brand.md`](../../sell/references/forms/content-and-brand.md)) → `answers/content-and-brand.md`.
+- "Done looks like" confirmed unchanged since the look — one line, theirs.
 - Contact rhythm agreed: channel, expected response time, who else may speak for them.
+- Language confirmed (`DEAL.md` → `- language:`).
 
 ## Materials
 
@@ -21,8 +25,8 @@ are struck, not deleted. Access is recorded as existing, never as values.*
 ## Access
 
 - Domain registrar — access granted or delegation confirmed.
-- Hosting/Vercel — invite accepted, or account created in whose name per
-  [`terms.md`](../../../_system/knowledge/terms.md).
+- Hosting/Vercel — invite accepted, or account created in whose name per the agreement's
+  ownership pattern ([`terms.md`](../../../_system/knowledge/terms.md)).
 - Any existing site/CMS/database that must be read or migrated.
 - Google Business / analytics property, where relevant.
 - Every grant lives in the password manager; the checklist records only that it exists.
@@ -31,12 +35,14 @@ are struck, not deleted. Access is recorded as existing, never as values.*
 
 - Deposit invoice raised in Stripe → paid.
 - `stripe_customer_id` linked on the profile.
-- Terms confirmed in writing (the proposal's "How it works" + any deal deltas) — a
-  reply saying "agreed" is enough paper for house deals; `[LAWYER]` deals need their
-  actual document signed.
+- **Terms confirmed = the signed agreement** (`05-agreement.md` → `- signed: <date>`, the
+  signed DOCX in the client's Drive folder). Nothing else counts, and nothing else is
+  asked for; "a reply saying agreed" is enough only for a free look or a house re-quote.
+- The deal card carries the agreed value, shape and support line (prefilled from the
+  agreement; Jamie saves).
 
 ## Exit rule
 
 The stage is done when every applicable row is *received* — and the proposal's timeline
-clock starts **now**, not at the yes. If a row stalls for more than a week, it goes in
-`DEAL.md`'s log and the client hears about it kindly; silent waiting is how projects rot.
+clock starts **now**, not at the signature. If a row stalls for more than a week, it goes
+in `DEAL.md`'s log and the client hears about it kindly; silent waiting is how projects rot.

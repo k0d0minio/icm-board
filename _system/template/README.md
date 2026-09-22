@@ -15,7 +15,7 @@ Consumed by `_system/scripts/icm-check.sh`:
 
 Sustentus is exempt from the estate walk (its `.icm/` is authoritative — it is the source
 this template was extracted from, decision D12); `icm-check.sh --repo` measures it
-voluntarily. The pipeline profile tracks that source: it was re-founded on sustentus's
+voluntarily. The pipeline tracks that source: it was re-founded on sustentus's
 current four-stage shape (Scope → Define → Build → Release, no substage) on 2026-09-18,
 generalised rather than parameterised, and split at file level into **template-owned**
 and **project-owned** files (decision D20, `icm-pipeline/MANIFEST`). Template-owned files
@@ -26,6 +26,11 @@ they get there; project-owned files are seeded once and never touched again.
 root/                            → copied to <repo>/                (migrated repos only)
   CLAUDE.md                      ← the one-line `@AGENTS.md` importer
   opencode.jsonc                 ← the estate's OpenCode rails (deny local checks, ask on push)
+  .opencode/plugins/icm-session-env.js
+                                 ← OPTIONAL, never required or drift-checked: the shell.env
+                                    bridge that exports OPENCODE_SESSION_ID so usage-snapshot.sh
+                                    can read its own numbers; Jamie's machine carries the same
+                                    file in ~/.config/opencode/plugins/ (agency brief §4.4a)
 icm/                             → copied to <repo>/.icm/           (every live repo)
   CONTEXT.md                     ← the repo's .icm map
   intake/
@@ -45,29 +50,46 @@ claude/                          → copied to <repo>/.claude/        (every liv
     pr-conventions/SKILL.md     ← branches, commits, CI-is-truth, no secrets
 icm-pipeline/                    → copied to <repo>/.icm/           (every repo — D22)
   MANIFEST                       ← the ownership list: T template-owned · P project-owned.
-                                    Read by icm-check.sh AND icm-sync.sh; never copied
+                                    Read by icm-check.sh AND icm-sync.sh — and itself a T
+                                    file, so every repo carries `.icm/MANIFEST` and setup.sh
+                                    can answer "complete?" offline (D23). `icm-sync.sh --apply`
+                                    and `setup.sh --fix` write `.icm/template-version` beside it
   stages/01_scope/               ← the front: source verbatim → settled live in session →
                                     scope.md (D-n decisions) → the intake cut. No substage
-  stages/{02_define,03_build,04_release}/   lanes/{bug,tweak,chore,knowledge}/     (T)
+  stages/{02_define,03_build,04_release}/                                            (T)
+  lanes/{bug,tweak,chore,knowledge}/  lanes/hotfix/ (human-invoked, opens READY)
+  lanes/handover/ (the deal's last lane)                                              (T)
   intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
   _shared/{project-rules,knowledge-map}.md   ← this repo's rules and doc pages         (P)
   project.json                   ← the project manifest (name, complexity, docs_path,
-                                    archives, required checks/env, smoke check) — --fix
-                                    fills name                                         (P)
+                                    archives, required checks/env, smoke check, and the
+                                    deploy · reporting · migrations · support blocks) —
+                                    --fix fills name                                   (P)
   runs/README.md                 ← the repo's own note on its runs                     (P)
   raw/README.md  raw/_processed/.gitkeep  processed/.gitkeep
                                  ← the drop folder for what a client sent, its archive,
-                                    and where process-raw.sh writes the extracted text (T)
-  scripts/lib/{gh,changed-files,project}.sh                                           (T)
+                                    and where process-raw.sh writes the extracted text —
+                                    recordings transcribed locally (ffmpeg + whisper.cpp),
+                                    never committed                                    (T)
+  scripts/lib/{gh,changed-files,project,vercel}.sh  scripts/lib/model-prices.json     (T)
   scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
            project-body,project-labels,ci-status,close-out,triage-report,env-check,
-           select-model,check-migrations,process-raw}.sh                              (T)
-  scripts/{format,lint,validate-knowledge-map,notify}.sh   ← the repo's own hooks      (P)
+           select-model,check-migrations,process-raw,
+           deploy-status,rollback,usage-snapshot,env,setup}.sh                        (T)
+  scripts/{format,lint,validate-knowledge-map,report}.sh   ← the repo's own hooks      (P)
+                                    report.sh is the reporting hook: complete as seeded,
+                                    steered by project.json → reporting, never edited.
+                                    notify.sh is RETIRED — reported by icm-sync.sh for git rm
 claude-pipeline/                 → copied to <repo>/.claude/        (every repo — D22)
   skills/pipeline/SKILL.md       ← the /pipeline router (seeded; drift-reported)
+  skills/setup/SKILL.md          ← /setup: the report, the questions, the P files
 github-pipeline/                 → copied to <repo>/.github/        (every repo — D22)
   pull_request_template.md       ← carries both gate anchors
+  workflows/{release,labels}.yaml ← REFERENCE workflows: seeded ONCE by /setup into a repo
+                                    whose reporting.announce_from is `ci` — deliberately NOT
+                                    in icm-check.sh's PIPELINE_GITHUB list, so the estate walk
+                                    never seeds a workflow uninvited
 ```
 
 Layer 0 itself — `AGENTS.md`, or a legacy full `CLAUDE.md` — is **never templated**.
@@ -143,7 +165,7 @@ Rules:
 - **No substitutions.** Nothing in the template is templated per repo: identity is the
   `epic/slug` path (no prefixes), and the pipeline scripts derive the GitHub repo from
   `origin` (override with `GITHUB_REPO`). A copy is exact, which is what makes the drift
-  report — and the sync — honest. Generalising the pipeline profile out of sustentus
+  report — and the sync — honest. Generalising the pipeline out of sustentus
   therefore meant *removing* its identity — the owner/repo literal, the people, the
   check names, the deploy targets, its docs-app archive paths, its channels — never
   turning them into placeholders. What a template-owned file needs to know about one

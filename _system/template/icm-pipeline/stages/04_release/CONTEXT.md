@@ -7,19 +7,23 @@ phase), and the operator has smoke-tested the post-flip previews by hand and tic
 merge** — that tick attests all manual/signed-in testing, so this stage never re-asks for it. Your
 job: confirm the factory agrees (CI green), run the review passes, park anything off-ticket, put
 the one announcement file (where the repo has a changelog) and the close-out on the branch, and
-squash-merge. **After the merge you are done** — the announcement belongs to the project's
-post-merge notification (`.icm/scripts/notify.sh`, which you hand the one-line summary and
-nothing more, or a CI workflow the repo owns — `_shared/project-rules.md` → Announcing), not to
-you.
+squash-merge. **After the merge**: one read of production (`deploy-status.sh`), one call to the
+repo's reporting hook (`report.sh announce` — unless the repo's `reporting.announce_from` is `ci`,
+in which case its release workflow calls it and you record `deferred to CI`), and you are done.
+What a channel is — a GitHub Release by default, Slack, email — is the repo's own
+(`.icm/project.json` → reporting; `_shared/project-rules.md` → Reporting), never yours.
 
 **What may stop the merge — nothing else may:**
 
 1. A **blocking CI failure** (`RESULT: RED`, or a `PENDING` that will not settle).
 2. A **security-critical finding introduced by this diff** — an exploitable defect: auth bypass,
    leaked secret, tenant-scoping hole.
-3. A **deploy-breaking config finding** — a new env var missing from wherever the repo declares
-   its environment or from Vercel, a migration without a working `down`, an index/migration
-   mismatch.
+3. A **deploy-breaking config finding** — measured, not eyeballed: `env.sh audit --changed`
+   reports `GAPS` (a key this branch added is missing from a surface it is scoped to); a
+   migration without a working `down` **in a repo that declares `migrations.reversible: true`**
+   (forward-only repos are exempt — a revert there is the hotfix lane's, prepared by
+   `rollback.sh`); an index/migration mismatch; a support tier of `basic` or `retainer` with no
+   fail-safe page or no Sentry key (`setup.sh` section 11 — report, never repair here).
 
 Every other finding — style, structure, "should be refactored", anything not this ticket's — is
 **parked as a stub in `.icm/intake/triage/`** (shape in `.icm/intake/CONTEXT.md`) and the merge
@@ -49,8 +53,10 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
 
 ## Process
 
-1. **Run the shared preamble**, then confirm Build finished: `notes.md` exists and the PR is
-   open (not draft). An acceptance criterion Build already flagged as unmet → send back to
+1. **Run the shared preamble**, then the first act of every stage:
+   `.icm/scripts/usage-snapshot.sh <slug> release start` (one `- usage:` line in the run's
+   `usage.md`; `SKIP` is fine, never a stop). Confirm Build finished: `notes.md` exists and the
+   PR is open (not draft). An acceptance criterion Build already flagged as unmet → send back to
    `/pipeline build <slug>`; don't release known-broken work. Then **project the stage label**:
 
    ```bash
@@ -86,6 +92,10 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    a licence to skip the settled-verdict read.
 
 4. **Run the review passes, then triage every finding by the rule.**
+   - **Readiness, measured first:** `.icm/scripts/env.sh audit --changed` → `RESULT: OK`. `GAPS`
+     is stop class 3 with the rows naming the fix (declare the key, add it where it is scoped —
+     the value is the operator's). A `support.tier` of `basic`/`retainer` with no fail-safe page
+     or Sentry key (`setup.sh` section 11) is the same class.
    - **Code review — always, in-session.** Run **`/code-review`** at the spec's complexity
      (`trivial → low`, `standard → medium`, `complex → high`). There is no CI review job; this
      pass is the review.
@@ -174,16 +184,32 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    `merge_method: "squash"`, attempted **once** (`_shared/github.md`). The squash carries the run
    record, docs, changelog **and the archive move** onto `main` — the merge is what publishes the
    close-out, which is why nothing has to run afterwards to finish the job.
-9. **Repoint, notify, report.** Update the PR body's spec link to its `blob/main/` form
-   (`update_pull_request`) — the only post-merge edit. Then hand the one-line summary of what
-   shipped (the changelog page's one-liner, where there is one) to the project's post-merge
-   notification — `.icm/scripts/notify.sh "<summary>"` — unless the record says
-   `announce: none`; what it does with it (a chat post, or nothing because a CI workflow the
-   repo owns announces on the merge) is the project's own (`_shared/project-rules.md` →
-   Announcing). **Do not wait or poll for that workflow** — it announces and, where the repo
-   wires it so, checks the archive landed; a failure reaches the project's alert channel
-   (→ Announcing), where it has one. Then tell the operator: what merged (SHA), what was parked
-   in triage (by stub name), and that the run is archived.
+9. **Repoint, read production once, announce, report.** Update the PR body's spec link to its
+   `blob/main/` form (`update_pull_request`) — the only post-merge edit. Then:
+
+   **(a) Production, once.** `.icm/scripts/deploy-status.sh --sha <merge-sha>` — it waits,
+   bounded, for the merge commit's production deployment(s) and prints the one line the record
+   takes: `- production: READY on <sha> — web dpl_… (prev dpl_…) · docs dpl_…`, or
+   `ERROR <project> — see the hotfix lane`, or `PENDING` after the bound, or
+   `not declared (no deploy block)`. An `ERROR` un-merges nothing and starts nothing: it is a
+   line in the record and the operator's call to open `/pipeline hotfix`.
+
+   **(b) Announce.** Unless the record says `announce: none`: where `reporting.announce_from` is
+   `session` (the default), call the repo's hook —
+   `.icm/scripts/report.sh announce "<summary>" --slug <slug> --sha <merge-sha> --url <pr-url>
+   [--audience internal]` — the summary being the changelog page's one-liner where there is one,
+   else the PR's Summary line; it cuts the GitHub Release (idempotent by tag) and whatever else
+   the repo mapped, prints `SKIPPED <channel>: <VAR> unset` for a channel it could not reach,
+   and exits 0 always. Where `announce_from` is `ci`, do not call it — record
+   `announce: deferred to CI` and let the repo's release workflow make the same call. **Never
+   wait or poll for that workflow.**
+
+   **(c) The record is already merged — say it in the report instead.** The `- production:` line
+   and the announce outcome go in your stop message (the record on `main` cannot take a
+   post-merge line without a second PR, and there is no second PR). Then tell the operator:
+   what merged (SHA), production's state, what announced where, what was parked in triage (by
+   stub name), and that the run is archived. Last act:
+   `.icm/scripts/usage-snapshot.sh <slug> release end`.
 
 ## Outputs
 
@@ -198,11 +224,15 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 
 - gate: Ready to merge ticked — merge authorised
 - ci: GREEN on <sha> (ci-status.sh, after the last push)
-- reviews: code <effort> · security <run — result | n/a> · readiness <run — result | n/a>
+- reviews: code <effort> · security <run — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
 - parked: <triage stub filename(s) | none>
 - migrations: <ok | skip — none of this run's own | re-stamped <n> after main (check-migrations.sh --apply)>
-- docs: <pages updated | no docs impact> · announce: <public | internal | none>
+- docs: <pages updated | no docs impact> · announce: <public | internal | none | deferred to CI>
 ```
+
+Plus `.icm/runs/<slug>/usage.md` gaining the `release start` and `release end` lines (the file
+travels with the archive). The post-merge `- production:` line and the announce outcome are
+reported in the stop message (step 9c).
 
 Plus the changelog page, where the repo has one (unless `announce: none`), and any docs edits —
 all in the one PR.
@@ -229,6 +259,8 @@ all in the one PR.
   verification, where the repo has one, reports to the project's alert channel
   (`_shared/project-rules.md` → Announcing) — and once merged, nothing can carry the move into
   that PR. There is no recovery PR; the run's own PR is the only vehicle.
-- After the merge you touched nothing but the PR body's spec link and the one `notify.sh` call,
-  and left the announcing itself to the project's notification (`_shared/project-rules.md` →
-  Announcing).
+- After the merge you touched nothing but the PR body's spec link, made one read of production
+  (`deploy-status.sh`) and one call to `report.sh announce` (or recorded `deferred to CI`), and
+  reverted nothing by your own decision — a revert is the hotfix lane's, prepared by
+  `rollback.sh` and merged by the operator.
+- Both usage lines are in `usage.md` — `release start` as the first act, `release end` as the last.

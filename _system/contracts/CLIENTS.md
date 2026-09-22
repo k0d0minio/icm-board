@@ -24,8 +24,8 @@ new  ──►  talking  ──►  client
 | Rung | Means | What you do about it |
 |---|---|---|
 | `new` | They arrived. Nobody has replied yet. | **Reply.** A lead arriving mints a "Reply to *name*" todo due +2 days, linked to the row (`JN-023` in `k0d0minio/jamienisbet`). Replying moves them to `talking`. |
-| `talking` | In conversation — scoping, quoting, waiting on their answer. Merges what used to be `contacted`, `qualified` and `proposed`. | **Send the scoping form.** The house questionnaires in `jamienisbet`'s `.icm/onboarding/` (`JN-021` there) go out from the profile's Forms card; answers come back into the row. Then quote. |
-| `client` | The deal is agreed. They are working with me. Merges what used to be `won` and `delivered`. | **Walk ConvertFlow until the conversion gaps clear** — delivery repo, deal terms, Stripe customer. The profile wears a warning badge per gap until each one exists. |
+| `talking` | In conversation — the look, the quote, the proposal, waiting on their answer. Merges what used to be `contacted`, `qualified` and `proposed`. | **Send the form that fits the stage.** The house forms live in icm-board (`workspaces/sell/references/forms/`) and go out from the profile's Forms card; answers come back into the row and are snapshotted into the deal folder's `answers/`. Then the look, then the quote ([WORKSPACES.md](WORKSPACES.md)). |
+| `client` | The agreement is signed. They are working with me. Merges what used to be `won` and `delivered`. | **Walk ConvertFlow until the conversion gaps clear** — delivery repo, deal terms, Stripe customer. The profile wears a warning badge per gap until each one exists. **The repo is created at signature by default** — ConvertFlow's missing-repo gap on an `active` row is the nudge; earlier only on Jamie's request. |
 | `lost` | Terminal. It ended without a deal. | **Archive them** (`archived_at`), which takes them off the list and keeps the record. Nothing is deleted; a lost lead who comes back is restored and moved back up the ladder. |
 
 Only `new` and `talking` are **open** — the two rungs the leads list counts as still being
@@ -51,10 +51,33 @@ because each answers a question the ladder can't:
 | `stripe_customer_id` | Has money moved, or can it? Stripe stays the source of truth for anything invoiced or paid; this column is only the join key. | The billing flow, or **Link Stripe customer** (`setClientStripeCustomerId`) |
 | `archived_at` | Should they still be on the list? A soft, reversible hide — the archive view lists them, and nothing is lost. | **Archive** (`setClientArchived`) |
 | `github_repo` | Where does their work live? Null means invisible on the tickets board. | **Connect / create repo** (`setClientRepo`) |
-| `value_minor` + `billing_type` + `deal_type` | What is this worth, and is it money? Feeds the header totals: *in play* (open rows), */ month* (clients on a retainer), *in kind* (barter, never counted as income). | The deal card, or ConvertFlow |
+| `value_minor` + `billing_type` + `deal_type` | What is this worth, and is it money? Feeds the header totals: *in play* (open rows), */ month* (clients on a retainer), *in kind* (barter, never counted as income). | The deal card, or ConvertFlow — prefilled from the deal folder's `05-agreement.md` when the row still reads 0 (a *Use these* button; nothing writes on its own) |
+| `support_minor` | Is there a monthly support line beside the one-off? `0` = none (a landing page, a client-owned build); a euro figure = *one-off + support* ([`pricing.md`](../knowledge/pricing.md) § Support). Counts into */ month* for active rows. | The deal card |
+| `deal_slug` | Which folder under icm-board's `workspaces/deals/` is this relationship? Null = no deal folder (a relationship that predates the system, or one that never opened one). Unique when set. | The deal card — proposed from the client's slug, confirmed by Jamie |
 
 Reading `status` for any of these is the mistake this contract exists to prevent. "Has it
 started" is `work_started_at`, not `client`. "Have they paid" is Stripe, not a rung.
+
+## The deal folder, and the badge
+
+The words and documents of a relationship live in icm-board at
+`workspaces/deals/<deal_slug>/` ([WORKSPACES.md](WORKSPACES.md) § The deal folder,
+decision D24). **Nothing there mirrors a rung, a value or a flag**, and nothing here is
+written from the folder. The dashboard reads the folder live over the GitHub API
+(read-only, D13) and shows two things beside each other: the row's rung, and the folder's
+*stage* — the highest `NN-` artefact in the live engagement (01 intake · 02 look · 03 quote
+· 04 proposal · 05 agreement · 06 onboarding · 07 kickoff · 08 handover).
+
+**The badge** appears when rung and stage cannot both be true, and only then:
+
+| Rung | Folder | Reads as |
+|---|---|---|
+| `active` (client) | no `05-agreement.md` in the live engagement | working without paper — sign it, or the rung is early |
+| `not_won` (lost) | an engagement whose table row has no `ended` | the folder still thinks it is live — close the row in `DEAL.md` |
+| `discussing` (talking) | `05-agreement.md` with `- signed: <date>` | signed but the rung never moved — move it |
+
+The badge is a cue, never a write. Resolving it is Jamie's, in whichever home the wrong
+fact lives.
 
 ## Where it lives
 

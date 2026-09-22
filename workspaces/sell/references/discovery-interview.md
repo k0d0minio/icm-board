@@ -1,7 +1,10 @@
 # Discovery interview — the script
 
-*Layer-3 reference for [`02_discovery`](../stages/02_discovery/CONTEXT.md). A crib sheet
-for a conversation, not a form to read aloud. Distilled 2026-08-28 from the estate's
+*Layer-3 reference for **the paid diagnostic** — the full interview arc, 30–45 minutes per
+sitting over its two weeks ([services.md](../../../_system/knowledge/services.md)). The
+first call's shorter crib is [`call-crib.md`](call-crib.md), distilled from § Before, The
+craft and the first four beats of the arc below. A crib sheet for a conversation, not a
+form to read aloud. Distilled 2026-08-28 from the estate's
 real discovery work: berceo's assessment (the pare-down and the gates) and messy-play's
 interview-as-prompt (the craft rules).*
 
@@ -13,7 +16,7 @@ already answers. Where a written spec exists, list its internal contradictions f
 each unresolved pair changes the architecture or the estimate, and resolving the top
 ones *is* the meeting (S8).
 
-Write the prep doc (`02-discovery-prep.md`) with the short list: **the questions to ask
+Write the prep list — the short list: **the questions to ask
 if we only get one meeting**, chosen by ID from
 [`discovery-questions.md`](discovery-questions.md), `[BLOCKER]`s first.
 
@@ -61,7 +64,7 @@ if we only get one meeting**, chosen by ID from
 
 ## After — same day
 
-Raw notes into the deal folder while they're warm; the stage turns them into
-`02-discovery-notes.md`. Anything promised in the room ("I'll send you X") goes in the
+Raw notes into the engagement's `raw/` while they're warm; the diagnostic's report
+([`diagnostic-report-template.md`](diagnostic-report-template.md)) is written from them. Anything promised in the room ("I'll send you X") goes in the
 notes' top section so it cannot evaporate. The internal K questions get answered
 honestly before the quote is written — that answer is allowed to be "we walk".

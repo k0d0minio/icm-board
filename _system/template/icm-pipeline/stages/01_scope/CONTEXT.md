@@ -44,7 +44,9 @@ glossary to follow, rewrite it.
 
 1. **Pick the slug** — short kebab-case (e.g. `csv-export`). It names everything from here on: the
    run folder, the intake folder, every feature branch and PR cut from it. One string traces the
-   work end to end.
+   work end to end. Then the first act of every stage:
+   `.icm/scripts/usage-snapshot.sh <slug> scope start` — it creates `.icm/runs/<slug>/usage.md`
+   (`SKIP` is fine, never a stop).
 
 2. **Record the source.** Write `.icm/runs/<slug>/01_scope/_source/story.md` under a provenance
    header saying who it came from, when, and in what medium:
@@ -119,8 +121,15 @@ glossary to follow, rewrite it.
    - **Strict build order.** Every stub gets a unique `sequence: n of m`, contiguous `1..m`; the
      order is a topological linearization of `depends-on` (a stub's number always exceeds every
      in-batch stub it depends on). Where the graph allows parallelism, still pick a deterministic
-     tie-break (foundation first, then impact) and capture the parallel shape under
-     `## Parallelizable`.
+     tie-break (foundation first, then impact).
+   - **`## Parallelizable` is derived from `touches:`, not asserted (D26).** Give every stub a
+     `touches:` guess in its `Notes for Define`; a parallel set holds only stubs whose guesses do
+     not overlap, and two stubs that share a surface are sequenced. **Shared-file stubs first**:
+     the dependency manifest and lockfile, the schema and migrations journal, the app layouts,
+     the message catalogues — the files that conflicted most in the estate's history — go at the
+     head of the build order so every later stub merges over them
+     (`.icm/intake/CONTEXT.md` → Formats). Build merges `origin/main` before its ready flip and
+     `new-run.sh` warns on an overlap with a live run; the cut is where the overlap is avoided.
    - **Trace decisions.** Where a stub rests on a decision, name its `D-n` in `Notes for Define`;
      where it rests on an open point, copy that point into `Notes for Define` too.
    - **`breakdown.md` leads with What I understood**, so a misread is caught before the stubs:
@@ -141,8 +150,9 @@ order` agreeing with the stubs). What it cannot judge, you still must: each stub
    as a ruleset problem to fix — do not open a PR, do not retry under another identity, do not
    leave the artifacts local-only and carry on.
 
-8. **Stop.** Return the `main`-branch links for `story.md`, `scope.md` and `breakdown.md` for the
-   human to review, the stub count and order, and the `## Open for Define` list. The next step,
+8. **Stop.** Last act: `.icm/scripts/usage-snapshot.sh <slug> scope end` (commit and push that
+   line with the rest — it is inside the run folder the path guard allows). Return the
+   `main`-branch links for `story.md`, `scope.md` and `breakdown.md` for the human to review, the stub count and order, and the `## Open for Define` list. The next step,
    when they are happy, is `/pipeline new`, which walks the batch into Define. A scope they are not
    happy with is deleted (the run folder and the intake folder) and Scope is run again from the
    source — there is no revise path and nothing to patch in place.
@@ -162,6 +172,7 @@ the only other paths a front writes are its own `run.md` and its own `.icm/intak
   Define writes `spec.md`.
 - `.icm/intake/<slug>/` — `breakdown.md` + one stub per future feature PR, `validate-intake.sh` →
   `RESULT: OK`.
+- `.icm/runs/<slug>/usage.md` — the `scope start`/`end` usage lines (append-only; travels with the run).
 - `.icm/runs/<slug>/run.md` — the run's pointer index:
 
   ```md

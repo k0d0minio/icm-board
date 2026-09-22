@@ -61,6 +61,10 @@ longest-waiting P1 triage stubs · active repos with nothing ticketed.
   ```
 
   If Jamie wants more than 10, push back once (a diluted list is no list), then obey.
+- *Disjointness (D26):* when two of today's picks in the same repo name overlapping
+  `touches:` guesses (a stub's `Notes for Define`, or a live run's `spec.md`), say so in
+  one line beside the list — the pair is sequenced, not run in parallel; `new-run.sh`
+  will warn again when the second is cut. Say it, never reorder silently.
 - *Week:* walk priorities and build orders — what is genuinely P0/P1 now, what demotes,
   what dies. Dead stubs to their epic's `_done/` with `> Dropped: <reason, date>`, per
   Jamie's call.
@@ -71,8 +75,10 @@ this ritual. Say so and move on.
 - *Bank what finished:* stubs whose work merged this session → `_done/`; epics that
   completed → archived whole.
 - *Cut what's left:* anything discovered, started, half-done or promised becomes a stub —
-  in the epic it belongs to, a new single-stub epic, or `triage/` with its lane. In
-  `intake`-profile repos give it a standalone `## Prompt`. **Never a loose `TODO.md`.**
+  in the epic it belongs to, a new single-stub epic, or `triage/` with its lane. In a
+  repo without the `/pipeline` router give it a standalone `## Prompt` — the board sends
+  the verb where the router exists and the body where it does not (D26). **Never a loose
+  `TODO.md`.**
   Cutting is part of stopping.
 - *Trim `today.md`:* remove entries that finished; what remains is tomorrow's honest
   starting point until the next plan replaces it.

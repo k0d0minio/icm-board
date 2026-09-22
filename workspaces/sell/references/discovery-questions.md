@@ -1,6 +1,9 @@
 # Discovery questions — the bank
 
-*Layer-3 reference for [`02_discovery`](../stages/02_discovery/CONTEXT.md). Stable IDs,
+*Layer-3 reference: **the paid diagnostic's instrument**
+([services.md](../../../_system/knowledge/services.md) § The diagnostic), and the source
+the first call's [crib](call-crib.md) picks its two or three `[BLOCKER]`s from. The free
+look ([`02_look`](../stages/02_look/CONTEXT.md)) never works through the bank. Stable IDs,
 never reused; answers are recorded against IDs in the discovery notes so re-asking is
 visible. `[BLOCKER]` = a responsible quote cannot be written without the answer.
 `[LAWYER]` = the answer may need real counsel, flag it, don't play one. Grown from real

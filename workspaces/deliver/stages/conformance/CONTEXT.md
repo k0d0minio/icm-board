@@ -9,7 +9,7 @@ uncommitted for Jamie to review per repo.
 | Layer | File | Why |
 |---|---|---|
 | 3 | [`_system/template/`](../../../../_system/template/) | The canonical baseline + asset library being checked against |
-| 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) · [`PIPELINE.md`](../../../../_system/contracts/PIPELINE.md) | The intake shape and the profiles the fix seeds against |
+| 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) · [`PIPELINE.md`](../../../../_system/contracts/PIPELINE.md) | The intake shape and the pipeline the fix seeds |
 | 4 | `_system/scripts/icm-check.sh` output | The report this ritual acts on |
 | 4 | Each repo's Layer 0 (`AGENTS.md` or `CLAUDE.md`) + `.claude/` | What the per-repo review reads |
 
@@ -18,16 +18,21 @@ uncommitted for Jamie to review per repo.
 **1. Check.** Run `_system/scripts/icm-check.sh` (no flags) and show the report —
 including its **drift** lines, where a repo's copy of a canonical asset has diverged
 from [`_system/template/claude/`](../../../../_system/template/README.md), and its
-**pipeline drift** lines, where a pipeline repo's template-owned file has diverged from
+**pipeline drift** lines, where a repo's template-owned file has diverged from
 [`_system/template/icm-pipeline/`](../../../../_system/template/icm-pipeline/MANIFEST).
+Then, **for every repo that carries `.icm/scripts/setup.sh`**, run
+`projects/<repo>/.icm/scripts/setup.sh --report` from that repo and show its last line and
+`[FAIL]` rows — one implementation, two callers (D23): the repo's own report is the
+authority on whether it is complete, current and configured; this ritual does not
+re-derive those checks. A repo without the script yet is measured by `icm-check.sh` alone.
 
 **2. Populate.** If the check found gaps, run `icm-check.sh --fix` and report what was
 created.
 - The script only creates missing files from the template; it never overwrites. Trust
   it — do not hand-create `.icm` or `.claude` files alongside it.
-- A repo declaring `- profile: pipeline` in its `.icm/CONTEXT.md` is checked (and, with
-  `--fix`, seeded) against the pipeline profile too — report profile gaps in their own
-  group. Declaring a profile is Jamie's act; the fix never upgrades one.
+- Every repo is checked (and, with `--fix`, seeded) against the one pipeline — there is
+  nothing to declare (D22); report pipeline gaps in their own group. The project-owned
+  files are then filled by `/setup` in the repo, never here.
 - Legacy flat `PREFIX-NNN` tickets are reported as *unmigrated*, never converted —
   migration is `/project`'s judgment work.
 - Drift is **reported, never repaired** — repos own their copies. Where a drifted copy
@@ -70,9 +75,8 @@ asks.
 
 - Reviews and commits (or discards) what `--fix` seeded, per repo.
 - Rules on each drift line: deliberate divergence or rot.
-- Declares (or declines) profile upgrades — a declared one is set up by `/project <repo>`
-  ([its § 1c](../project/CONTEXT.md)), never here; decides when an unmigrated repo gets
-  its `/project` re-cut.
+- Runs `/setup` in a repo whose report names gaps, and merges its PR; decides when an
+  unmigrated repo gets its `/project` re-cut.
 
 ## Outputs
 

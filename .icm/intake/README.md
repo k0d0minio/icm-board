@@ -14,7 +14,10 @@
 > deleted). A completed epic moves whole into `intake/_done/`. Priority is an optional
 > `- priority: P0|P1|P2` line; external blockage an optional `- blocked: <reason>` line.
 > Each stub's `## Prompt` must stand alone pasted into a fresh agent session at the
-> repo root. The admin dashboard's Tickets board reads this folder from `main`.
+> repo root — it is the brief Define reads. The admin dashboard's Tickets board reads
+> this folder from `main` and sends the pick-up verb (`/pipeline new <epic>/<slug>`, or
+> the lane verb for a triage stub) where this repo carries the `/pipeline` router, the
+> `## Prompt` body where it does not.
 
 Any plan, backlog, or task list for this repo becomes stubs here — never a loose
 `TODO.md` or `BACKLOG.md` at the root.

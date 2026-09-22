@@ -18,9 +18,10 @@ the processes that sell, start and deliver the work; the knowledge those process
 the contracts every repo is measured against; the scripts that measure them; and the
 canonical Claude assets seeded across the estate.
 
-- **[`workspaces/`](CONTEXT.md)** — the three processes: `sell/` (lead → signed deal),
-  `start/` (deal → running project), `deliver/` (the estate engineering machine).
-  `workspaces/deals/` is Layer 4: one folder per client relationship.
+- **[`workspaces/`](CONTEXT.md)** — the three processes: `sell/` (lead → signed
+  agreement), `start/` (agreement → running project), `deliver/` (the estate engineering
+  machine). `workspaces/deals/` is Layer 4: one folder per client relationship, one folder
+  per engagement inside it — **the deal workspace lives here** (decision D24).
 - **[`_system/`](_system/README.md)** — the control layer: `contracts/` (the specs),
   `knowledge/` (rate card, services, voice, terms, stack), `scripts/`, `template/` (the
   baseline + canonical asset library), `setup/` (the questionnaire), `hooks/`, `AUDIT.md`.
@@ -48,7 +49,7 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
 
 | The task | Go to |
 |---|---|
-| A lead, a quote, a proposal, an onboarding — anything about one relationship | **`/client <name>`** → [`workspaces/sell/`](workspaces/sell/CONTEXT.md) · [`workspaces/start/`](workspaces/start/CONTEXT.md) |
+| A lead, a free look, a quote, a proposal, an agreement, an onboarding, a kickoff — anything about one relationship | **`/client <name>`** → [`workspaces/sell/`](workspaces/sell/CONTEXT.md) · [`workspaces/start/`](workspaces/start/CONTEXT.md) |
 | Adopt a repo · work out what to build · cut a sprint's tickets | **`/project <repo>`** |
 | Pick today's ≤10 · reconcile the board · end a session | **`/day [wrap]`** |
 | Does every repo carry the baseline + canonical assets | **`/icm-check`** |
@@ -66,6 +67,13 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
 - **Deals are tracked; secrets are not.** `workspaces/deals/` is committed (private repo,
   cloud sessions need it) — but never a credential, token, or identity document. Business
   *state* stays in Neon/Stripe; the folders hold words and documents.
+- **One home per fact** (D24). State in Neon (the rung, the flags, the agreed value);
+  documents here (`workspaces/deals/<client>/<engagement>/`, `private/` included); a copy
+  only when it is immutable and provenance-stamped (the kickoff snapshots into a client
+  repo's `.icm/docs/`, the dashboard's form-answer snapshots). `DEAL.md` mirrors no Neon
+  column; the dashboard reads the folder live and never writes state from it. **Deal
+  commits go straight to `main` with a `Deal:` prefix** — words, not code, the same
+  standing as `Plan:`/`Wrap:`.
 - **Tickets live next to the logic they describe.** A ticket about this repo's machinery
   is cut here; a dashboard ticket is cut in `jamienisbet`. Planning is epics and stubs in
   `.icm/intake/` — never a loose `TODO.md`. Ticket-only commits go straight to `main`;
@@ -74,12 +82,13 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
   exempts itself from is a rule it should delete.
 - **Conformance reports, it does not repair.** `--fix` seeds only what is missing and
   never overwrites; drift from canonical assets is reported, never auto-synced. The one
-  exception is explicit and human-invoked: a pipeline repo's **template-owned** files
+  exception is explicit and human-invoked: a repo's **template-owned** files
   (`_system/template/icm-pipeline/MANIFEST`) are brought up to the template by
   `icm-sync.sh --apply <repo>` — dry-run by default, nothing outside the manifest, no
-  deletions (D20).
+  deletions (D20). Nothing a repo runs ever reads icm-board (D23).
 - **CI is the source of truth.** Never run `build`/`lint`/`typecheck` locally; push and
   read the checks.
-- **Sustentus is exempt** from the estate baseline — its `.icm/` is authoritative. Gates
-  everywhere are human checkboxes: read, never tick.
+- **Sustentus is exempt** from the estate baseline — its `.icm/` is authoritative (it
+  still has a deal folder here, like every relationship). Gates everywhere are human
+  checkboxes: read, never tick.
 - **No secrets in git, ever.** Env vars only; flag any plaintext credential found.

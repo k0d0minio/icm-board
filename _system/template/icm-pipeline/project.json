@@ -6,5 +6,32 @@
   "required_checks": [],
   "personas": [],
   "runs_archive": ".icm/runs/_done",
-  "intake_archive": ".icm/intake/_done"
+  "intake_archive": ".icm/intake/_done",
+
+  "deploy": {
+    "platform": "vercel",
+    "team_slug": "",
+    "token_env": "VERCEL_TOKEN",
+    "projects": []
+  },
+
+  "reporting": {
+    "announce_from": "session",
+    "announce": ["github-release"],
+    "alert": [],
+    "economics": [],
+    "channels": {
+      "github-release": { "tag_prefix": "release/" },
+      "slack": { "token_env": "SLACK_BOT_TOKEN", "announce_channel_env": "SLACK_ANNOUNCE_CHANNEL_ID", "alert_channel_env": "SLACK_ALERTS_CHANNEL_ID" },
+      "email": { "api_key_env": "RESEND_API_KEY", "from_env": "REPORT_EMAIL_FROM", "to_env": "REPORT_EMAIL_TO" }
+    }
+  },
+
+  "migrations": { "path": "", "reversible": false },
+
+  "support": {
+    "tier": "none",
+    "failsafe_page": "",
+    "monitoring": { "sentry_dsn_env": "SENTRY_DSN" }
+  }
 }

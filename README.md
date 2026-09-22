@@ -14,17 +14,19 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
 ├── README.md                  you are here
 │
 ├── workspaces/                the processes (grammar: contracts/WORKSPACES.md)
-│   ├── sell/                  01_intake → 02_discovery → 03_quote → 04_proposal
-│   ├── start/                 05_onboarding → 06_repo → 07_kickoff
+│   ├── sell/                  01_intake → 02_look → 03_quote → 04_proposal → 05_agreement
+│   ├── start/                 06_onboarding → 07_kickoff
 │   ├── deliver/               project · day · conformance (the estate machine)
-│   └── deals/                 Layer 4 — one folder per client relationship
+│   └── deals/                 Layer 4 — one folder per client, one per engagement inside it
+│                              (DEAL.md · 01-…08-*.md · answers/ · raw/ · private/ · out/)
 │
 ├── _system/                   the control layer (_system/README.md)
-│   ├── contracts/             WORKSPACES · TICKETS · PROJECT · LENSES · CLIENTS
-│   ├── knowledge/             services · pricing · voice · terms · stack
+│   ├── contracts/             WORKSPACES · TICKETS · PIPELINE · PROJECT · LENSES · CLIENTS
+│   ├── knowledge/             positioning · services · pricing · voice · terms · stack
 │   ├── setup/                 the questionnaire that fills knowledge/
-│   ├── scripts/               icm-check · tickets-board · ticket-hygiene · pull-all
-│   │                          · estate-conformance (API-only) · self-check
+│   ├── scripts/               icm-check · icm-sync · tickets-board · ticket-hygiene · pull-all
+│   │                          · estate-conformance (API-only) · self-check · vercel-env
+│   │                          · run-economics · validate-deal · render-deal
 │   ├── template/              the baseline + canonical Claude assets --fix seeds
 │   ├── hooks/                 SessionStart (estate board)
 │   └── AUDIT.md               what's broken or undecided across the estate
@@ -43,10 +45,13 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
 - **The folders are the orchestration.** Stage contracts plus human gates; nothing runs
   itself and no outbound action leaves a session — see `AGENTS.md` § Never build an
   orchestrator. Jamie advances every deal and every ritual himself.
-- **One story per client.** `/client <name>` walks a deal folder through stages 01–07;
-  `07_kickoff` hands over to `/project` and the client's own repo. Business *state*
-  (ladder rung, deal value, money) lives in Neon and Stripe via the admin dashboard —
-  the folders hold the words and documents.
+- **One story per client.** `/client <name>` walks an engagement through stages 01–07;
+  `07_kickoff` hands over to `/project` and the client's own repo, whose handover lane
+  writes `08-handover.md` back at the end. **One home per fact** (D24): business *state*
+  (the rung, the flags, the agreed value, money) lives in Neon and Stripe via the admin
+  dashboard; every deal document, private reasoning included, lives in the deal folder
+  here; the dashboard reads the folder live and nothing syncs. `Deal:` commits go
+  straight to `main`.
 - **Two halves of the same check.** On this machine the estate is on disk, so
   `icm-check.sh` reads it directly — and now also seeds and drift-checks the canonical
   Claude assets. In CI it isn't, so `estate-conformance.sh` asks the GitHub API the same

@@ -1,7 +1,8 @@
 # Runs — one folder per unit of work in flight
 
 `runs/<slug>/` is a run's working home: `run.md` (the pointer index — lane, stub,
-branch, PR) plus each stage's `output/`. Spine runs carry
+branch, PR), `usage.md` (one `- usage:` line per stage start and end, appended by
+`usage-snapshot.sh`, never edited) plus each stage's `output/`. Spine runs carry
 `02_define/output/spec.md` and `03_build/output/notes.md` (Release appends its
 `## Release` record there); lane runs carry `lane/output/notes.md` instead. A **front**
 run — Scope — carries `01_scope/_source/story.md` and `01_scope/output/scope.md`, and
@@ -10,7 +11,7 @@ opens no PR of its own.
 ```md
 # Run: <slug>
 
-- lane: feature            # or front | bug | tweak | chore
+- lane: feature            # or front | bug | tweak | chore | hotfix | handover
 - stub: intake/<epic>/<slug>.md   # when spun from one
 - branch: claude/<slug>    # recorded, not enforced — written by new-run.sh
 - pr: #456                 # the ONE PR — written by new-run.sh (a front has none)

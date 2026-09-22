@@ -1,4 +1,4 @@
-# The estate pipeline — profiles, spine, gates, ownership
+# The estate pipeline — the spine, the lanes, the gates, the ownership
 
 *The contract for the templated, per-repo SDLC pipeline — extracted from the sustentus
 `.icm/` (the reference implementation, which stays exempt from the estate baseline and
@@ -6,71 +6,74 @@ authoritative for itself) and seeded from [`_system/template/`](../template/READ
 Re-founded on that source's current four-stage shape in September 2026, generalised
 rather than parameterised — a template-owned copy is exact, which is what makes both the
 drift report and the sync honest. Companions: [TICKETS.md](TICKETS.md) (the intake layer
-every repo shares) · [PROJECT.md](PROJECT.md) (the register). Decisions D10–D12,
+every repo carries) · [PROJECT.md](PROJECT.md) (the register). Decisions D10–D12,
 D20–D21 and D22, [`.icm/project.md`](../../.icm/project.md).*
 
-**There is one pipeline, and every adopted repo carries it (decision D22).** The tiers
-below were the estate's first answer — a repo declared `intake` or `pipeline` in its
-`.icm/CONTEXT.md` and the tooling keyed on that line. The line is no longer read:
-`icm-check.sh` requires the pipeline everywhere, `icm-sync.sh` syncs any adopted repo,
-and what varies between a one-page site and sustentus is a **`complexity`** key in the
-repo's own `.icm/project.json` — `standard` by default, `micro` for a repo too small to
-hold a knowledge map (its `validate-knowledge-map.sh` returns 0 at once). An old
-`- profile:` line, or a `"profile"` key in `project.json`, is ignored, never an error.
-`icm-check.sh --fix` is still what makes the folders arrive, and nothing starts running
-by itself. The project-owned files are then filled by **`/project <repo>`**, whose setup step
-([`deliver/project` § 1c](../../workspaces/deliver/stages/project/CONTEXT.md)) reads the
-repo for what a file can answer, asks Jamie the rest in the same rounds that establish
-intent, syncs, and proves the result before its PR opens — one ritual, not a guide.
+**There is one pipeline, and every adopted repo carries it (decision D22).** `icm-check.sh`
+requires it everywhere, `icm-sync.sh` syncs any adopted repo, and what varies between a
+one-page site and sustentus is a **`complexity`** key in the repo's own `.icm/project.json`
+— `standard` by default, `micro` for a repo too small to hold a knowledge map (its
+`validate-knowledge-map.sh` returns 0 at once). Nothing is declared or chosen beyond that;
+an old `- profile:` line, or a `"profile"` key in `project.json`, is ignored, never an
+error. `icm-check.sh --fix` is what makes the folders arrive, and nothing starts running
+by itself. The project-owned files are then filled by **`/setup`** — a command every repo
+carries beside the router (decision D23): `setup.sh` reports what is complete, current and
+configured from the repo's own files, the skill asks only what the report left open, writes
+the project-owned files, and stops on a `claude/` branch. `/project` keeps intent, analysis
+and tickets, with one precondition: `/setup` reports `OK` or names its gaps in the run.
 
-## The profiles — history, and the two rows that still mean something
+Two rows survive from the first, tiered design because they still describe real things:
 
-*`intake` and `pipeline` are no longer declared or read (D22); the rows stay because the
-intake layer is still the part of the pipeline a small repo actually uses, and because
-`pipeline-full` and `dormant` still describe real things.*
-
-| Profile | Adds | For |
+| Row | Means | For |
 |---|---|---|
-| **`intake`** (was the default) | `intake/` epics + triage + `docs/` ([TICKETS.md](TICKETS.md)) | every live repo; work is picked from stubs via `## Prompt`, ships as PRs on `claude/` branches |
-| **`pipeline`** | the front + the run spine below | repos with enough flow to want specs, runs and gated merges |
-| **`pipeline-full`** | whatever a repo's own factory adds on top — a CI-driven announce on merge, a preview smoke walk | **not templated** — sustentus is its only instance. Everything the template needs to *know* about such additions is read from the repo's project-owned files (`project.json` → `smoke_check`, `project-rules.md` → Announcing), so the contracts stay identical; whether the row survives as a profile is a later call, made with evidence |
+| **the reporting layer** | what a repo's own factory does on and after a merge — a GitHub Release by default, Slack or email when declared, a preview smoke walk where one exists | **read from the repo's project-owned files, never templated as a tier**: `project.json` → `reporting`, `deploy`, `smoke_check`; `project-rules.md` → Reporting. Sustentus is the reference; the reference workflows (`release.yaml`, `labels.yaml`) are seeded once by `/setup` where `announce_from` is `ci` |
 | *(dormant)* | the empty `.icm/dormant` marker | parked repos ([TICKETS.md](TICKETS.md) § Dormant) |
 
-## The `pipeline` profile — what the template seeds, and who owns each file
+## What the template seeds, and who owns each file
 
 ```
 .icm/
   CONTEXT.md                 ← the repo's Layer-1 map                                     (repo's own)
-  project.json               ← the project manifest: name, complexity, docs_path, checks (P)
+  MANIFEST                   ← this ownership list, in the repo — setup.sh reads it offline (T)
+  template-version           ← the icm-board commit the last sync came from (written, not synced)
+  project.json               ← the manifest: name, complexity, docs_path, checks, deploy,
+                                reporting, migrations, support                            (P)
   stages/
     01_scope/CONTEXT.md      ← source recorded → settled in session → scope.md → the cut (T)
     02_define/CONTEXT.md     ← stub or request → spec.md → the run's ONE draft PR          (T)
-    03_build/CONTEXT.md      ← implement the approved spec; notes.md; draft → open        (T)
-    04_release/CONTEXT.md    ← gate read → review → docs → close-out → gated squash-merge (T)
+    03_build/CONTEXT.md      ← implement the approved spec; env.sh audit --changed; flip  (T)
+    04_release/CONTEXT.md    ← gate read → review → close-out → squash-merge → one read of
+                                production → report.sh announce                            (T)
   lanes/
     bug/ tweak/ chore/       ← fast lanes: no spec, the merge button is the gate           (T)
+    hotfix/                  ← human-invoked, opens READY; rollback.sh prepares a revert   (T)
+    handover/                ← the deal's last lane: accounts, env, setup.sh OK, the record (T)
     knowledge/               ← one docs page, one docs-only PR, no run                     (T)
   intake/CONTEXT.md          ← the breakdown/stub formats, triage, the archive rules       (T)
-  runs/<slug>/               ← one folder per run: run.md + stage outputs                  (Layer 4)
+  runs/<slug>/               ← one folder per run: run.md + usage.md + stage outputs       (Layer 4)
   runs/README.md             ← the repo's own note on its runs and their archive           (P)
   raw/                       ← what a client sent, as it arrived: README.md + _processed/   (T)
   processed/                 ← text `process-raw.sh` extracted, + manifest.json             (T keeper)
   _shared/
     github.md                ← PR regimes, gate anchors, the never-tick rule               (T)
     ci.md                    ← GREEN / RED / PENDING and what green means                  (T)
-    stage-preamble.md        ← resolve the run or STOP                                     (T)
+    stage-preamble.md        ← resolve the run or STOP; run-scoped isolation               (T)
     scope-template.md        ← the shape of a settled scope; the D-n table                 (T)
     conventions.md           ← redirect to the repo's code rules                           (T)
-    project-rules.md         ← what is true of THIS repo: people, factory, announce        (P)
+    project-rules.md         ← what is true of THIS repo: people, factory, reporting, support (P)
     knowledge-map.md         ← which docs page each stage reads                            (P)
   scripts/
-    lib/{gh,changed-files,project}.sh                                                      (T)
+    lib/{gh,changed-files,project,vercel}.sh  lib/model-prices.json                       (T)
     resolve-run.sh validate-spec.sh validate-intake.sh validate-decisions.sh new-run.sh
     project-body.sh project-labels.sh ci-status.sh close-out.sh triage-report.sh
-    env-check.sh select-model.sh check-migrations.sh process-raw.sh                        (T)
-    format.sh lint.sh validate-knowledge-map.sh notify.sh                                  (P)
+    env-check.sh select-model.sh check-migrations.sh process-raw.sh
+    deploy-status.sh rollback.sh usage-snapshot.sh env.sh setup.sh                        (T)
+    format.sh lint.sh validate-knowledge-map.sh report.sh                                 (P)
 .claude/skills/pipeline/SKILL.md   ← the /pipeline router (one skill, many stages)
+.claude/skills/setup/SKILL.md      ← /setup: the report, the questions, the P files
 .github/pull_request_template.md   ← carries both gate anchors
+.github/workflows/{release,labels}.yaml ← reference workflows, seeded ONCE by /setup (announce_from: ci)
+.opencode/plugins/icm-session-env.js    ← optional root asset: hands OpenCode's session id to the shell
 ```
 
 **File-level ownership (decision D20).** Every file the template seeds is one of two
@@ -87,18 +90,26 @@ which:
 - **P — project-owned.** Seeded **once** from the template's stub when missing, then the
   repo's forever: neither script touches it again. `project.json` holds the values a
   script reads (`name`, `complexity`, `docs_path`, `required_env`, `required_checks`,
-  `runs_archive`, `intake_archive`, `smoke_check`, and the optional `migrations_path` and
-  `models`); `_shared/project-rules.md` holds the rules a stage
-  reads (who the operator is, how the repo announces, which capability skills exist);
-  `_shared/knowledge-map.md` names the repo's own doc pages; the four scripts are the
-  repo's own feedback and notification hooks.
+  `runs_archive`, `intake_archive`, `smoke_check`, `models`, and — decision D23 — the
+  `deploy` block (platform, team, the token's *name*, the projects and their classes), the
+  `reporting` block (kinds → channels; `github-release` on by default; variable *names*
+  only), `migrations` (`path`, `reversible`) and `support` (`tier`, the fail-safe page, the
+  Sentry key's name)); `_shared/project-rules.md` holds the rules a stage reads (who the
+  operator is, how the repo reports, the support line, which capability skills exist);
+  `_shared/knowledge-map.md` names the repo's own doc pages; `report.sh` is the reporting
+  hook — complete as seeded, changed by editing `project.json`, never by editing the file;
+  `format.sh` and `lint.sh` are the repo's own feedback scripts. **Nothing a repo runs
+  reads anything outside the repo** (agency brief flag 1): the cross-repo tools —
+  `run-economics.sh`, `vercel-env.sh registry`, `icm-check.sh`, `icm-sync.sh` — are
+  icm-board's and are never called from a repo; `setup.sh --template` is the one explicit,
+  optional reach, and it reports `SKIP` without one.
 
 **No placeholders.** A template-owned contract never says `{{PROJECT}}`; it says "the
 operator", "the docs tree (`docs_path` in `.icm/project.json`)", "the repo's required
-checks", "see `_shared/project-rules.md` → Announcing". Generalising the profile out of
+checks", "see `_shared/project-rules.md` → Reporting". Generalising the pipeline out of
 sustentus meant *removing* its identity, never templating it.
 
-**The front is a stage, not a profile, and it has no substage.** Scope exists for work
+**The front is a stage, and it has no substage.** Scope exists for work
 that arrives as someone else's words — a story, a prototype URL, a document, a prompt
 written after a call, a chat thread. It records the source verbatim, interrogates it
 **live with the operator in session** (`AskUserQuestion`, in rounds) — there is no
@@ -131,8 +142,12 @@ name throughout. It is also the isolation boundary (D22): a run writes only unde
 `.icm/runs/<slug>/<stage>/`, on its own branch, in a working tree no other live run
 shares — `_shared/stage-preamble.md` → Run-scoped isolation states the rule and every
 stage and lane restates it in its Outputs. That, not a lock or a scheduler, is what lets
-runs be in flight in parallel; the migration check in Release is the one place parallel
-runs can still collide without git noticing.
+runs be in flight in parallel. **Runs are cut for disjointness (D26):** `## Parallelizable`
+is derived from the stubs' `touches:` guesses (no shared surface in a parallel set; the
+shared-file stubs — lockfile, schema and migrations journal, layouts, message catalogues —
+first in the build order), Build merges `origin/main` before its ready flip, and
+`new-run.sh` warns on an overlap with a live run. The migration check in Release is the one
+place parallel runs can still collide without git noticing.
 
 ## Gates — human checkboxes in the PR body
 
@@ -174,7 +189,7 @@ for every key.
 | `validate-spec.sh <slug\|path>` | spec structure: header fields, five sections, criteria-are-checkboxes | `OK` 0 · `INVALID` 2 |
 | `validate-intake.sh <epic\|path>` | the cut's bookkeeping: sequences contiguous, depends-on ordered, build order agrees; triage stubs lane-tagged | `OK` 0 · `SKIP` 0 · `INVALID` 2 |
 | `validate-decisions.sh <slug\|path>` | every `\| D-n \|` row of the scope's Decisions table appears in `spec.md` and `notes.md` (the front's own, or the front of the epic behind the stub); a file not yet written is "not yet", never a failure | `OK` 0 · `SKIP` 0 · `MISSING n` 2 |
-| `new-run.sh <slug> --summary "…" [--stub …] [--lane …]` | commit run → consume stub → push → open the one PR (draft on the spine, ready in a lane), body from `project-body.sh` | `CREATED` 0 |
+| `new-run.sh <slug> --summary "…" [--stub …] [--lane …] [--ready]` | commit run → consume stub → push → open the one PR (draft on the spine and in bug/tweak/chore/handover; **ready** for a hotfix or with `--ready`), body from `project-body.sh`; labels `type:<lane>`; **warns** `[WARN] overlaps <slug> on <path>` when this run's `touches:` shares a surface with a live run (D26) — never refuses | `CREATED` 0 |
 | `project-body.sh <slug> [--apply]` | the one implementation of the spine PR body, projected from `spec.md`; `--apply` PATCHes it in place and resets both gate anchors | `APPLIED` 0 |
 | `project-labels.sh <slug> --stage <…\|auto>` | project `type`/`stage`/`complexity` from the spec header onto the run's PR (PUT replaces the whole set) — spine runs only | `APPLIED` 0 |
 | `ci-status.sh <slug> \| --pr <n>` | block until CI settles; reads check runs **and** commit statuses, dedupes by newest attempt, re-reads the head each pass; required names from `required_checks`, a conditional smoke from `smoke_check` | `GREEN` 0 · `RED` 3 · `PENDING` 4 |
@@ -183,10 +198,15 @@ for every key.
 | `env-check.sh [--fix]` | pre-flight: binaries, a GitHub route, `required_env`, `complexity`, the folder shape, executable bits (repaired only with `--fix`), a UTF-8 locale | `PASS` 0 · `FAIL` 1 |
 | `select-model.sh <epic/slug \| stub \| path>` | a stub's, scope's or spec's `complexity` → the model to open the session on (`low`/`medium` → `sonnet`, `high` → `opus`, `research` → `fable`; an explicit `recommended-model` wins). **Prints a recommendation; launches nothing** | `MODEL <alias>` 0 · `INVALID` 2 |
 | `check-migrations.sh [--apply]` | Release step 7, after `main` is merged in: are this run's `YYYYMMDDHHMMSS_*.sql` migrations still newer than `main`'s? Reports; `--apply` re-stamps every local one in order (renames, never commits, never touches a migration `main` has) | `OK` 0 · `SKIP` 0 · `STALE n` 2 · `RESTAMPED n` 0 |
-| `process-raw.sh [--dry-run]` | `.icm/raw/` → `.icm/processed/`: extract text with **local** tools only (email, chat export, PDF, deck, recording, image), log `manifest.json`, archive the original to `raw/_processed/`, park one triage **pointer** stub per asset — it never scopes, cuts or sequences | `PROCESSED n` 0 · `DRY-RUN n` 0 · `EMPTY` 0 |
+| `process-raw.sh [--dry-run]` | `.icm/raw/` → `.icm/processed/`: extract text with **local** tools only (email, chat export, PDF, deck, image; **audio and video** through ffmpeg + whisper.cpp — `SKIP` with the install hints when either is absent, the recording never uploaded and never committed), log `manifest.json` (extractor, model, language for a transcription), archive the original to `raw/_processed/`, park one triage **pointer** stub per asset — it never scopes, cuts or sequences | `PROCESSED n` 0 · `DRY-RUN n` 0 · `EMPTY` 0 |
+| `deploy-status.sh <slug> \| --sha <sha>` | Release step 9, **once**: the merge commit's production deployment per `deploy.projects[]`, waited for (bounded), with the previous READY id — the `- production:` line | `READY` 0 · `ERROR <p>` 3 · `PENDING` 4 · `SKIP` 0 (no deploy block) |
+| `rollback.sh <slug> \| --sha <sha> [--revert] [--vercel]` | **prepares** a recovery: a `claude/hotfix-revert-<slug>` branch + the hotfix PR (through `new-run.sh`), and/or the previous READY deployment with the exact CLI/REST rollback call — printed, never called; warns when the merge carried a migration and `migrations.reversible` is false | `PREPARED …` 0 · `DRY-RUN` 0 · `SKIP` 0 |
+| `usage-snapshot.sh <slug> <stage> start\|end` · `--report <slug>` | appends one cumulative `- usage:` line to the run's `usage.md` from the harness's own store (Claude Code transcript · OpenCode SQLite), priced in-repo from `lib/model-prices.json`; never estimates, never blocks | `RECORDED` 0 · `SKIP (<why>)` 0 · `REPORT` 0 |
+| `env.sh audit\|init\|pull\|push-notes\|add\|doc` | the repo's env across five surfaces, driven by the deploy block: names only; `add` takes the value **on stdin only** and never prints it; `--changed` is Build's pre-push check and Release's stop class 3 | `OK` · `GAPS n` · `SEEDED n` · `PULLED n` · `PUSHED n` · `ADDED …` · `SKIP` · `DOC` |
+| `setup.sh [--fix] [--template <path\|url>] [--report]` | the eleven-section report behind `/setup`: baseline (from the repo's own `.icm/MANIFEST`), formatter exposure, `project.json`, environment, tickets, raw, runs, knowledge, reporting, workflows, support; `--fix` seeds what is missing from an explicit source, never overwrites; no default source | `OK` 0 · `GAPS n` 0 |
 | `format.sh` · `lint.sh` (P) | changed-files-only **feedback** before a push — never the verdict, never the full sweep (D21) | `OK` · `SKIP` · … |
 | `validate-knowledge-map.sh` (P) | every page the knowledge map names resolves under `docs_path` | `OK` 0 · `SKIP` 0 · `INVALID` 2 |
-| `notify.sh "<notes>"` (P) | the post-merge notification hook — the repo wires its channel, or leaves the stub because its CI announces | `SENT` 0 |
+| `report.sh <announce\|alert\|economics> "<summary>"` (P) | the reporting hook: the kind's channels from `project.json` (`github-release` by default — idempotent by tag; `slack`; `email`); `SKIPPED <channel>: <VAR> unset` names the fix; `--dry-run` prints the payloads; **exit 0 always** | `SENT …` · `SKIPPED (…)` · `DRY-RUN …` — all 0 |
 
 Rules the scripts encode, which are the contract even where repo config wouldn't stop
 you: **one PR per run** (`new-run.sh` dies if `run.md` records one) · **adopt or STOP**
@@ -223,8 +243,9 @@ If a change makes a stage run itself, that is still the signal to stop.
 ## Adding a stage or lane
 
 **In the template** — for every pipeline repo: add the folder and its `CONTEXT.md` under
-`template/icm-pipeline/`, add a `T` line to the MANIFEST, add the routing row to the
-seeded `/pipeline` skill, and run `icm-sync.sh` per repo. **In one repo only** — add a
+`template/icm-pipeline/`, add a `T` line to the MANIFEST, add the lane word to
+`lib/project.sh` → `pipeline_lanes` if it is a lane, add the routing row to the seeded
+`/pipeline` skill, and run `icm-sync.sh` per repo. **In one repo only** — add a
 numbered folder `.icm/stages/NN_<name>/CONTEXT.md` (or `.icm/lanes/<name>/`), a row to
 the repo's `/pipeline` routing table, and a note in its `_shared/project-rules.md`;
 `icm-check.sh` will list it as "not in the template's manifest" so the addition stays

@@ -5,10 +5,13 @@
 # files — the stage and lane contracts, the shared doctrine, the factory scripts and their lib —
 # are byte-identical in every pipeline repo and carry no repo's identity; project-owned files —
 # `.icm/project.json`, `_shared/project-rules.md`, `_shared/knowledge-map.md`, the local feedback
-# scripts, `notify.sh`, `runs/README.md` — are the repo's own. This script overwrites the first
+# scripts, `report.sh`, `runs/README.md` — are the repo's own. This script overwrites the first
 # set from the template and NEVER touches the second: rsync is given the manifest's T entries as
 # an explicit file list, so nothing outside it can move. It never deletes: a file the template
-# retired (a substage, say) is REPORTED for the operator to `git rm`, never removed here.
+# retired (a substage, `scripts/notify.sh`) is REPORTED for the operator to `git rm`, never removed
+# here. On `--apply` it also writes `.icm/template-version` — the icm-board commit the template
+# came from and the date — so a repo's `setup.sh` can say how current it is without icm-board
+# (the MANIFEST itself is template-owned and lands as `.icm/MANIFEST`; agency brief §4.7).
 #
 # It is the one deliberate exception to "drift is reported, never repaired" — narrowed to these
 # files, invoked by a human, defaulting to a dry run. `icm-check.sh` still reports the drift; this
@@ -126,9 +129,23 @@ while IFS= read -r f; do
   rel="${f#"$ICM_TARGET"/}"
   grep -qxF "$rel" "$list" || retired="${retired:+$retired$'\n'}    $rel"
 done < <(find "$ICM_TARGET/stages" "$ICM_TARGET/lanes" -name 'CONTEXT.md' 2>/dev/null | sort)
+# Files the template retired by name — replaced, never deleted here. One entry today; the
+# array is the list future retirements join.
+retired_by_name=(scripts/notify.sh)
+for r in "${retired_by_name[@]}"; do
+  [ -e "$ICM_TARGET/$r" ] && retired="${retired:+$retired$'\n'}    $r   ← retired (report.sh replaces it)"
+done
 if [ -n "$retired" ]; then
   echo "  Not in the template's manifest (the repo's own addition — say so in _shared/project-rules.md — or a file the template retired: git rm it; nothing is deleted here):"
   printf '%s\n' "$retired"
+fi
+
+# --- template-version: which template this repo was last brought up to ----------------------------------
+# Written on --apply only, never synced (it differs per repo by construction). setup.sh reads it.
+if [ "$DRY_RUN" -eq 0 ]; then
+  tv_commit="$(git -C "$TEMPLATE_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  printf 'template: icm-board %s\nsynced: %s\nmanifest: %s T files\n' "$tv_commit" "$(date -u +%F)" "$n_owned" > "$ICM_TARGET/template-version"
+  echo "  Wrote .icm/template-version (icm-board $tv_commit, $(date -u +%F))"
 fi
 
 echo "-------------------------------------------------"

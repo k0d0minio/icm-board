@@ -2,9 +2,9 @@
 
 *Layer-3 reference cited by sell `01_intake` and `04_proposal`, the portfolio site, the
 referral site and the outreach playbook. Written 2026-09-22 from Jamie's decisions of that
-day (the rework brief, D24–D26); the two slots that need his own words are marked
-`— not yet established` and asked as Q22 and Q23 in
-[`../setup/questionnaire.md`](../setup/questionnaire.md). Facts about money live in
+day (the rework brief, D24–D26); the two slots that needed his own words (Q22, Q23 in
+[`../setup/questionnaire.md`](../setup/questionnaire.md)) were answered on the same day.
+Facts about money live in
 [pricing.md](pricing.md) and are only pointed at from here; nothing on this page is
 itself a public surface.*
 
@@ -15,8 +15,8 @@ itself a public surface.*
 > fixed price, and hands you a repository that carries its own way of working — so your
 > team, or any developer, can carry on without him.
 
-*— draft, Jamie to confirm (Q22).* Until he does, the site copy derives from this sentence
-and says so in its PR; the sentence changes here first, then everywhere that cites it.
+*Confirmed by Jamie as drafted, 2026-09-22 (Q22), the three verbs with it.* The site copy
+derives from this sentence; the sentence changes here first, then everywhere that cites it.
 
 ## The three verbs
 
@@ -68,8 +68,8 @@ method do not ([pricing.md](pricing.md) § What never appears publicly).
 | **The entry offer** | a free look | a free look, then a diagnostic | a diagnostic or a workshop |
 | **Price posture** | a number on the page (the landing page from the floor) | a range on the call, never on the page | never on the page — a diagnostic first, then a quote |
 | **Words never used** | platform, architecture, pipeline, AI (unless they say it first) | disruption, transformation, synergy, "leverage AI" | cheap, quick, hack, prototype |
-| **One real sentence Jamie would say to them** | — not yet established (Q23) | — not yet established (Q23) | — not yet established (Q23) |
-| **One word he would never use with them** | — not yet established (Q23) | — not yet established (Q23) | — not yet established (Q23) |
+| **One real sentence Jamie would say to them** | "You tell me how the shop runs, I tell you what's worth building and what isn't." | "Walk me through your week and I'll tell you what to automate, what to keep a person on, and what to leave alone." | "Fixed scope, one engineer end to end, and a repository your own developers can take over on day one." |
+| **One word he would never use with them** | AI | synergy | prototype |
 
 The referral site speaks to the first column through the professional who refers; the
 portfolio speaks to the first two; the third is reached by introduction only.

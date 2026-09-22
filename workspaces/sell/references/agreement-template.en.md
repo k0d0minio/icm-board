@@ -50,10 +50,11 @@ are in development; you can move them to your own accounts at any time and I wil
 
 <none: "A landing page has no ongoing cost and no support line; in-scope defects are fixed
 regardless.">
-<basic: "**€<recurring>/month** for hosting and basic support — when the application is
-down or a flow is broken, I fix it. It requires the fail-safe page and the error tracker,
-both included in the build. It does not include new features or content changes. Either
-of us can end it with one month's notice.">
+<retainer: "**€<recurring>/month** as a retainer covering hosting, basic support and
+maintenance — when the application is down or a flow is broken, I fix it. It requires the
+fail-safe page and the error tracker, both included in the build. Its written scope is
+<what the retainer covers>; anything outside it is quoted separately. Either of us can end
+it with one month's notice.">
 
 ## 6. Revisions
 

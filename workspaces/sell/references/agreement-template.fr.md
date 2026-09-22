@@ -51,11 +51,11 @@ transférer sur vos propres comptes à tout moment et je vous y aiderai. »>
 
 <aucun : « Une page d'atterrissage n'a aucun coût récurrent et aucune ligne de support ;
 les défauts dans le périmètre sont corrigés quoi qu'il arrive. »>
-<basique : « **<recurring> €/mois** pour l'hébergement et le support de base — quand
-l'application est en panne ou qu'un parcours est cassé, je le répare. Cela suppose la page
-de secours et le suivi d'erreurs, tous deux compris dans la construction. Cela ne comprend
-ni nouvelles fonctionnalités ni changements de contenu. Chacun peut y mettre fin avec un
-mois de préavis. »>
+<forfait : « **<recurring> €/mois** au titre d'un forfait couvrant l'hébergement, le
+support de base et la maintenance — quand l'application est en panne ou qu'un parcours est
+cassé, je le répare. Cela suppose la page de secours et le suivi d'erreurs, tous deux
+compris dans la construction. Son périmètre écrit est <ce que le forfait couvre> ; tout ce
+qui en sort est chiffré séparément. Chacun peut y mettre fin avec un mois de préavis. »>
 
 ## 6. Révisions
 

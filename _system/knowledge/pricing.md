@@ -31,7 +31,7 @@ quiet yes.
 | Shape | Feeds the dashboard as | The number comes from |
 |---|---|---|
 | **One-off** | `value_minor`, *in play* | scoped work, priced from the tiers, bands and method below |
-| **One-off + support** | `value_minor` + `support_minor` (*/ month*) | the one-off as above, plus a recurring line **priced by the build's complexity** — see Support |
+| **One-off + support** | `value_minor` + `support_minor` (*/ month*) | the one-off as above, plus the retainer that carries hosting, support and maintenance — **support is never a line of its own**, see Support |
 | **Retainer** | `billing_type` monthly, */ month* | the agreed monthly scope — see Retainers |
 | **Partnership** | `deal_type` in-kind / equity, *in kind* — never income | the EUR value both sides agree it represents, in the deal's `private/terms-sheet.md` |
 
@@ -42,11 +42,14 @@ Whatever the shape, Stripe is the source of truth for what was invoiced and paid
 
 - **Micro (a landing page): no ongoing cost whatsoever.** Hosting rides on Jamie's Vercel
   team at no charge; there is no support line and none is offered.
-- **Standard (a build with state — accounts, data, payments): a monthly support line**, the
-  euro figure *— to set at the first quote under this rule* and recorded here afterwards
-  as the precedent. What it buys is *basic support*: crash fixes on call, which requires
-  the fail-safe page and Sentry to exist ([terms.md](terms.md) § Support after handover,
-  [services.md](services.md) § Hosting & basic support).
+- **Anything larger than a landing page runs on a retainer, and support and maintenance
+  are folded into the retainer's monthly figure** (Jamie, 2026-09-22). There is no
+  separate support price per complexity; the complexity shows up in the retainer's scope
+  and number (§ Retainers). What the retainer's support part buys is *basic support*:
+  crash fixes on call, which requires the fail-safe page and Sentry to exist
+  ([terms.md](terms.md) § Support after handover, [services.md](services.md) § Hosting
+  & basic support). `support_minor` on the dashboard is the retainer's monthly figure,
+  or zero.
 - **Retainer and partnership** are unchanged in band (below) until re-scoped.
 
 ## Fixed-price: the tiers

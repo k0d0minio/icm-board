@@ -79,14 +79,16 @@ either the catalogue grows, or the work is declined.
 - **What the client gets** — the build kept running: Vercel Pro in Jamie's team, Supabase
   or Neon for the data, and **crash fixes on call** — when the app is down or a flow
   breaks, Jamie is the one who fixes it. Not feature work, not a retainer.
-- **Typical shape** — the recurring line of *one-off + support*: **included at no cost for
-  landing pages**; **a monthly line for builds with state**, priced by the build's
-  complexity ([pricing.md](pricing.md) § Support). It requires the fail-safe page and
-  Sentry — without both there is nothing to be on call for.
+- **Typical shape** — **included at no cost for landing pages**; for anything larger it
+  is **part of the retainer** — support and maintenance are folded into the retainer's
+  monthly figure, never priced as a line of their own ([pricing.md](pricing.md)
+  § Support). It requires the fail-safe page and Sentry — without both there is nothing
+  to be on call for.
 - **In scope, always** — hosting on the stated accounts, the error tracker, the on-call
   fix, the monthly hosting rebill where the deal says so ([terms.md](terms.md)).
-- **Not in scope, always** — new features, content changes, anything a retainer covers;
-  the client-owned pattern has no support line at all ([terms.md](terms.md)).
+- **Not in scope, always** — new features, content changes, anything the retainer's
+  written scope does not name; the client-owned pattern has no support at all
+  ([terms.md](terms.md)).
 - **Smallest honest version** — hosting only, no on-call: the landing-page case.
 
 ## Non-services

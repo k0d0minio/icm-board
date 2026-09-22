@@ -18,13 +18,13 @@ Tickets are never created or edited from the dashboard.
 ```
 .icm/
   dormant                ← optional, empty: this repo is parked (see Dormant repos)
-  CONTEXT.md             ← this repo's .icm map; declares its profile (PIPELINE.md)
+  CONTEXT.md             ← this repo's .icm map (PIPELINE.md)
   intake/
     README.md            ← micro-copy of this contract
     <epic-slug>/         ← one folder per epic
       breakdown.md       ← the cut's single review surface
       <feature-slug>.md  ← one stub per unit of work
-      _done/             ← done stubs (pipeline profiles: spun out — see PIPELINE.md)
+      _done/             ← done stubs (spun out into a run — see PIPELINE.md)
     triage/              ← the parking lane: one-off bug/tweak/chore stubs
       <slug>.md
       _done/
@@ -80,9 +80,15 @@ the source of truth.
 `- sequence: <n> of <m>` · `- depends-on:` (write `none` when there are none).
 
 **`## Prompt`** — everything under it must stand alone when pasted into a fresh agent
-session at the repo root; the board's "Copy prompt" and one-tap deep link send *only*
-that section. Required in `intake`-profile repos (it is the whole pick-up contract);
-optional where the `pipeline` profile's `/pipeline new` does the picking up.
+session at the repo root. **Required in every stub**: it is the brief Define reads when
+`/pipeline new` picks the stub up, and the whole pick-up contract where a repo has no
+router yet. **What the board sends is the pick-up verb** (decision D26): where the repo
+carries `.claude/skills/pipeline/SKILL.md`, the "Copy prompt" button and the deep links
+send `/pipeline new <epic>/<slug>` for an epic stub, `/pipeline <lane>
+.icm/intake/triage/<slug>.md` for a triage stub (the lane from its `- lane:` line), and
+`/pipeline build <slug>` / `/pipeline release <slug>` for a run in flight by its stage;
+where the repo does not, they send the `## Prompt` body as before. The ticket detail shows
+the exact string it will send.
 
 **Optional, free-form:** `priority` (`P0` urgent · `P1` next · `P2` whenever — `/day`
 ranks across repos with it), `size`, `blocked: <reason>` (external blockage, shown as a
@@ -114,9 +120,12 @@ displays what it finds and never requires them.
 ```
 
 The build order is a strict total order: sequences contiguous `1..m`, every `depends-on`
-naming an in-epic stub sequenced first, `## Build order` agreeing with the stubs. In
-`pipeline` repos `validate-intake.sh` checks the bookkeeping; elsewhere
-`ticket-hygiene.sh` lints it.
+naming an in-epic stub sequenced first, `## Build order` agreeing with the stubs.
+`validate-intake.sh` checks the bookkeeping in every repo that carries it;
+`ticket-hygiene.sh` lints it estate-wide. **`## Parallelizable` is derived from
+`- touches:`** (D26): a parallel set holds only stubs whose optional `touches:` guesses do
+not overlap; stubs that share a surface are sequenced, the shared-file ones first
+(`intake/CONTEXT.md` → Formats).
 
 ## Triage — the parking lane
 
@@ -142,7 +151,7 @@ lose it in conversation.
 
 ## Prompt
 
-<stand-alone pick-up, as above — required in intake-profile repos>
+<stand-alone pick-up, as above — required>
 ```
 
 No breakdown, no `sequence:`, no `depends-on` — a backlog, not a batch. The human
@@ -157,7 +166,7 @@ around it — is the state:
 |---|---|
 | **open** | the stub sits in a live epic or in `triage/` |
 | **next** | the open stub with the lowest unmet `sequence` in its epic |
-| **in flight** | `pipeline` profile: `.icm/runs/<slug>/` exists · `intake` profile: the `claude/<slug>` PR is open |
+| **in flight** | `.icm/runs/<slug>/` exists (a repo with the pipeline) · the `claude/<slug>` PR is open (a repo without it yet) |
 | **blocked** | a `- blocked: <reason>` line; a stub whose `depends-on` isn't done is *waiting*, shown as such |
 | **today** | the ticket is listed in icm-board's `.icm/today.md` (below) |
 | **done** | the stub is in its epic's `_done/` (pipeline: *spun out* — shipped is the run's merge) |
@@ -188,7 +197,8 @@ than vanishing:
 | lane / blocked / size | their dash-lines, shown as badges |
 | in flight | `.icm/runs/<slug>/` presence (pipeline repos) |
 | today | icm-board's `.icm/today.md` |
-| the prompt | `## Prompt` body up to the next `##` (synthesised from the path when absent) |
+| the prompt | `## Prompt` body up to the next `##` (synthesised from the path when absent) — sent as the body only where the repo has no `/pipeline` router; otherwise the board sends the pick-up verb |
+| the verb | `/pipeline new <epic>/<slug>` · `/pipeline <lane> .icm/intake/triage/<slug>.md` · `/pipeline build\|release <slug>` — probed once per repo by the presence of `.claude/skills/pipeline/SKILL.md` |
 
 Legacy flat `PREFIX-NNN` tickets still parse under the old rules until their repo
 migrates — both shapes render side by side.
@@ -210,7 +220,8 @@ a dormant repo that gets a new stub drops the marker in the same commit.
 ## Working rules
 
 - The session that picks a stub up moves it to its epic's `_done/` in the PR that
-  finishes the work (`intake` profile) or spins out the run (`pipeline` profile).
+  spins out the run (`new-run.sh --stub`) — or, in a repo without the router yet, in the
+  PR that finishes the work.
 - Cutting what's left into epics or triage is part of ending any session — never a loose
   `TODO.md`.
 - The board reads `main` via the GitHub API — a stub exists once it's pushed.

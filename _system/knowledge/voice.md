@@ -24,7 +24,12 @@ than any rule below.
 - **Short.** A proposal a client actually reads beats a thorough one they don't.
 - **Honest about uncertainty.** "I won't know until X" is house style; a confident guess
   dressed as a promise is not.
-- **English by default; Portuguese where the client leads in it** — note per deal which.
+- **English by default; French or Portuguese where the client leads in it** — recorded
+  per deal on `DEAL.md` (`- language:`); the proposal and agreement templates exist in all
+  three.
+- **The register follows who is reading.** A café owner, an SME founder and an enterprise
+  team hear the same offer in different words — the table in
+  [positioning.md](positioning.md) § Three registers says which words, and which never.
 
 ## Never send
 

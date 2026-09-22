@@ -35,13 +35,36 @@ a reference file that names a real client is a Layer-4 artifact in the wrong fol
 
 | Workspace | Stages | Runs | Ends when |
 |---|---|---|---|
-| [`sell/`](../../workspaces/sell/) | `01_intake → 02_discovery → 03_quote → 04_proposal` | once per deal | the deal is agreed (or lost) |
-| [`start/`](../../workspaces/start/) | `05_onboarding → 06_repo → 07_kickoff` | once per won deal | `/project` has run in the client repo |
+| [`sell/`](../../workspaces/sell/) | `01_intake → 02_look → 03_quote → 04_proposal → 05_agreement` | once per engagement | the agreement is signed (or the deal is lost) |
+| [`start/`](../../workspaces/start/) | `06_onboarding → 07_kickoff` | once per signed engagement | `/project` has run in the client repo |
 | [`deliver/`](../../workspaces/deliver/) | `project · day · conformance` | forever, cyclically | never |
 
-Sell and start share one number line (01–07) because a deal is one story: its artifacts
-sort chronologically in its deal folder. Deliver's stages are deliberately **unnumbered**
-— they are re-entrant rituals, not a sequence, and pretending otherwise would be false.
+Sell and start share one number line (01–07) because a deal is one story: its artefacts
+sort chronologically in the engagement folder, and the build's end — `08-handover.md`,
+written by the client repo's handover lane — closes the same line. `06_repo` was retired
+into `07_kickoff`'s gate on 2026-09-22: the repo is created at signature by default, and
+kickoff adopts it. Deliver's stages are deliberately **unnumbered** — they are re-entrant
+rituals, not a sequence, and pretending otherwise would be false.
+
+## The deal folder
+
+Layer 4 for sell and start is one folder per client relationship, and inside it one folder
+per engagement ([`deals/README.md`](../../workspaces/deals/README.md) has the schema):
+
+```
+workspaces/deals/<client>/
+  DEAL.md                       dash-fields: client, company, contacts, repo, language,
+                                engagement (the live one), source — no mirror of any Neon column
+  <engagement>/                 one per deal, sequential, never two live
+    01-intake.md … 08-handover.md     the artefacts, as sent / as signed
+    answers/<form>.md                 immutable snapshots of Neon's form answers
+    raw/                              client material; media ignored, transcripts tracked
+    private/ pricing.md · negotiation.md · terms-sheet.md · economics.md
+  out/                          rendered DOCX — gitignored
+```
+
+**Stage is positional**: the live engagement's stage is the highest `NN-` artefact present
+in its folder, and the next stage is the one after it. Nothing writes a stage name down.
 
 ## The stage contract
 
@@ -83,9 +106,21 @@ earlier stages' artifacts, not just this stage's inputs.
 - **No secrets in Layer 4, ever.** Deal folders carry words and documents — never
   credentials, tokens, or identity documents. Access material goes into a password
   manager and the folder records only *that* it exists.
-- **Neon stays authoritative for business state.** A deal folder mirrors the ladder rung
-  for legibility; the dashboard row *is* the status ([CLIENTS.md](CLIENTS.md)). Money
-  facts are Stripe's, always.
+- **One home per fact (decision D24).** Relationship *state* — the rung, the next action,
+  `stripe_customer_id`, `github_repo`, `work_started_at`, the agreed value and shape —
+  lives in Neon and is never mirrored into git: `DEAL.md` carries no Ladder, Stage or Value
+  row. Every deal *document*, private reasoning included, lives here. The dashboard reads
+  the deal folder live and shows the rung beside the folder's stage
+  ([CLIENTS.md](CLIENTS.md) § The badge); nothing syncs. **A copy is allowed only when it
+  is immutable and provenance-stamped**: the snapshots a client repo receives at kickoff
+  (`.icm/docs/proposal-<date>.md`, `scope-<date>.md` — the quote's scope, never its
+  numbers, never anything under `private/`) and the form-answer snapshots the dashboard
+  writes into `answers/`. Money facts are Stripe's, always.
+- **Deal commits go straight to `main`, with a `Deal:` prefix.** A deal folder is words,
+  not code — the same standing as `Plan:` and `Wrap:` commits. Stage paths explicitly.
+- **`private/` never leaves this repo.** Pricing reasoning, negotiation analysis, the
+  partnership term sheet, the economics roll-up — read by `03_quote` as precedent, written
+  by the stages and by `run-economics.sh`, copied nowhere.
 - **Nothing runs itself.** No stage triggers another; no script advances a deal; the
   scheduled workflows report and never write. The moment something here drives rather
   than describes, it has broken the house rule that outranks this contract. (What that

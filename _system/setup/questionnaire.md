@@ -59,6 +59,25 @@ each `— not yet established` marker. Skip freely — a skipped question stays 
 21. Where do your leads really come from today (referral, portfolio form, in person)?
     Which channel do you want the playbook to grow?
 
+## Positioning → [`knowledge/positioning.md`](../knowledge/positioning.md)
+
+22. **The offer in one sentence, and the three verbs, in your words.** The page carries a
+    drafted sentence (a senior engineer who looks at how a business runs, sorts which parts
+    belong to software, an assistant, a person or nothing, builds what makes sense at a
+    fixed price, hands over a repository that carries its own method) and three verbs —
+    *Look, then sort · Build what makes sense · Hand it over, governed*. Rewrite each as
+    you would actually say it; strike what you would never say.
+23. **Per register — a café owner, an SME founder, an enterprise team:** one real sentence
+    you would say to them about what you do, and one word you would never use with them.
+    Three pairs; they fill the two empty rows of the registers table.
+
+## Paper → [`knowledge/terms.md`](../knowledge/terms.md) § Paper
+
+24. **The Drive parent folder** for client documents (proposals, agreements, the signed
+    copies) — its name or link; each client gets a folder inside it. And **the house DOCX
+    look**: a reference `.docx` whose styles the rendered proposals and agreements should
+    take (saved as `_system/knowledge/house.docx`), or "plain" for pandoc's default.
+
 ---
 
 **Done log** — when answers are distributed, record it here and in ICM-009:
@@ -66,3 +85,4 @@ each `— not yet established` marker. Skip freely — a skipped question stays 
 | Date | Sections filled | By |
 |---|---|---|
 | 2026-08-26 | All seven, conversationally (ICM-009). Still open, deliberately: voice example pastes (Q8) · outreach message examples (Q20) · web-app/AI standing inclusions (Q3, partial) · the AI-SME outbound channel (Q21, partial). Each is marked in its file. | Jamie + Claude session |
+| 2026-09-22 | Positioning, pricing (anchor, floor, four shapes, diagnostic, tiers), services (free look, diagnostic, hosting & support), terms (support, paper, partnerships, languages), stack — from the rework brief's decisions, not a questionnaire run. **Open: Q22, Q23, Q24** — asked here, marked `— not yet established` in their files. | Claude session (directive of 2026-09-22) |

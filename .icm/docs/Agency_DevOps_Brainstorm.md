@@ -1,7 +1,11 @@
 # Agency DevOps Brainstorm — what the pipeline template still owes an agency
 
 *Research and interview pass, 2026-09-22, on branch `claude/icm-pipeline-devops-research-e0196c`;
-revised the same day on Jamie's four flags (§3, last four rows). Scope:
+revised the same day on Jamie's four flags (§3, last four rows), then tightened once more (r3,
+same day) where a re-read of the flags against the repo found the design still leaning: no
+default template path in `setup.sh` (flag 1), a Release on every merge by default (flag 2),
+sensitive values in `pull` and the meaning of "document" (flag 4), the workflows' template
+folder, and sustentus's on-disk state. Scope:
 `_system/template/icm-pipeline/`, `_system/scripts/`, `projects/sustentus/.icm/` plus its
 `.github/workflows/` (the reference implementation), and — for the usage-source question — the
 two harnesses as installed on this machine (Claude Code 2.1.271, OpenCode 1.18.30). No downstream
@@ -138,7 +142,9 @@ inside the repo.**
   every payload and sends nothing.
 - **Runtime dependencies: none outside the repo.** `report.sh` reads `.icm/project.json`, sources
   `.icm/scripts/lib/gh.sh`, and uses the repo's own `GH_TOKEN`/`gh` login (a fine-grained token
-  scoped to that repo is enough for a Release) and whatever channel variables the repo declares.
+  scoped to that repo with *Contents: read and write* is enough for a Release; in Actions, the
+  job's `permissions: contents: write` on the default `GITHUB_TOKEN`) and whatever channel
+  variables the repo declares.
   It never reads the registry, the deal folder, or anything under `~/Apps`. The same holds for
   every other script in this brief (§4.9).
 - **The zero-config alert is a red job.** Where `alert` maps to no channel, the CI workflow that
@@ -326,9 +332,12 @@ records `announce: none` and therefore announces nothing, ever — which flag 2 
 - **`github-release` — on by default.** The seeded `project.json` stub ships
   `announce: ["github-release"]`. `POST /repos/{o}/{r}/releases` via `lib/gh.sh` after the merge:
   tag `release/<YYYY-MM-DD>-<slug>` on the merge SHA, name = the summary, body = the changelog
-  body or the spec's *Proposed change* plus the PR link, `prerelease: false`. Only for
-  `audience: public` (an `internal` entry is announced on the other channels and gets no
-  Release, mirroring the changelog index). Idempotent by tag. The tag is also the anchor
+  body or the spec's *Proposed change* plus the PR link, `prerelease: false`. **Every merge
+  gets one unless the run opts out.** The audience defaults to `public`; a changelog entry or a
+  `notes.md` line reading `audience: internal` is announced on the other channels and gets no
+  Release (mirroring the changelog index), and `announce: none` on the run sends nothing at
+  all — both are the run's explicit choice, never a default, and a repo with no changelog page
+  never has to say anything to get its Release. Idempotent by tag. The tag is also the anchor
   `rollback.sh --revert` names. Every repo therefore has a public ship log from its first merge
   with zero configuration.
 - **Where the summary comes from** when there is no changelog page: the PR's Summary line, which
@@ -396,9 +405,13 @@ nothing to declare".
   `standard` or `micro`?" · "personas?". It writes the P files, re-runs `setup.sh` until `OK`,
   and stops with the changes on a `claude/` branch for the operator to merge (a bare repo's first
   run is one PR; a maintenance run that changed nothing is a valid outcome and says so).
-- **Template source for a bare repo.** `--template` defaults to `../../_system/template`
-  relative to `projects/<repo>` (icm-board's checkout on Jamie's machine — the common case) and
-  accepts any path or tarball URL. A repo the dashboard created already carries the baseline, so
+- **Template source for a bare repo.** `setup.sh` has **no default source**. `--template
+  <path|url>` names one (a path or a tarball URL), or `ICM_TEMPLATE` in the shell does; the
+  `/setup` skill run from Jamie's machine passes icm-board's checkout explicitly
+  (`~/Apps/_system/template`). Nothing in a repo reaches for `../../_system` on its own — a
+  relative default would be exactly the silent dependency on icm-board's layout that flag 1
+  forbids, and it would resolve to nothing, or to something else, everywhere but one machine.
+  A repo the dashboard created already carries the baseline, so
   "bare" is an adopted external repo, which is adopted from Jamie's machine anyway. If cloud-side
   bare setup is ever wanted, the template can be mirrored to a public `k0d0minio/icm-template` by
   icm-board CI on merge — T files carry no identity by construction (D20), so the mirror leaks the
@@ -456,7 +469,12 @@ from `lib/gh.sh` and the `gh` CLI. Verbs:
 - **`pull`** — `vercel env pull` per project path into `.env.local` with the notes interleaved,
   refusing before the pull when `.env.local` is not ignored, and restoring the `.gitignore` line
   the CLI appends. The cloud hook `vercel-env-hydrate.sh` becomes a caller of this verb, so the
-  local and cloud flows are one implementation.
+  local and cloud flows are one implementation. A key Vercel holds as `type: sensitive` cannot be
+  read back by anyone — 248 of the estate's 464 documented keys at the epic's last count
+  (`intake/vercel-env-system/breakdown.md`) — so the CLI leaves it out, `pull` writes it as
+  `KEY=` under its note with one `# sensitive — paste locally` line, and `audit` reports it as
+  *present on Vercel, not pullable*, never as missing. The value stays with the human; no
+  pipeline script ever needs it.
 - **`push-notes`** — `.env.example` notes → Vercel comments (REST, the `comment` field and
   nothing else; `TODO` placeholders skipped; the 500-character cap named, never truncated).
 - **`add <KEY> [--targets production,preview,development] [--sensitive] [--github secret|variable]
@@ -471,7 +489,10 @@ from `lib/gh.sh` and the `gh` CLI. Verbs:
 - **`doc`** — the documentation half of flag 4 for a session that must not create anything:
   prints the `.env.example` block a new key needs (key, note, suffix) and the `audit` lines it
   would clear, so the agent's output is a diff to `.env.example` and a checklist for the
-  dashboards, and the value stays with the human.
+  dashboards, and the value stays with the human. *Documenting a variable means its key, its
+  note and the surfaces it must exist on — never its value. That is the one place flag 4's
+  wording is read narrowly, and deliberately: `.env.example` is committed, and the standing rule
+  (§9, Secrets) admits no exception for it.*
 
 **The `.env.example` convention grows two additive suffix tokens**: `[ci]` (the key must exist as
 a GitHub Actions secret or variable — the reference release workflow's `RESEND_API_KEY`,
@@ -548,7 +569,7 @@ around.
 | `_shared/github.md` | T | changed | lane list gains hotfix; a hotfix PR opens ready; `type:hotfix` in the label vocabulary |
 | `_system/template/claude-pipeline/skills/setup/SKILL.md` | canonical asset | new | the `/setup` command, seeded beside the router (§4.7) |
 | `_system/template/root/.opencode/plugins/icm-session-env.js` | canonical root asset (optional) | new | the `shell.env` bridge (§4.4a) |
-| `_system/template/github-workflows/{release,labels}.yaml` | reference | new | seeded once by `/setup` (`announce_from: ci` repos) |
+| `_system/template/github-pipeline/workflows/{release,labels}.yaml` | reference | new | seeded once by `/setup` (`announce_from: ci` repos). Under `github-pipeline/`, the folder `icm-check.sh --fix` already copies to `.github/` beside the PR template (`template/README.md`), so `.github` has one source — and **not** in its `PIPELINE_GITHUB` list, so the estate walk never seeds a workflow uninvited |
 | `_system/template/claude/hooks/vercel-env-hydrate.sh` | canonical asset | changed | calls `.icm/scripts/env.sh pull` where the repo has it; keeps its own path otherwise |
 | `_system/scripts/vercel-env.sh` | icm-board | changed | the estate loop over each repo's `env.sh`; `registry` verb regenerates `vercel-env-registry.json` from the repos' deploy blocks |
 | `_system/scripts/run-economics.sh` | icm-board | new | per-client roll-up → `workspaces/deals/<slug>/economics.md` (§4.4) |
@@ -639,8 +660,8 @@ one PR. Each package ends with the proof in §8 that applies to it.
    sections, the `setup` skill beside the router, `/project` § 1c removed and its questions
    re-homed, `start/06`, `07` and the kickoff checklist pointing at `/setup`, `/icm-check`
    calling `setup.sh --report`. *Depends on 1–3 and 6 (it checks all of them).*
-9. **Reference workflows.** `_system/template/github-workflows/{release,labels}.yaml` seeded by
-   `/setup` for `announce_from: ci` repos. *Depends on 1, 8.*
+9. **Reference workflows.** `_system/template/github-pipeline/workflows/{release,labels}.yaml`
+   seeded by `/setup` for `announce_from: ci` repos. *Depends on 1, 8.*
 10. **Contracts, PIPELINE.md, D23.** The wording sweep across `PIPELINE.md`, `_system/README.md`,
     `github.md`, `ci.md`, the chore lane, and the D23 row in `.icm/project.md`; the parked
     `profile-wording-sweep` stub's files may be touched where the same sentence is being edited
@@ -656,7 +677,11 @@ those repos** — never from this one.
   what it does, what it never does, `Usage:`, `Verdict:`.
 - `icm-sync.sh projects/sustentus` (dry run) lists exactly the new and changed T files and nothing
   else; `icm-check.sh --repo projects/sustentus` reports the expected drift and no missing P file
-  once the stubs are seeded. Neither is applied.
+  once the stubs are seeded. Neither is applied. **Sustentus's `main` on disk is still pre-D20**
+  (no `.icm/project.json`, no `env-check.sh` — checked 2026-09-22); the D20/D22 sync lives on its
+  local, unpushed branch `claude/icm-pipeline-file-ownership` (four commits, `189a3e7` →
+  `3532e30`). Both proofs run with that branch checked out, and its `project.json` is the one the
+  §6 sustentus block extends — pushing and merging it is Jamie's, in that repo, before adoption.
 - **Self-sufficiency:** every new script under `.icm/scripts/` runs to a `RESULT:` line inside a
   scratch clone of this repo made *outside* `~/Apps` with `HOME` pointed at an empty directory
   and no `_system/` in reach — `report.sh --dry-run`, `env.sh audit`, `usage-snapshot.sh`,
@@ -720,14 +745,14 @@ those repos** — never from this one.
 | **Runtime dependence on icm-board (flag 1)** | None, by rule (§4.9, §9). Prices are synced as a T file so a repo prices its own lines; `setup.sh` needs a template source only to seed or sync, and says `SKIP` otherwise; the cross-repo tools stay in icm-board and are never called by a repo. | The registry is invisible to a cloud session (`vercel-env-hydrate.sh` header); a fine-grained token for a client repo cannot read icm-board. |
 | **Default announce channel (flag 2)** | `github-release`, on in the seeded stub; Slack and email are additive; `announce_from` decides the one caller. | A Release needs only the GitHub route every repo has (`lib/gh.sh`); idempotent by tag. |
 | **Setup command (flag 3)** | `/setup` + `setup.sh` seeded into every repo; `/project` § 1c removed; `.icm/MANIFEST` and `.icm/template-version` make completeness and currency answerable offline. | `/project` § 1c is four steps whose first is empty after D22 (parked stub `profile-wording-sweep`); the MANIFEST "stays in the template" today. |
-| **Template source for a bare repo** | `--template` pointing at icm-board's checkout (the common case on Jamie's machine); the dashboard scaffolds the baseline for repos it creates; a public mirror only if cloud-side bare setup is ever wanted, and that is Jamie's call. | D19: `createClientRepo` scaffolds the baseline; D20: T files carry no identity. |
+| **Template source for a bare repo** | Named explicitly every time — `--template <path\|url>` or `ICM_TEMPLATE`, no default; the `/setup` skill passes icm-board's checkout on Jamie's machine; the dashboard scaffolds the baseline for repos it creates; a public mirror only if cloud-side bare setup is ever wanted, and that is Jamie's call. | Flag 1 (§9): a relative default is a hidden reach outside the repo; D19: `createClientRepo` scaffolds the baseline; D20: T files carry no identity. |
 | **Env management (flag 4)** | `env.sh` in the template, driven by the deploy block, six verbs, `[ci]` and `[cloud]` suffixes; values on stdin only; `vercel-env.sh` becomes the estate loop. | `vercel-env.sh` header (three one-way flows, the convention); `vercel env add [name] [environment] < [file]` and `--sensitive` in the Vercel CLI docs; `gh secret set` reads stdin. |
 | **OpenCode usage source** | SQLite read, keyed by `OPENCODE_SESSION_ID` from a `shell.env` plugin; children by `parent_id`; cost as recorded. | `opencode.db` schema and rows; `@opencode-ai/plugin` 1.18.25 `index.d.ts` lines 235–248; `OPENCODE_DB` in the binary and the docs; `export` and `session list --format json` shapes; `stats` is human-only. |
 | **Claude Code local source** | Transcript by `CLAUDE_CODE_SESSION_ID`; dedupe by `requestId`; subagents under `<session>/subagents/`. No `CLAUDE_ENV_FILE`. | `env` in this session; this session's transcript (113 lines / 18 requests); claude-code issues #15840, #11649. |
 | **Claude Code cloud source** | Same transcript reader (`/root/.claude/projects/…`); the session record is a cross-check. | sustentus `docs/token-metrics.md` → "What was verified". |
 | **Where the usage line lives** | `runs/<slug>/usage.md`, not `run.md`. | Scope has no `run.md` at entry; `run.md` is parsed by three scripts. |
 | **Registry vs `deploy` block** | The repo's `deploy` block is authoritative; the registry is regenerated from it. | A cloud session cannot see `projects/` or the registry; the block is the only copy every session can read. |
-| **GitHub Release tag and audience** | `release/<YYYY-MM-DD>-<slug>`; public entries only. | Unique per run, sortable, no counter; mirrors the changelog index's `internal` rule. |
+| **GitHub Release tag and audience** | `release/<YYYY-MM-DD>-<slug>`; one per merge, audience `public` by default; `audience: internal` or `announce: none` on the run is the only opt-out. | Unique per run, sortable, no counter; flag 2 says "always on", so the changelog index's `internal` rule is kept as the opt-out, not the gate. |
 | **Client email recipients** | Variable names (`REPORT_EMAIL_TO`, `REPORT_EMAIL_FROM`) in the repo's environment, `[ci]`-scoped in `.env.example`. | T files carry no identity (D12/D20); a client-owned repo must not carry Jamie's routing. |
 | **Hotfix cadence on sustentus** | Opens ready; the first ready push builds all three product apps and that cost is accepted on an incident. | sustentus `project-rules.md` → "the first ready push always builds all three"; decision 4. |
 | **Forward-only migrations vs stop class 3** | `migrations.reversible` in `project.json`; stop class 3 scoped to reversible repos; `rollback.sh` warns when not. | `db-migrate.yaml` ("forward-only and idempotent") against `04_release` stop class 3. |

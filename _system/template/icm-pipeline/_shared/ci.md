@@ -193,7 +193,8 @@ is an accepted failure mode, not a blind spot, and it is loud:
   branch, or in the Vercel dashboard. The post-merge notification runs after the merge and does
   not gate on it.
 - The fix is a follow-up commit to the default branch through the normal lanes, not a revert of
-  the run.
+  the run *by a session's own decision* — a revert is the hotfix lane's (`lanes/hotfix/CONTEXT.md`),
+  prepared by `rollback.sh` and merged by the operator; fix-forward stays the default.
 
 ## The verdict vocabulary — three values, not two
 
@@ -209,7 +210,10 @@ be a note; they never make a verdict RED.
 ### What GREEN means depends on the PR's phase (blind-until-ready)
 
 The three values are the same in both phases; what differs is **which signals exist to settle
-them**, and `ci-status.sh` prints which tier its verdict settled on:
+them**, and `ci-status.sh` prints which tier its verdict settled on. Where the repo declares its
+deploy projects (`.icm/project.json` → deploy.projects), the script also names a product project
+that has posted nothing yet on a ready head as `[INFO] expected, not yet posted` — a notice, never
+a wait:
 
 | Phase                | GREEN means                                                                                                                                                                                                                                                                                       |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

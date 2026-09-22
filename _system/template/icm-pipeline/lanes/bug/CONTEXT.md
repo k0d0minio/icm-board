@@ -24,7 +24,7 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 
 ## Process
 
-1. **Pick a slug** (`fix-<what>`, kebab-case) and **reproduce first**. State the observed vs
+1. **Pick a slug** — then the first act of every lane: `.icm/scripts/usage-snapshot.sh <slug> bug start` (`SKIP` is fine, never a stop). Pick it (`fix-<what>`, kebab-case) and **reproduce first**. State the observed vs
    expected behaviour in one line each. Can't reproduce → STOP and report what you tried; don't
    fix blind.
 2. **Fix the cause, not the symptom** — minimal diff, no drive-by refactors. Prefer the matching
@@ -64,10 +64,12 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 
 5. **STOP.** Report the preview URLs `ci-status.sh` printed and say: "smoke-test, then
    squash-merge from GitHub". You do not merge lane PRs and you do not re-invoke the lane —
-   the operator's merge click is the gate. After their merge the project's post-merge
-   notification — `.icm/scripts/notify.sh`, or a CI workflow the repo owns
-   (`_shared/project-rules.md` → Announcing) — announces (if a changelog page rode along) and,
-   where the repo has a verify job, checks the archive landed; don't run it, don't wait. If you
+   the operator's merge click is the gate. After their merge the repo's reporting hook
+   announces — `report.sh announce`, called by the repo's release workflow where
+   `reporting.announce_from` is `ci`, and by the operator by hand (or not at all) where it is
+   `session` (`_shared/project-rules.md` → Reporting); a lane never calls it, never waits, and
+   never watches production. Last act before the stop:
+   `.icm/scripts/usage-snapshot.sh <slug> bug end`. If you
    parked a finding in `.icm/intake/triage/` on the way and the folder now holds more than 60
    active stubs (`ls .icm/intake/triage/*.md | wc -l`; `intake/CONTEXT.md` → Triage → cap), say
    so here — `triage/ holds N active stubs (cap 60) — run triage report` — and name
@@ -78,7 +80,7 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 **Run-scoped, without exception** (`.icm/_shared/stage-preamble.md` → Run-scoped isolation): everything this lane writes while working lands under
 `.icm/runs/<slug>/lane/`, on the run's own branch `claude/<slug>`.
 
-`.icm/runs/<slug>/run.md` (with `- lane: bug`) and `.icm/runs/<slug>/lane/output/notes.md` —
+`.icm/runs/<slug>/run.md` (with `- lane: bug`), `.icm/runs/<slug>/usage.md` (the `bug start`/`end` lines) and `.icm/runs/<slug>/lane/output/notes.md` —
 both archived to the runs archive (`runs_archive` in `.icm/project.json`; `.icm/runs/_done/` by
 default) under `<slug>/` by step 4:
 

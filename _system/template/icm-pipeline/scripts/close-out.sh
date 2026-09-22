@@ -34,7 +34,10 @@
 #        - no `- pr:` line at all    → a FRONT (Scope, which opens no PR). Its epic stands in for a
 #                                      merge: it archives once `.icm/intake/<slug>/` has moved to
 #                                      the intake archive, and is refused while that epic is live.
-#   3. Moves .icm/runs/<slug>/ -> <runs_archive>/<slug>/.
+#   3. Moves .icm/runs/<slug>/ -> <runs_archive>/<slug>/ — the whole folder, so `usage.md` (the
+#      per-stage usage lines usage-snapshot.sh appended) travels with the run into the archive,
+#      where run-economics.sh (icm-board) reads it. A hotfix or handover lane run archives the
+#      same way as any lane (lib/project.sh → pipeline_lanes).
 #   4. If the run came from an intake stub, and that epic now has no active stubs left AND every
 #      one of its OTHER spun-out stubs is settled — its run's PR merged, or the stub itself retired
 #      with a `> Dropped:` / `superseded-by:` line — moves .icm/intake/<epic>/ ->

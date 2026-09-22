@@ -40,7 +40,9 @@ overruns on a one-line `Context budget:` note in `spec.md`.
 
 ## Process
 
-1. **Resolve the slug.** A stub's `feature-slug` is the slug; pre-seed the spec from it
+1. **Resolve the slug — then the first act of every stage:**
+   `.icm/scripts/usage-snapshot.sh <slug> define start` (`SKIP` is fine, never a stop). A stub's
+   `feature-slug` is the slug; pre-seed the spec from it
    (`personas`, Problem, Proposed change, Acceptance criteria, Out of scope, the
    initiative/objective link — all carry over; `depends-on`/`sequence` are context, not spec
    fields). Define never invents a slug: a plain request with no stub behind it is new content
@@ -92,7 +94,8 @@ overruns on a one-line `Context budget:` note in `spec.md`.
    it plainly to the user: the revision re-opens the gate and the operator must re-tick it.**
    Never re-run `new-run.sh` — one PR per run.
 
-7. **Stop.** Point at the spec path + draft PR URL; editing the spec steers Build; **ticking
+7. **Stop.** Last act: `.icm/scripts/usage-snapshot.sh <slug> define end`. Point at the spec
+   path + draft PR URL; editing the spec steers Build; **ticking
    "Spec approved" on the PR is the gate** — Build won't start without it, and you never tick it.
    The tick is **the operator's**: the business logic was settled at Scope and the business is
    not involved from this stage on — everything past here is technical implementation.
@@ -136,8 +139,9 @@ creates (or the harness-named one it records), never `main`, never another run's
   approval, or moved to Out of scope. Build will not answer it for you.>
 ```
 
-Plus `run.md` (extended with `branch:` + `pr:` if the front already created it), the run committed
-and pushed, and a **draft PR** whose body and labels are projected from `spec.md`.
+Plus `run.md` (extended with `branch:` + `pr:` if the front already created it), `usage.md` with
+the `define start`/`end` lines, the run committed and pushed, and a **draft PR** whose body and
+labels are projected from `spec.md`.
 
 ## Verify (before handing off)
 

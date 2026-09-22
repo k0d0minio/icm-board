@@ -4,12 +4,14 @@ description: >-
   The delivery pipeline (ICM). Use for /pipeline AND for the bare forms
   the operator types without a slash — "new" (next intake stub), "new <stub-name>",
   "build <slug>", "release <slug>", "revise <slug> \"<what to change>\"",
-  "bug|tweak|chore <stub-or-slug>", "scope <anything>",
+  "bug|tweak|chore <stub-or-slug>", "hotfix \"<what is wrong in production>\"",
+  "handover", "scope <anything>",
   "triage report|batch|prune", "knowledge add|edit|remove \"<what>\"" — and whenever the
   [pipeline-router] hook injected a Route: line. Also use it to scope, define, revise, build or
   release work, to fix a bug, to report on, batch or prune the triage backlog, or to change a
-  project-knowledge page in the docs tree outside a Release. Subcommands: scope, new, revise,
-  build, release, bug, tweak, chore, triage, knowledge.
+  project-knowledge page in the docs tree outside a Release, to recover production after a bad
+  merge, or to hand a finished build over. Subcommands: scope, new, revise, build, release,
+  bug, tweak, chore, hotfix, handover, triage, knowledge.
 ---
 
 # /pipeline — the delivery pipeline router
@@ -23,7 +25,7 @@ Argument form: `<subcommand> [slug, stub name, or "request"]`. The argument is: 
 
 **Natural-language routing — the operator never has to type `/pipeline`.** The bare forms
 `new`, `new <stub-name>`, `build <slug>`, `release <slug>`, `revise <slug> "<what to change>"`,
-`bug|tweak|chore <stub-name or "report">`, `scope <anything>`,
+`bug|tweak|chore <stub-name or "report">`, `hotfix "<incident>"`, `handover`, `scope <anything>`,
 `triage report|batch <area|lane> "<epic-title>"|prune` and `knowledge add|edit|remove "<what>"`
 are this skill's subcommands without the slash; treat them exactly as
 `/pipeline <the same words>`. `/pipeline <sub>` stays the explicit
@@ -56,6 +58,8 @@ the pipeline anywhere else.
 | `bug "<report>"` / `bug <stub-or-slug>`   | `.icm/lanes/bug/CONTEXT.md`              |
 | `tweak "<change>"` / `tweak <stub-or-slug>` | `.icm/lanes/tweak/CONTEXT.md`          |
 | `chore "<task>"` / `chore <stub-or-slug>` | `.icm/lanes/chore/CONTEXT.md`            |
+| `hotfix "<what is wrong in production>"` (human-invoked, opens ready) | `.icm/lanes/hotfix/CONTEXT.md` |
+| `handover` (the deal's last lane; needs the deal folder on disk to record) | `.icm/lanes/handover/CONTEXT.md` |
 | `triage report` / `triage batch <area\|lane> "<epic-title>"` / `triage prune` (see below) | `.icm/intake/CONTEXT.md` → Managing the backlog |
 | `knowledge add\|edit\|remove "<what>"` (see below) | `.icm/lanes/knowledge/CONTEXT.md`        |
 | _(empty / unclear)_                       | read `.icm/CONTEXT.md`, show the help    |
@@ -96,12 +100,15 @@ the source, settles the scope in session and cuts the intake batch in one sittin
    when the human is ready.
 6. **A run ends at the merge, and the merge is what closes it out.** Release (and every lane)
    runs `close-out.sh` on the branch as its last commit — the archive move rides in the run's own
-   PR, so the squash publishes it. Release then merges; a lane **stops** after that push and
-   hands the PR to the operator to merge from GitHub. The project's post-merge notification —
-   `.icm/scripts/notify.sh`, or a CI workflow the repo owns (`_shared/project-rules.md` →
-   Announcing) — then announces the merge and, where the repo wires it in CI, checks the archive
-   landed; both are reads, and failures surface in the project's alert channel
-   (`_shared/project-rules.md` → Announcing), where it has one.
+   PR, so the squash publishes it. Release then merges, reads production once
+   (`deploy-status.sh`) and announces through the repo's reporting hook (`report.sh announce`,
+   or `deferred to CI` — `_shared/project-rules.md` → Reporting); a lane **stops** after its
+   last push and hands the PR to the operator to merge from GitHub. Nothing watches production
+   afterwards: a fault is `report.sh alert` (a red CI job where no channel is mapped), and the
+   recovery is the human-invoked `hotfix` lane, prepared by `rollback.sh`.
+7. **Every stage and lane brackets itself with two usage lines** —
+   `usage-snapshot.sh <slug> <stage> start` as the first act after the preamble and `… end` as
+   the last before the stop. `SKIP` is a fine answer; the line is never a gate.
 
 ## Resolving `new` (one procedure, two selectors)
 
@@ -228,6 +235,10 @@ never edits the docs tree outside Release or this lane.
   bug "<report>"      reproduce → fix → PR (+ changelog if user-visible) → close-out
   tweak "<change>"    tiny adjustment → small PR (+ changelog if worth announcing) → close-out
   chore "<task>"      refactor/dep-bump/migration → PR → close-out (no changelog)
+  hotfix "<incident>" production is wrong after a merge → fix-forward, or a revert / Vercel
+                      rollback prepared by rollback.sh → PR opened READY → close-out (human-invoked)
+  handover            the build is finished: accounts, env.sh doc, setup.sh OK, support line,
+                      the record into the deal folder (the deal's last lane)
   Backlog (.icm/intake/triage/ — the parking lane; cap 60 active stubs; no run, no PR):
   triage report       counts by lane / source / area / age + near-duplicates (triage-report.sh)
   triage batch <area|lane> "<epic-title>"

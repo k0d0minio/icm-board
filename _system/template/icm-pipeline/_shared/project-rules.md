@@ -15,6 +15,9 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   every PR from GitHub: <name>.
 - **Authors** — where a story or request comes from (`run.md` → `author/source:`): <names,
   roles, or "the operator themselves">.
+- **The client contact** — who is told what shipped, and by which variable: <`REPORT_EMAIL_TO`
+  in the repo's environment names them; never an address in this file>. <Or: no client-facing
+  report — the operator relays.>
 
 ## Knowledge
 
@@ -27,17 +30,36 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 
 - **Required CI checks** — `required_checks` in `.icm/project.json` (the names `ci-status.sh`
   waits for). Tiering, if any (which checks run on a draft head, which on a ready one): <…>.
+- **Deploy** — `deploy` in `.icm/project.json`: <which projects are product (preview on a ready
+  head) and which quiet (build on merge only)>. The token is named there, never here.
+- **Migrations** — `migrations` in `.icm/project.json`: <where they live; reversible (`down`
+  scripts exist) or forward-only — a code revert must then tolerate the newer schema>.
+- **Environment surfaces** — `.env.example` per app is the manifest (`env.sh audit`); keys
+  scoped `[ci]` live in this repository's Actions secrets/variables, `[cloud]` in the Claude
+  cloud environment panel. <Anything unusual about where a key must exist.>
 - **Local feedback scripts** — `scripts/format.sh` and `scripts/lint.sh` run <formatter / linter>
   over changed files only; CI stays the verdict. <Or: not wired — the stubs report SKIP.>
 - **Archive** — `runs_archive` / `intake_archive` in `.icm/project.json`. <Where they are served
   from, if anywhere; the default `_done/` folders need no note.>
 
-## Announcing
+## Reporting
 
-- **Post-merge notification** — `scripts/notify.sh` <is wired to …> / <is not wired; a CI
-  workflow on the merge announces instead: `.github/workflows/<name>`>.
+- **Kinds → channels** — `reporting` in `.icm/project.json`: `announce` → <github-release
+  (the seeded default) [+ slack, email]>; `alert` → <none — a red CI job and Vercel's own
+  deployment-failed email are the alert | slack | email>; `economics` → <none — icm-board's
+  run-economics.sh writes it into the deal folder>. Channel variables are NAMES in project.json,
+  values in the environment.
+- **Who calls the hook** — `announce_from`: <session — Release step 9 calls `report.sh announce`
+  | ci — `.github/workflows/release.yaml` (the reference workflow) calls it on the merge>.
 - **Changelog** — <where a user-visible change is written up, and the skill or convention that
-  owns its shape; or "none">.
+  owns its shape; or "none" — the PR's Summary line is then the Release's body>.
+- **Workflows** — <`release.yaml` / `labels.yaml` present | absent, deliberately>.
+
+## Support
+
+- **Tier** — `support` in `.icm/project.json`: <none | basic — crash fixes on call, needs the
+  fail-safe page at `support.failsafe_page` and Sentry via the key named by
+  `monitoring.sentry_dsn_env` | retainer>. <Who is on call; what "on call" means here.>
 
 ## Capability skills the stages may call
 

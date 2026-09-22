@@ -5,7 +5,10 @@
 # the run: it says in one pass whether this machine (or cloud session, or Actions runner) can
 # drive the pipeline at all — the binaries the scripts call, a GitHub route (token or `gh`
 # login), the project's own required variables (`.icm/project.json` → required_env), the
-# folder shape, the executable bits, the locale.
+# folder shape, the executable bits, the locale — and, when the repo declares a deploy block,
+# whether the Vercel route works (`lib/vercel.sh --check`); the reporting block's channel
+# variables are reported as warnings, never failures (a missing channel is a decision, not a
+# broken machine). python3 or sqlite3 is recommended for usage-snapshot.sh's OpenCode reader.
 #
 # It REPORTS, it does not repair — the estate's standing rule for every check. The one repair it
 # knows how to make, the executable bit on `.icm/scripts/*.sh`, is behind `--fix`; without the
@@ -42,7 +45,7 @@ fail() { echo "  [FAIL] $*"; ERRORS=$((ERRORS + 1)); }
 # 1. Critical binaries — every pipeline script needs bash, git, jq and curl; the sync and the
 #    conformance tooling need rsync. rg is recommended (the contracts suggest it for searches)
 #    but no script calls it, so its absence is a warning, not a failure.
-echo "[1/6] Checking Critical System Tooling..."
+echo "[1/8] Checking Critical System Tooling..."
 for tool in bash git rsync jq curl; do
   if command -v "$tool" >/dev/null 2>&1; then
     ok "Binary found: $tool"
@@ -55,10 +58,15 @@ if command -v rg >/dev/null 2>&1; then
 else
   warn "rg (ripgrep) not found in PATH — recommended for searches; no pipeline script needs it"
 fi
+if command -v python3 >/dev/null 2>&1 || command -v sqlite3 >/dev/null 2>&1; then
+  ok "Binary found: $(command -v python3 >/dev/null 2>&1 && echo python3 || echo sqlite3) (recommended — usage-snapshot.sh's OpenCode reader)"
+else
+  info "neither python3 nor sqlite3 found — usage-snapshot.sh records SKIP under OpenCode; Claude Code needs neither"
+fi
 
 # 2. A GitHub route — a token in the environment, or a logged-in `gh` CLI (lib/gh.sh takes
 #    either, in that order). Neither is a WARN; one is enough.
-echo "[2/6] Checking GitHub CLI & Authentication..."
+echo "[2/8] Checking GitHub CLI & Authentication..."
 if command -v gh >/dev/null 2>&1; then
   ok "Binary found: gh (GitHub CLI)"
 else
@@ -73,7 +81,7 @@ else
 fi
 
 # 3. The project manifest and the variables it says this repo needs.
-echo "[3/6] Checking Project Manifest & Required Environment (.icm/project.json)..."
+echo "[3/8] Checking Project Manifest & Required Environment (.icm/project.json)..."
 if [ -f ".icm/project.json" ]; then
   if command -v jq >/dev/null 2>&1 && jq -e . .icm/project.json >/dev/null 2>&1; then
     ok ".icm/project.json parses"
@@ -106,7 +114,7 @@ fi
 
 # 4. The folder shape the pipeline promises. No profile line is read — every repo carries the one
 #    pipeline, and `complexity` (step 3) is the only weight.
-echo "[4/6] Checking Local ICM Directory Integrity..."
+echo "[4/8] Checking Local ICM Directory Integrity..."
 if [ -d ".icm" ]; then
   ok "Local .icm directory present"
   for sub in stages lanes _shared scripts; do
@@ -128,7 +136,7 @@ else
 fi
 
 # 5. Executable bits on the scripts a stage invokes. lib/ is sourced and excluded on purpose.
-echo "[5/6] Checking Script Execution Permissions..."
+echo "[5/8] Checking Script Execution Permissions..."
 if [ -d ".icm/scripts" ]; then
   NON_EXEC="$(find .icm/scripts -maxdepth 1 -name '*.sh' ! -executable 2>/dev/null | sort || true)"
   if [ -n "$NON_EXEC" ]; then
@@ -145,8 +153,55 @@ if [ -d ".icm/scripts" ]; then
   fi
 fi
 
-# 6. A UTF-8 locale — the contracts and the decision regexes carry non-ASCII punctuation.
-echo "[6/6] Checking System Locale & Encoding..."
+# 6. The deploy block, and whether the Vercel route works. Absent is a fact, not a fault.
+echo "[6/8] Checking Deploy Block & Vercel Route (.icm/project.json → deploy)..."
+if [ -f ".icm/project.json" ] && jq -e '(.deploy.projects // []) | length > 0' .icm/project.json >/dev/null 2>&1; then
+  n_pj="$(jq -r '.deploy.projects | length' .icm/project.json)"
+  tok_var="$(jq -r '.deploy.token_env // "VERCEL_TOKEN"' .icm/project.json)"
+  ok "deploy declared: $n_pj project(s) on $(jq -r '.deploy.platform // "vercel"' .icm/project.json)${tok_var:+ (token: $tok_var)}"
+  if [ -n "${!tok_var:-}" ] || [ -n "${VERCEL_TOKEN:-}" ]; then
+    if out="$(bash .icm/scripts/lib/vercel.sh --check 2>/dev/null)"; then
+      ok "Vercel route: $(printf '%s' "$out" | grep -m1 'GET ' || echo OK)"
+    else
+      fail "Vercel route: the token named by deploy.token_env cannot list the team's projects — deploy names a team this token does not reach"
+    fi
+  else
+    warn "deploy declared but $tok_var (and VERCEL_TOKEN) unset — deploy-status.sh, env.sh audit and rollback.sh will stop; set it in this environment or the cloud panel"
+  fi
+else
+  info "deploy not declared in .icm/project.json — deploy-status.sh writes 'not declared'; setup.sh asks for the block"
+fi
+
+# 7. The reporting block — which kinds map to which channels, and whether their variables are
+#    set here. A channel with no variable is a WARN: report.sh prints SKIPPED and exits 0.
+echo "[7/8] Checking Reporting Channels (.icm/project.json → reporting)..."
+if [ -f ".icm/project.json" ]; then
+  for kind in announce alert economics; do
+    chans="$(jq -r "(.reporting[\"$kind\"] // (if \"$kind\" == \"announce\" and (.reporting == null) then [\"github-release\"] else [] end)) | join(\" \")" .icm/project.json 2>/dev/null)"
+    if [ -z "$chans" ]; then
+      info "reporting.$kind → none$([ "$kind" = alert ] && echo ' (a red CI job and Vercel'"'"'s own email are the alert)')"
+      continue
+    fi
+    ok "reporting.$kind → $chans"
+    for ch in $chans; do
+      case "$ch" in
+        github-release) : ;;  # the GitHub route above is its whole requirement
+        slack|email)
+          for var in $(jq -r ".reporting.channels[\"$ch\"] // {} | to_entries[] | select(.key | endswith(\"_env\")) | .value" .icm/project.json); do
+            [ -n "${!var:-}" ] && ok "$ch: $var set" || warn "$ch: $var unset here — report.sh will print SKIPPED $ch (fix: .icm/scripts/env.sh add $var --ci)"
+          done ;;
+        *) warn "reporting.$kind names an unknown channel '$ch' (implemented: github-release, slack, email)" ;;
+      esac
+    done
+  done
+  af="$(jq -r '.reporting.announce_from // "session"' .icm/project.json)"
+  if [ "$af" = "ci" ] && [ ! -f ".github/workflows/release.yaml" ] && [ ! -f ".github/workflows/release.yml" ]; then
+    warn "reporting.announce_from is 'ci' but no .github/workflows/release.yaml exists — nothing will announce (seed the reference workflow, or set announce_from to session)"
+  fi
+fi
+
+# 8. A UTF-8 locale — the contracts and the decision regexes carry non-ASCII punctuation.
+echo "[8/8] Checking System Locale & Encoding..."
 if [[ "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" =~ UTF-8|utf8|UTF8 ]]; then
   ok "UTF-8 locale in effect (${LC_ALL:-${LC_CTYPE:-$LANG}})"
 else

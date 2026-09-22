@@ -8,15 +8,17 @@
 #     template headings + both gate anchors + acceptance criteria mirrored unticked; `revise <slug>`
 #     re-projects it with the same script), writes/extends run.md, projects the labels
 #     (project-labels.sh), and — if --stub was passed — git mv's the stub into _done/.
-#   • Lane (--lane bug|tweak|chore) — the fast-lane scaffold (.icm/lanes/*/CONTEXT.md). No spec
-#     required: opens a DRAFT PR whose body carries Summary (with a `- slug:` line, so
-#     resolve-run.sh finds lane PRs by body like spine ones — its branch-name fallback covers
-#     PRs without one) and Steps to test — and NO gate
-#     checkboxes: a lane PR is merged by a human from the GitHub UI, so the merge button is its
-#     gate. Labels it type:<lane> and writes run.md with a `lane:` line. Lanes open draft like the
-#     spine (blind-until-ready, deployment-economics stub 9): draft pushes run the cheap CI tier
-#     and build no previews; the lane flips ready when its fix is settled, which starts the full
-#     gate and the affected product-app previews.
+#   • Lane (--lane bug|tweak|chore|hotfix|handover — the vocabulary is lib/project.sh's
+#     `pipeline_lanes`) — the fast-lane scaffold (.icm/lanes/*/CONTEXT.md). No spec required:
+#     opens a PR whose body carries Summary (with a `- slug:` line, so resolve-run.sh finds lane
+#     PRs by body like spine ones — its branch-name fallback covers PRs without one) and Steps to
+#     test — and NO gate checkboxes: a lane PR is merged by a human from the GitHub UI, so the
+#     merge button is its gate. Labels it type:<lane> and writes run.md with a `lane:` line.
+#     bug/tweak/chore/handover open DRAFT like the spine (blind-until-ready, deployment-economics
+#     stub 9): draft pushes run the cheap CI tier and build no previews; the lane flips ready when
+#     its fix is settled, which starts the full gate and the affected product-app previews.
+#     `hotfix` opens READY — an incident wants one full gate and the previews at once, and that
+#     first ready push's cost is accepted (agency brief §4.5). `--ready` forces it for any lane.
 #
 # The spine PR body mirrors .github/pull_request_template.md — the same sections in the same
 # order (Summary, the Spec table, Acceptance criteria, Steps to test, the Gates block), and the
@@ -46,7 +48,7 @@
 # Usage:
 #   .icm/scripts/new-run.sh <slug> --summary "<one plain sentence>" \
 #       [--stub .icm/intake/<scope>/<feature>.md] [--steps "<steps to test>"] [--base main] \
-#       [--lane bug|tweak|chore] [--title "<PR title — lane mode, default: the slug>"] [--dry-run]
+#       [--lane bug|tweak|chore|hotfix|handover] [--ready] [--title "<PR title — lane mode>"] [--dry-run]
 #
 #   With --lane, --stub may name a TRIAGE stub only (.icm/intake/triage/<name>.md — the parked
 #   off-ticket finding the lane is picking up); scope-epic stubs still go through Define.
@@ -68,10 +70,11 @@ die() { echo "error: $*" >&2; exit 1; }
 
 # --- args ------------------------------------------------------------------------------------------
 
-slug=""; summary=""; stub=""; steps=""; base="main"; lane=""; title_flag=""; dry_run=0
+slug=""; summary=""; stub=""; steps=""; base="main"; lane=""; title_flag=""; dry_run=0; ready_flag=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run) dry_run=1; shift ;;
+    --ready)   ready_flag=1; shift ;;
     --summary) summary="${2:-}"; shift 2 ;;
     --stub)    stub="${2:-}"; shift 2 ;;
     --steps)   steps="${2:-}"; shift 2 ;;
@@ -82,9 +85,14 @@ while [ $# -gt 0 ]; do
     *)         [ -z "$slug" ] && slug="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$slug" ]    || die "usage: new-run.sh <slug> --summary \"<one sentence>\" [--stub <path>] [--lane bug|tweak|chore] [--dry-run]"
+# shellcheck source=lib/project.sh
+source "$here/lib/project.sh"
+
+[ -n "$slug" ]    || die "usage: new-run.sh <slug> --summary \"<one sentence>\" [--stub <path>] [--lane $(pipeline_lanes | tr ' ' '|')] [--ready] [--dry-run]"
 [ -n "$summary" ] || die "--summary \"<one plain sentence>\" is required (the PR Summary — the one AI-authored line)"
-case "$lane" in ""|bug|tweak|chore) : ;; *) die "--lane must be bug|tweak|chore, got: $lane" ;; esac
+if [ -n "$lane" ] && ! is_lane "$lane"; then die "--lane must be one of: $(pipeline_lanes | tr ' ' '|'), got: $lane"; fi
+# A hotfix opens ready — the whole point of the lane is one full gate now (lib/project.sh → lanes).
+[ "$lane" = "hotfix" ] && ready_flag=1
 # A lane may consume a triage stub (the parking lane it exists to drain) — but never a scope-epic
 # stub, which must go through Define so the spec and the Spec-approved gate exist.
 if [ -n "$lane" ] && [ -n "$stub" ]; then
@@ -183,14 +191,17 @@ ${summary}
 ${steps}
 EOF
 )"
-  # Draft like the spine — the lane itself flips ready once its fix is settled (stub 9).
+  # Draft like the spine — the lane itself flips ready once its fix is settled (stub 9) —
+  # unless the lane is a hotfix or --ready was passed: then the PR opens ready.
   draft=true
+  [ "$ready_flag" -eq 0 ] || draft=false
 fi
 
 # --- --dry-run: print the body, create nothing ------------------------------------------------------
 
 if [ "$dry_run" -eq 1 ]; then
-  echo "dry run — printing the ${lane:+$lane-lane }PR body for '$slug' (branch $branch, base $base); nothing created" >&2
+  label_note="type:feature"; [ -z "$lane" ] || label_note="type:$lane"
+  echo "dry run — printing the ${lane:+$lane-lane }PR body for '$slug' (branch $branch, base $base, $([ "$draft" = true ] && echo draft || echo READY), label $label_note); nothing created" >&2
   printf '%s\n' "$body"
   exit 0
 fi
@@ -282,5 +293,5 @@ fi
 
 # --- verdict ---------------------------------------------------------------------------------------
 
-echo "run '$slug' created — branch: $branch, ${lane:+$lane lane }PR: $pr_url"
+echo "run '$slug' created — branch: $branch, ${lane:+$lane lane }PR: $pr_url ($([ "$draft" = true ] && echo draft || echo ready))"
 echo "RESULT: CREATED"

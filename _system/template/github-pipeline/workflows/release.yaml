@@ -1,0 +1,124 @@
+name: Release
+
+# The reference announce-on-merge workflow (agency brief §4.7, item 9) — seeded ONCE by /setup into
+# a repo whose `.icm/project.json` reads `reporting.announce_from: "ci"`, never by the estate walk.
+# It does one thing after a run's PR merges: it calls the repo's own reporting hook,
+#
+#   .icm/scripts/report.sh announce "<summary>" --slug <slug> --sha <merge-sha> --url <pr-url>
+#
+# and lets the hook decide what a channel is (`.icm/project.json` → reporting.channels: a GitHub
+# Release by default, Slack and email when the repo declares them). No channel id, token name or
+# address appears in this file — those are the repo's own, as variable NAMES in project.json and
+# values in this repository's Actions secrets/variables. When the hook could not announce, the
+# job fails and calls `report.sh alert`; with no alert channel that red job IS the alert (the
+# repository owner's GitHub notification), which is the seeded default.
+#
+# Where the summary comes from: the PR's `## Summary` first line — every pipeline PR carries one
+# (new-run.sh --summary). A repo with a changelog page lets the hook read that page's summary
+# instead by passing --body; that is a per-repo edit to the step below, made when the repo adopts
+# the workflow.
+#
+# Read-only against the repository: `contents: write` is granted ONLY because a GitHub Release is
+# a write to /releases — nothing here commits, pushes or edits a file. The close-out already rode
+# in the PR (`.icm/_shared/github.md`, regime 3); the archive check that verifies it landed is a
+# per-repo addition, not this file's.
+#
+# `session` repos (the default) do not carry this file: Release step 9 calls report.sh itself.
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Run slug to (re-)announce from main"
+        required: true
+        type: string
+      sha:
+        description: "Merge commit SHA (defaults to main's head)"
+        required: false
+        type: string
+
+concurrency:
+  group: release-${{ github.event.pull_request.number || inputs.slug }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write      # POST /releases — the seeded default announce channel
+  pull-requests: read  # the merged PR's body (the Summary line)
+
+jobs:
+  announce:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    name: Announce the merge
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || inputs.sha || github.sha }}
+
+      - name: Resolve slug, summary and merge SHA
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          INPUT_SLUG: ${{ inputs.slug }}
+          INPUT_SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_SLUG:-}" ]; then
+            slug="$INPUT_SLUG"; sha="${INPUT_SHA:-$(git rev-parse HEAD)}"; summary="Release $slug"; url=""
+          else
+            # The slug line is the spine Spec-table row or the lane `- slug:` bullet (resolve-run.sh
+            # matches the same two shapes); the Summary is the first non-empty line under ## Summary.
+            slug="$(printf '%s\n' "$PR_BODY" | sed -nE 's/^- slug:[[:space:]]*//p; s/^\|[[:space:]]*\*\*Slug\*\*[[:space:]]*\|[[:space:]]*`?([^`| ]+)`?[[:space:]]*\|.*/\1/p' | head -1)"
+            [ -n "$slug" ] || slug="pr-${PR_NUMBER}"
+            summary="$(printf '%s\n' "$PR_BODY" | awk '/^## Summary/{f=1; next} f && NF {print; exit}')"
+            [ -n "$summary" ] || summary="PR #${PR_NUMBER} merged"
+            sha="$MERGE_SHA"; url="$PR_URL"
+          fi
+          # An `announce: none` or `audience: internal` in the PR body is the run's explicit choice.
+          audience="public"
+          printf '%s\n' "$PR_BODY" | grep -qiE '^\s*-?\s*audience:\s*internal' && audience="internal"
+          if printf '%s\n' "$PR_BODY" | grep -qiE '^\s*-?\s*announce:\s*none'; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+          { echo "slug=$slug"; echo "sha=$sha"; echo "url=$url"; echo "audience=$audience"; echo "summary<<EOF"; echo "$summary"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+
+      - name: report.sh announce
+        id: announce
+        if: steps.run.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Channel variables are the repo's own Actions secrets/variables, named by
+          # .icm/project.json → reporting.channels. Add lines here as the repo declares channels:
+          # SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          # SLACK_ANNOUNCE_CHANNEL_ID: ${{ vars.SLACK_ANNOUNCE_CHANNEL_ID }}
+          # RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          # REPORT_EMAIL_FROM: ${{ vars.REPORT_EMAIL_FROM }}
+          # REPORT_EMAIL_TO: ${{ vars.REPORT_EMAIL_TO }}
+        run: |
+          set -uo pipefail
+          out="$(.icm/scripts/report.sh announce "${{ steps.run.outputs.summary }}" \
+                  --slug "${{ steps.run.outputs.slug }}" --sha "${{ steps.run.outputs.sha }}" \
+                  ${{ steps.run.outputs.url && format('--url {0}', steps.run.outputs.url) || '' }} \
+                  --audience "${{ steps.run.outputs.audience }}")"
+          printf '%s\n' "$out"
+          # SKIPPED for every channel is a fault worth a red job — the merge is live and nobody was told.
+          case "$(printf '%s\n' "$out" | tail -n1)" in
+            "RESULT: SENT"*) exit 0 ;;
+            *) echo "::error::report.sh announced on no channel — see the SKIPPED lines above"; exit 1 ;;
+          esac
+
+      - name: report.sh alert (the announcement failed)
+        if: failure() && steps.announce.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .icm/scripts/report.sh alert "The release announcement for ${{ steps.run.outputs.slug }} failed — the merge is live and no channel took the message" \
+            --url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

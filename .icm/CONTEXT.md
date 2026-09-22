@@ -1,12 +1,11 @@
 # .icm — this repo's work layer
 
-- profile: intake
-
-*The map of this folder. The profile line above is read by the estate conformance
-tooling (`icm-check.sh`) — `intake` is the default; change it to `pipeline` (and re-run
-`icm-check.sh --fix` from the icm-board repo) to receive the run spine. Canonical
-contracts: `_system/contracts/TICKETS.md` and `_system/contracts/PIPELINE.md` in the
-icm-board estate; `intake/README.md` here is the self-contained micro-copy.*
+*The map of this folder. There is one pipeline for every adopted repo and nothing to
+declare here (D22); what varies is `complexity` in a repo's `.icm/project.json`. This
+repo holds no application code and carries no run spine of its own — its `.icm/` is the
+register and the backlog, held to the same baseline it enforces. Canonical contracts:
+`_system/contracts/TICKETS.md` and `_system/contracts/PIPELINE.md`; `intake/README.md`
+here is the self-contained micro-copy.*
 
 ## Layout
 
@@ -21,9 +20,10 @@ icm-board estate; `intake/README.md` here is the self-contained micro-copy.*
   docs/                 ← ad hoc reports, client words, runbooks
 ```
 
-With `- profile: pipeline`, this folder also carries `stages/`, `lanes/`, `runs/`,
-`_shared/` and `scripts/` — each seeded file documents itself, and
-`.claude/skills/pipeline/SKILL.md` routes between them.
+In an adopted repo this folder also carries `stages/`, `lanes/`, `runs/`, `_shared/`,
+`scripts/` and the `MANIFEST` — each seeded file documents itself, and
+`.claude/skills/pipeline/SKILL.md` routes between them. Not here: icm-board ships no
+product and runs no pipeline of its own.
 
 ## The rules that travel with this folder
 

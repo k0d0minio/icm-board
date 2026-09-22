@@ -31,7 +31,7 @@ created.
 - The script only creates missing files from the template; it never overwrites. Trust
   it — do not hand-create `.icm` or `.claude` files alongside it.
 - Every repo is checked (and, with `--fix`, seeded) against the one pipeline — there is
-  no profile to declare (D22); report pipeline gaps in their own group. The project-owned
+  nothing to declare (D22); report pipeline gaps in their own group. The project-owned
   files are then filled by `/setup` in the repo, never here.
 - Legacy flat `PREFIX-NNN` tickets are reported as *unmigrated*, never converted —
   migration is `/project`'s judgment work.

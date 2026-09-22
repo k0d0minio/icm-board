@@ -75,8 +75,10 @@ this ritual. Say so and move on.
 - *Bank what finished:* stubs whose work merged this session → `_done/`; epics that
   completed → archived whole.
 - *Cut what's left:* anything discovered, started, half-done or promised becomes a stub —
-  in the epic it belongs to, a new single-stub epic, or `triage/` with its lane. In
-  `intake`-profile repos give it a standalone `## Prompt`. **Never a loose `TODO.md`.**
+  in the epic it belongs to, a new single-stub epic, or `triage/` with its lane. In a
+  repo without the `/pipeline` router give it a standalone `## Prompt` — the board sends
+  the verb where the router exists and the body where it does not (D26). **Never a loose
+  `TODO.md`.**
   Cutting is part of stopping.
 - *Trim `today.md`:* remove entries that finished; what remains is tomorrow's honest
   starting point until the next plan replaces it.

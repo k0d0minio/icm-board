@@ -65,8 +65,8 @@ repo, no reporting decision), stop and say `/setup` comes first. Where the repo 
 carry the script yet — it predates the in-repo manifest — `_system/scripts/icm-check.sh
 --fix` then `icm-sync.sh --apply projects/<repo>` bring it (the formatter guard first:
 exclude the template-owned paths from the repo's formatter by hand before a template-owned
-file is committed — D17/D19; remi-ai #105), and `/setup` follows in the repo. There is no
-profile to declare, and this ritual writes none of the project-owned files.
+file is committed — D17/D19; remi-ai #105), and `/setup` follows in the repo. There is one
+pipeline and nothing to declare (D22); this ritual writes none of the project-owned files.
 
 **2. Scan — cheap, structural, no fan-out.** Enough to ask good questions: the stack,
 routes/entry points, ticket state (every epic's stubs, `_done/` and build order; the

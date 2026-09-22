@@ -1,3 +1,11 @@
+> Done in the 2026-09-22 rework (D24–D26), k0d0minio/icm-board#46 — Phase F commit on
+> `claude/rework-deal-workspace-2026-09-22`. Every file listed below was swept: `deliver/project`
+> § 1c and `deliver/conformance` (A, F), `start/06_repo` (removed — absorbed into `07_kickoff`, C),
+> `07_kickoff` + `kickoff-checklist.md` (C), `TICKETS.md` · `CLIENTS.md` · `_system/README.md` (B, C),
+> `AGENTS.md` + `.claude/commands/` (C), this repo's `.icm/CONTEXT.md` (F, the `- profile: intake` line
+> gone), `estate-conformance.sh`'s header (F); found by the same grep and swept too: `deliver/day`,
+> `.claude/agents/ticket-scout.md`, `pr-conventions/SKILL.md` (canonical + copy).
+
 # Stub: The contracts still describe two profiles — sweep the wording to D22
 
 - feature-slug: profile-wording-sweep

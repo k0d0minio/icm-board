@@ -13,7 +13,7 @@
 #   GAP   what --fix would seed — .icm/CONTEXT.md, intake/, intake/README.md, triage/,
 #         _done/, docs/, .claude/, .claude/settings.json, and the canonical Claude
 #         assets (hooks + skills from _system/template/claude/). These fail the run.
-#         (Pipeline-profile completeness is the local script's job — reading each
+#         (Pipeline completeness is the local script's job — reading each
 #         repo's CONTEXT.md content over the API would cost a request per repo.)
 #   warn  agent/human territory, never auto-fixed — no Layer-0 identity file, no
 #         project.md, a tracked settings.local.json, a loose TODO.md. Reported, never

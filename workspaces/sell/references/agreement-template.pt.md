@@ -52,10 +52,11 @@ próprias contas a qualquer momento e eu ajudo.»>
 
 <nenhum: «Uma landing page não tem custo recorrente nem linha de suporte; os defeitos
 dentro do âmbito são corrigidos em qualquer caso.»>
-<básico: «**<recurring> €/mês** para alojamento e suporte básico — quando a aplicação está
-em baixo ou um fluxo está partido, eu corrijo. Requer a página de contingência e o
-rastreio de erros, ambos incluídos na construção. Não inclui novas funcionalidades nem
-alterações de conteúdo. Qualquer um de nós pode terminá-lo com um mês de pré-aviso.»>
+<avença: «**<recurring> €/mês** a título de avença que cobre alojamento, suporte básico e
+manutenção — quando a aplicação está em baixo ou um fluxo está partido, eu corrijo. Requer
+a página de contingência e o rastreio de erros, ambos incluídos na construção. O seu âmbito
+escrito é <o que a avença cobre>; tudo o que fica fora é orçamentado à parte. Qualquer um
+de nós pode terminá-la com um mês de pré-aviso.»>
 
 ## 6. Revisões
 

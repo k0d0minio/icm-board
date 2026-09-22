@@ -19,9 +19,9 @@ across runs — the factory, not the product
 - **Placeholders are honest.** A section not yet filled says `— not yet established`,
   never a plausible invention. An agent that reads a gap raises it; it never fills it.
 - **Filled from the questionnaire.** [`../setup/questionnaire.md`](../setup/questionnaire.md)
-  is the intake for this folder — concrete examples, not descriptions. The open slots are
-  Q22–Q24 (the offer in Jamie's words, one real sentence per register, the Drive parent
-  folder and the house DOCX look).
+  is the intake for this folder — concrete examples, not descriptions. Q22–Q24 (the offer
+  in Jamie's words, one real sentence per register, the Drive parent folder and the house
+  DOCX look) were answered on 2026-09-22; the slots still open are marked in their files.
 - **Facts, not state.** What a retainer costs belongs here; what *this client's*
   retainer is belongs in their deal folder and Neon. A file here that names a live
   client is in the wrong layer.

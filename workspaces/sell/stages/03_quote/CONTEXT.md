@@ -25,7 +25,8 @@ One stage, one job: decide what is built, in which tiers, under which shape, for
      and contradictory, **the Foundation tier is the diagnostic**. Each number at or above
      the floor.
    - **Shape** — one-off · one-off + support · retainer · partnership; for a build with
-     state, **the support line** (monthly figure, or "none — landing page").
+     state, **the support line** ("in the retainer — €<n>/month", or "none — landing
+     page"; never a support figure of its own, `pricing.md` § Support).
    - **Terms deltas** — only where this deal departs from `terms.md`, each named.
    - **`[LAWYER]`** on anything that resembles drafting: equity, commission, revenue
      share, unusual liability. Carried verbatim into 04 and 05.
@@ -49,5 +50,6 @@ One stage, one job: decide what is built, in which tiers, under which shape, for
 
 - Every scope line traces to the look; nothing appears from nowhere.
 - Every tier number is at or above the floor and matches the card or names its deviation.
-- A build with state carries the fail-safe page and Sentry in scope, and a support line
-  (or "none" with the reason). No number in the quote is below the one in `private/`.
+- A build with state carries the fail-safe page and Sentry in scope, and names where
+  support lives (the retainer, or "none" with the reason). No number in the quote is
+  below the one in `private/`.

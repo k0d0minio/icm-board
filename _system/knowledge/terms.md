@@ -28,17 +28,22 @@ practice, not counsel, and the business operates from Portugal under EU rules.*
   received* (the onboarding checklist's green rows), never from the proposal.
 - **Support after handover** — **basic support** is defined: crash fixes on call — when
   the app is down or a flow is broken, Jamie fixes it; nothing else. It requires the
-  fail-safe *technical difficulties* page and Sentry in the build, and it is priced as the
-  recurring line of *one-off + support* ([pricing.md](pricing.md) § Support). **The
-  Jamie-hosted pattern is its home**: hosting and support ride together on his accounts.
-  **The client-owned pattern has no support line** — ongoing work there is a retainer, or
-  nothing. **Landing pages: no ongoing cost** and no support line at all. In-scope defects
-  are fixed regardless of tier, as before.
-- **Paper** — the agreement is a **DOCX signed through Google eSignature**. It is rendered
-  from the deal's `05-agreement.md` ([`render-deal.sh`](../scripts/render-deal.sh)), placed
-  in **Google Drive in a folder named after the client** (the parent folder *— to set*, Q24;
-  the Drive root until then), sent for signature by Jamie, and the signed copy stays in
-  that folder; `DEAL.md` logs the link and the date. "A reply saying *agreed*" remains
+  fail-safe *technical difficulties* page and Sentry in the build. **It is never a line of
+  its own** (Jamie, 2026-09-22): **landing pages carry no ongoing cost** and no support at
+  all; **anything larger runs on a retainer, and support and maintenance are folded into
+  the retainer's monthly figure** ([pricing.md](pricing.md) § Support). **The
+  Jamie-hosted pattern is its home**: hosting and support ride together on his accounts,
+  inside the retainer. **The client-owned pattern has no support** — ongoing work there is
+  a retainer, or nothing. In-scope defects are fixed regardless of tier, as before.
+- **Paper** — the agreement is a **DOCX signed through Google Docs eSignature** (confirmed
+  2026-09-22: the DOCX is opened in Drive as a Google Doc and the signature requested from
+  there; the signed PDF lands in the client's folder). It is rendered from the deal's
+  `05-agreement.md` ([`render-deal.sh`](../scripts/render-deal.sh)) with the house look
+  (`house.docx`, generated from the `jamienisbet` brand — paper and ink, Hanken Grotesk,
+  IBM Plex Mono; Q24), placed in **Google Drive in a folder named after the client** inside
+  the parent folder **`Clients`** ([My Drive › Clients](https://drive.google.com/drive/folders/1HQ9w35ENhIZHxNagw_2szaliuEEDQbOe), Q24), sent for
+  signature by Jamie, and the signed copy stays in that folder; `DEAL.md` logs the link
+  and the date. "A reply saying *agreed*" remains
   enough paper **for a free look and for a house-deal re-quote** — never for an agreement.
 - **Languages** — English by default; French or Portuguese where the client leads in it,
   recorded on `DEAL.md` (`- language:`) and carried into the proposal and the agreement

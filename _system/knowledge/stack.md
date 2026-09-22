@@ -54,7 +54,8 @@ reports `SKIP` with the install hint when it is absent:
 
 - **pandoc** — markdown → DOCX for proposals and agreements
   ([`render-deal.sh`](../scripts/render-deal.sh)); the house look comes from
-  `_system/knowledge/house.docx` when Jamie provides one (Q24), pandoc's default otherwise.
+  `_system/knowledge/house.docx` — generated 2026-09-22 from the `jamienisbet` brand (Q24);
+  pandoc's default if the file is ever absent.
 - **ffmpeg + whisper.cpp (`whisper-cli`)** — a client's voice note or screen recording →
   a transcript, locally, never uploaded (`process-raw.sh`'s audio and video kinds).
 

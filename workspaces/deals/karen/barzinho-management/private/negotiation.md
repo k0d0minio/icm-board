@@ -1,3 +1,5 @@
+> *Moved 2026-09-22 from `workspaces/deals/karen/04-counter-analysis.md` into this engagement folder (rework D24 — one folder per engagement) — renamed `private/negotiation.md`: a private analysis of the client's counter, never client-facing; content unchanged below this line.*
+
 > *Adopted 2026-08-26 from `barzinho/.icm/docs/karen-counter-analysis.md`; written 2026-07-08 (moved to `.icm/docs/` by the 2026-08-11 estate sweep).*
 > *Copied verbatim; the original stays in the barzinho repo as its own record.*
 

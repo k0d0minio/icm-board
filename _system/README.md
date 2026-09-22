@@ -32,7 +32,7 @@ process**; there is deliberately no second narrative describing them.
 
 | Command | Routes into | When |
 |---|---|---|
-| **`/client <name>`** | [`workspaces/sell/`](../workspaces/sell/CONTEXT.md) · [`workspaces/start/`](../workspaces/start/CONTEXT.md) | A lead, a quote, a proposal, an onboarding — any one relationship, any stage. Idempotent. |
+| **`/client <name>`** | [`workspaces/sell/`](../workspaces/sell/CONTEXT.md) · [`workspaces/start/`](../workspaces/start/CONTEXT.md) | A lead, a free look, a quote, a proposal, an agreement, an onboarding, a kickoff — any one relationship, any stage; the stage is read from the engagement folder. Idempotent. |
 | **`/project <repo>`** | [`workspaces/deliver/stages/project/`](../workspaces/deliver/stages/project/CONTEXT.md) | Adopting · before a sprint · whenever direction may have moved. Idempotent. |
 | **`/day [wrap]`** | [`workspaces/deliver/stages/day/`](../workspaces/deliver/stages/day/CONTEXT.md) | Evening: pick tomorrow's ≤10. Session end: bank what shipped, cut what's left. |
 | **`/icm-check`** | [`workspaces/deliver/stages/conformance/`](../workspaces/deliver/stages/conformance/CONTEXT.md) | Does every repo carry the baseline + canonical assets. |
@@ -45,7 +45,7 @@ knows about).
 
 | Doc | Owns |
 |---|---|
-| [contracts/WORKSPACES.md](contracts/WORKSPACES.md) | The workspace grammar — five layers, stage contracts, deal folders, the rules. |
+| [contracts/WORKSPACES.md](contracts/WORKSPACES.md) | The workspace grammar — five layers, stage contracts, the deal folder (one home per fact), the rules. |
 | [contracts/TICKETS.md](contracts/TICKETS.md) | The intake layer — epics, stubs, triage, positional status, what the dashboard parses. |
 | [contracts/PIPELINE.md](contracts/PIPELINE.md) | The per-repo pipeline — the run spine, the lanes, gates, ownership, the scripts contract, the agency layer (reporting, deploy, environment, usage, `/setup`). |
 | [contracts/PROJECT.md](contracts/PROJECT.md) | `.icm/project.md` — a project's intent, business logic, features, constraints, decisions. |
@@ -54,10 +54,10 @@ knows about).
 
 ## `knowledge/` — what the business knows
 
-[knowledge/README.md](knowledge/README.md): services · pricing · voice · terms · stack.
-Layer-3 for the sell and start workspaces; filled via
-[setup/questionnaire.md](setup/questionnaire.md) (ICM-009). Gaps are honest
-(`— not yet established`), never invented mid-deal.
+[knowledge/README.md](knowledge/README.md): positioning · services · pricing · voice ·
+terms · stack. Layer-3 for the sell and start workspaces, the portfolio and the referral
+site; filled via [setup/questionnaire.md](setup/questionnaire.md) (ICM-009; Q22–Q24 open).
+Gaps are honest (`— not yet established`), never invented mid-deal.
 
 ## `scripts/` — the executables
 
@@ -76,6 +76,8 @@ seeing icm-board).
 | [scripts/ticket-hygiene.sh](scripts/ticket-hygiene.sh) | Read-only drift report, plus contract lint over every ticket; `/day` applies the fixes with judgment. An empty `.icm/dormant` parks a repo ([TICKETS.md](contracts/TICKETS.md)). |
 | [scripts/pull-all.sh](scripts/pull-all.sh) | Pull every repo. |
 | [scripts/self-check.sh](scripts/self-check.sh) | Holds **this** repo to its own rules: links resolve, tickets meet the contract. |
+| [scripts/validate-deal.sh](scripts/validate-deal.sh) | Read-only: a deal engagement's quote, proposal and agreement still agree — scope bullets, numbers per tier, the agreed tier, `[LAWYER]` tags, the language, no `private/` reference from a client-facing file, no credential-shaped string anywhere in the client folder. `--all` walks every client; `DRIFT` is a report (an adopted engagement may carry it). |
+| [scripts/render-deal.sh](scripts/render-deal.sh) | A deal artefact, markdown → DOCX under the client's gitignored `out/` (pandoc, with `knowledge/house.docx` as the reference document when it exists). Never uploads, never commits; `SKIP` with the install hint when pandoc is absent. |
 | [scripts/vercel-env.sh](scripts/vercel-env.sh) | The estate's Vercel env plumbing, over [scripts/vercel-env-registry.json](scripts/vercel-env-registry.json) — which repo/app path is which Vercel project, on which of the three teams. All five flows: `link`; `init` seeds each app's committed `.env.example` from the names Vercel holds, never values, never overwriting a line; `push-notes` makes each key's note in git the variable's Vercel comment, comments and nothing else; `pull` writes each app's `.env.local` from Vercel's development environment with those same notes interleaved above the keys; `audit` is the drift report the three one-way flows imply, read-only in the strong sense (epic `vercel-env-system`). Since D23 the parser and the rules live once in the template's per-repo `.icm/scripts/env.sh`, driven by each repo's deploy block: `--via-repos` makes this script the estate loop over that, and `registry` regenerates the registry from the deploy blocks (printed; `--write` replaces the file). Local machine only, and per-team `VERCEL_TOKEN_*` env vars only. |
 
 `icm-check.sh` and `estate-conformance.sh` are a deliberate pair, not a duplication — one
@@ -125,7 +127,10 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
   `> Dropped:` line — nothing is deleted, no slug reused in its epic. Deals follow the
   same spirit: a lost deal keeps its folder and its log.
 - **No outbound action without Jamie.** Sessions draft; he sends, invoices, and flips
-  ladder rungs. Business state lives in Neon/Stripe, never mirrored into git.
+  ladder rungs. Business state lives in Neon/Stripe, never mirrored into git; the deal
+  documents live in `workspaces/deals/` and nothing syncs between the two (one home per
+  fact, D24). The one write outside git a deal session may make is a rendered DOCX into
+  Jamie's own Google Drive (D25) — his storage, not a send.
 - **CI is the source of truth.** The agent never runs `build`/`lint`/`typecheck`/`test`
   locally; it pushes and reads the checks.
 - **PR events are not a verdict.** No session subscribes to a PR — one push is a burst of

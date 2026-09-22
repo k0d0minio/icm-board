@@ -1,20 +1,17 @@
-# Jerome — deal (Le Pavillon Vert)
+# Jerome (Le Pavillon Vert) — client
 
-| | |
-|---|---|
-| Ladder | lost |
-| Stage | — closed at `04_proposal` |
-| Adopted | 2026-08-26, at 04_proposal |
-| Shape | fixed-price (landing page, pitched as the foundation for a wider platform) |
-| Value | — see `proposal.pdf`; never entered in the dashboard |
-| Source | pre-system — not recorded |
-| Company | Le Pavillon Vert — brasserie and events venue, Château-ferme de Falnuée, Gembloux, Belgium |
-| Repo | k0d0minio/le-pavillon-vert (not connected to the row) |
+- client: jerome
+- company: Le Pavillon Vert — brasserie and events venue, Gembloux
+- contacts: Jerome
+- repo: none yet
+- language: fr
+- engagement: none
+- source: adopted
 
-> **No Neon row existed at adoption**, and the repo records no contact name — the folder
-> was first created as `le-pavillon-vert/`. Jamie created the row on 2026-08-26 and set it
-> `lost`, which is where the name **Jerome** came from; the folder was renamed to match
-> the `01_intake` rule that a slug is the person's name.
+## Engagements
+| slug | shape | started | ended | outcome |
+|---|---|---|---|---|
+| pavillon-vert-landing | one-off (landing page, pitched as the foundation for a wider platform) | 2026-07-14 | 2026-08-26 | lost — quiet after the proposal; the artefact (`proposal.pdf`) is referenced in the repo, not copied |
 
 ## Log
 - 2026-07-14 — repo opened.
@@ -22,6 +19,16 @@
 - 2026-07-15 → 2026-08-26 — **quiet.** Later commits are estate housekeeping only.
 - 2026-08-26 — adopted by the ICM-011 sweep and marked **lost** (Jamie's decision); Neon
   row created the same day.
+- 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
+
+## Notes (adopted)
+
+*The sections below are the adopted `DEAL.md`'s (before the 2026-09-22 re-cut), kept verbatim; the Ladder, Stage and Value rows of its table were retired — the rung is Neon's, the value lives in the quote.*
+
+> **No Neon row existed at adoption**, and the repo records no contact name — the folder
+> was first created as `le-pavillon-vert/`. Jamie created the row on 2026-08-26 and set it
+> `lost`, which is where the name **Jerome** came from; the folder was renamed to match
+> the `01_intake` rule that a slug is the person's name.
 
 ## The artifact
 

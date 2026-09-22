@@ -17,3 +17,20 @@
 
 # Claude Code accretion layer stays per-machine (settings.json is clean policy).
 .claude/settings.local.json
+
+# Deal folders: rendered documents are build artefacts, and client media is never committed.
+# Transcripts (.txt, .md) under raw/ stay tracked — the words matter, the bytes do not.
+workspaces/deals/**/out/
+workspaces/deals/**/raw/*.mp4
+workspaces/deals/**/raw/*.mov
+workspaces/deals/**/raw/*.m4a
+workspaces/deals/**/raw/*.mp3
+workspaces/deals/**/raw/*.wav
+workspaces/deals/**/raw/*.webm
+workspaces/deals/**/raw/*.mkv
+workspaces/deals/**/raw/*.aac
+workspaces/deals/**/raw/*.ogg
+workspaces/deals/**/raw/*.opus
+workspaces/deals/**/raw/*.amr
+workspaces/deals/**/raw/*.flac
+workspaces/deals/**/raw/*.avi

@@ -1,15 +1,17 @@
-# Alex Valexo — deal (Alfredo)
+# Alex Valexo — client
 
-| | |
-|---|---|
-| Ladder | lost |
-| Stage | — closed at `01_intake` |
-| Adopted | 2026-08-26, at 01_intake |
-| Shape | — never priced |
-| Value | — |
-| Source | pre-system — not recorded |
-| Company | Alfredo |
-| Repo | — none connected |
+- client: alex-valexo
+- company: Alfredo
+- contacts: Alex (owner)
+- repo: none yet
+- language: en
+- engagement: none
+- source: adopted
+
+## Engagements
+| slug | shape | started | ended | outcome |
+|---|---|---|---|---|
+| — | — (never priced) | — | 2026-08-26 | lost — a prior contract with another developer; nothing rejected on the work itself |
 
 ## Log
 - 2026-08-18 — last touched while still at `talking`.
@@ -17,6 +19,11 @@
   **lost** by Jamie the same day, before the stage ever ran. The folder is kept: nothing
   is deleted, and if Alex comes back this is the folder that reopens.
 - 2026-08-27 — reason for the loss recorded: a prior contract with another developer.
+- 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
+
+## Notes (adopted)
+
+*The sections below are the adopted `DEAL.md`'s (before the 2026-09-22 re-cut), kept verbatim; the Ladder, Stage and Value rows of its table were retired — the rung is Neon's, the value lives in the quote.*
 
 ## Why it ended
 

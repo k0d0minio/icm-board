@@ -1,3 +1,5 @@
+> *Moved 2026-09-22 from `workspaces/deals/diogo-rita/open-questions.md` into this engagement folder (rework D24 — one folder per engagement); content unchanged below this line.*
+
 # Open questions for Diogo & Rita
 
 *Moved from the client repo (`.icm/docs/open-questions-2026-08-24.md`) on 2026-08-27 —

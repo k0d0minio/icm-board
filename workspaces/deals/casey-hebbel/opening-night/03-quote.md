@@ -1,3 +1,5 @@
+> *Moved 2026-09-22 from `workspaces/deals/casey-hebbel/03-quote.md` into this engagement folder (rework D24 — one folder per engagement); content unchanged below this line.*
+
 # Casey Hebbel — quote (scope · shape · number · deviations)
 
 *Summary of record. The canonical document is

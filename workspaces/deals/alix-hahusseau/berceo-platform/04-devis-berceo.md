@@ -1,3 +1,5 @@
+> *Moved 2026-09-22 from `workspaces/deals/alix-hahusseau/04-devis-berceo.md` into this engagement folder (rework D24 — one folder per engagement); content unchanged below this line.*
+
 # Berceo — devis V1
 
 **Jamie Nisbet** — Ingénieur logiciel & consultant IA, Mafra, Portugal

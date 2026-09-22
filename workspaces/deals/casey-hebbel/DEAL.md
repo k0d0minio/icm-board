@@ -1,15 +1,17 @@
-# Casey Hebbel — deal
+# Casey Hebbel — client
 
-| | |
-|---|---|
-| Ladder | talking |
-| Stage | 04_proposal — quote delivered, awaiting her answer |
-| Adopted | 2026-08-26, at 03_quote |
-| Shape | fixed-price, two packages |
-| Value | €1,200 (Package A) or €2,400 (Package B) — her choice pending; Jamie expects A |
-| Source | pre-system — met in person ("we chatted about most of it in person") |
-| Company | — no business name yet; choosing one is itself a quote deliverable |
-| Repo | k0d0minio/casey-hebbel |
+- client: casey-hebbel
+- company: none yet — choosing the business name is a quote deliverable
+- contacts: Casey (coach, owner)
+- repo: k0d0minio/casey-hebbel
+- language: en
+- engagement: opening-night
+- source: adopted
+
+## Engagements
+| slug | shape | started | ended | outcome |
+|---|---|---|---|---|
+| opening-night | one-off, two packages (A €1,200 · B €2,400) | 2026-08-13 |  | quote sent (`04-proposal.md`); awaiting her package choice, name, form answers and images |
 
 ## Log
 - 2026-08-13 — "Before I quote you" questionnaire sent (20 questions).
@@ -26,6 +28,11 @@
   pass: stage corrected to `04_proposal`, "Broadway" struck from the Company row (it
   entered via the adoption sweep; she has never given a business name), Value corrected
   to reflect both packages.
+- 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
+
+## Notes (adopted)
+
+*The sections below are the adopted `DEAL.md`'s (before the 2026-09-22 re-cut), kept verbatim; the Ladder, Stage and Value rows of its table were retired — the rung is Neon's, the value lives in the quote.*
 
 ## Open
 - **Everything waits on her answer** — package choice (A or B), the business name, the

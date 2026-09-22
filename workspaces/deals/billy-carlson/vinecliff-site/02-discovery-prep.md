@@ -1,3 +1,5 @@
+> *Moved 2026-09-22 from `workspaces/deals/billy-carlson/02-discovery-prep.md` into this engagement folder (rework D24 — one folder per engagement); content unchanged below this line.*
+
 # Vinecliff — the sit-down with Billy (discovery prep)
 
 *The question set for one working session with Billy Carlson. The platform at

@@ -1,3 +1,5 @@
+> *Moved 2026-09-22 from `workspaces/deals/casey-hebbel/04-proposal.md` into this engagement folder (rework D24 — one folder per engagement); content unchanged below this line.*
+
 # Casey Hebbel — what she received
 
 - **What**: the styled quote page — two packages, terms, timeline, and the

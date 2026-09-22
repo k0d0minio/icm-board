@@ -30,6 +30,18 @@ intake, while there is still time to say no:
 - **Vague unlimited vision** — "we'll know it when we see it"; no stable done-looks-like
   sentence survives discovery.
 
+## The three registers
+
+[positioning.md](../../../_system/knowledge/positioning.md) § Three registers names them
+and the words each hears; qualification reads a lead into one at intake:
+
+- **Local operating business** — a café, a venue, a practice, a shop; one owner; a number
+  on the page; entered by a free look.
+- **SME with a process worth automating** — a company doing a real process by hand; a
+  range on the call; entered by a free look, then a diagnostic.
+- **Enterprise** — a team inside a larger organisation; never a number on the page;
+  entered by a diagnostic or a workshop, by introduction.
+
 ## Who we want more of
 
 **Both lines, weighted to AI.** Local operating businesses (Mafra/Lisboa cafés,

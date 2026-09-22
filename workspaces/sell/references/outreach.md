@@ -6,6 +6,10 @@ action from a session, ever. Voice per
 [`voice.md`](../../../_system/knowledge/voice.md); shapes seeded from
 [`_system/setup/questionnaire.md`](../../../_system/setup/questionnaire.md) § Outreach (ICM-009).*
 
+**Which register, in which words:** [positioning.md](../../../_system/knowledge/positioning.md)
+§ Three registers — the vocabulary changes per register, the ask does not: **a free look**,
+after a first call. That is the referable, sendable thing; a price never is.
+
 ## The posture
 
 - **Specific beats scaled.** One message that proves we looked at *their* thing beats

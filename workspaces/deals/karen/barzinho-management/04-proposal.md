@@ -1,3 +1,5 @@
+> *Moved 2026-09-22 from `workspaces/deals/karen/04-proposal.md` into this engagement folder (rework D24 — one folder per engagement); content unchanged below this line.*
+
 > *Adopted 2026-08-26 from `barzinho/proposal-for-karen.md` (workspace root); written 2026-06-30, revised 2026-07-08.*
 > *Copied verbatim; the original stays in the barzinho repo as its own record.*
 

@@ -1,15 +1,17 @@
-# Rui Matias — deal
+# Rui Matias (Kau) — client
 
-| | |
-|---|---|
-| Ladder | talking |
-| Stage | 01_intake |
-| Adopted | 2026-08-26, at 01_intake |
-| Shape | — not yet priced |
-| Value | — |
-| Source | pre-system — not recorded |
-| Company | Kau |
-| Repo | k0d0minio/kau-american-bbq |
+- client: rui-matias
+- company: Kau
+- contacts: Rui
+- repo: k0d0minio/kau-american-bbq
+- language: en
+- engagement: none
+- source: adopted
+
+## Engagements
+| slug | shape | started | ended | outcome |
+|---|---|---|---|---|
+| — | — (not yet priced) | — |  | no engagement open — the next reply is `01_intake`'s job |
 
 ## Log
 - 2026-08-12 — last touched, per the dashboard at adoption.
@@ -17,3 +19,8 @@
   row was already at `talking`; the conversation itself predates this workspace, so no
   `01-intake.md` is reconstructed. The stage runs forward from here — qualification
   verdict and the next reply are its job.
+- 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
+
+## Notes (adopted)
+
+*The sections below are the adopted `DEAL.md`'s (before the 2026-09-22 re-cut), kept verbatim; the Ladder, Stage and Value rows of its table were retired — the rung is Neon's, the value lives in the quote.*

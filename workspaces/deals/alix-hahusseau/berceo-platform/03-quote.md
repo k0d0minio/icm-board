@@ -1,3 +1,5 @@
+> *Moved 2026-09-22 from `workspaces/deals/alix-hahusseau/03-quote.md` into this engagement folder (rework D24 — one folder per engagement); relative links re-pointed one level deeper, content otherwise unchanged below this line.*
+
 # Berceo — quote (sell/03_quote)
 
 *Stage artifact. Scope + shape + number, decided before any prose. The client-facing
@@ -7,7 +9,7 @@ document is [`04-devis-berceo.md`](04-devis-berceo.md) and never renegotiates th
 |---|---|
 | Client | Berceo — SRL, BCE 0801 875 541 |
 | Contacts | Alix Hahusseau (+32 491 12 25 44) & Jordane — decisions taken jointly, by email |
-| Service | Web application ([services.md](../../../_system/knowledge/services.md)) |
+| Service | Web application ([services.md](../../../../_system/knowledge/services.md)) |
 | Shape | Fixed-price |
 | **Number** | **€7.500** |
 | Commitment | 5 h/week guaranteed, 16 weeks |
@@ -178,7 +180,7 @@ Named so it is never argued later. Their own deferrals first:
 reduced by €2.100**.
 
 **Second deviation, named — an hourly rate is quoted at the client.**
-[pricing.md](../../../_system/knowledge/pricing.md) states plainly that no day or hourly
+[pricing.md](../../../../_system/knowledge/pricing.md) states plainly that no day or hourly
 rate is offered and that time-and-materials is deliberately not sold. This quote breaks
 that: it names **€120/h**, multiplies it by the 80 committed hours to reach €9.600, and
 shows €7.500 against it. Jamie's call, 2026-08-27, and it is a real trade — the anchor
@@ -190,7 +192,7 @@ build from personal savings, because half the fee already rides on their launch,
 because the relationship is meant to run past V1. Future quotes should read this as
 precedent for a founder-funded first build, not as a standing rate.
 
-**Deviation, named.** [pricing.md](../../../_system/knowledge/pricing.md) does not band
+**Deviation, named.** [pricing.md](../../../../_system/knowledge/pricing.md) does not band
 web applications — the method is scope, then precedent from `workspaces/deals/`. There is
 no comparable precedent: the largest priced deal in the folder is diogo-rita at €2.000
 plus commission, then casey-hebbel at €1.200/€2.400. **Berceo is the largest deal the
@@ -214,7 +216,7 @@ does not need.
 
 ## Terms deltas
 
-Against [terms.md](../../../_system/knowledge/terms.md):
+Against [terms.md](../../../../_system/knowledge/terms.md):
 
 | Term | Standard | This deal |
 |---|---|---|

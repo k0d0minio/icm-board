@@ -1,7 +1,8 @@
 # Agency DevOps Brainstorm — what the pipeline template still owes an agency
 
-*Research and interview pass, 2026-09-22, on branch `claude/icm-pipeline-devops-research-e0196c`.
-Scope: `_system/template/icm-pipeline/`, `_system/scripts/`, `projects/sustentus/.icm/` plus its
+*Research and interview pass, 2026-09-22, on branch `claude/icm-pipeline-devops-research-e0196c`;
+revised the same day on Jamie's four flags (§3, last four rows). Scope:
+`_system/template/icm-pipeline/`, `_system/scripts/`, `projects/sustentus/.icm/` plus its
 `.github/workflows/` (the reference implementation), and — for the usage-source question — the
 two harnesses as installed on this machine (Claude Code 2.1.271, OpenCode 1.18.30). No downstream
 repo was touched. Every finding names the file or command it was read from.*
@@ -15,29 +16,33 @@ of done, §9 the constraints, §10 the points research settled.*
 The pipeline is complete for the thing it was built for: one operator, one repo, Vercel, Slack.
 What it does not yet carry is the agency layer around that — the same machine running in twenty
 client repos, each with a different way of reporting, none of them with a `#alerts` channel, all
-of them needing a cost number per client and a way back when a release goes wrong. Eight decisions
-were settled in session (§3); one correction arrived mid-session and reshapes the reporting side:
-**only sustentus has an alert channel, so reporting must be abstracted into message kinds that a
-repo maps to whatever it has — including nothing.**
+of them needing a cost number per client, an environment that is declared once and checked
+everywhere, a way back when a release goes wrong, and one command that sets a repo up or keeps it
+honest without anyone remembering how. Eight decisions were settled in session (§3); one
+correction and four review flags reshaped the design: **reporting is abstracted into message kinds
+a repo maps to whatever it has, with a GitHub Release on by default; nothing a repo runs ever calls
+icm-board; `/setup` replaces `/project`'s setup step; and the estate env manager becomes a
+per-repo script driven by the repo's own deploy block.**
 
 The shape of the answer is the shape the template already uses: a few more `- key:` lines in the
 plain-text surfaces a run already carries, a few more one-job scripts that end in one `RESULT:`
-line, two new objects in the project-owned `project.json`, one new lane, and one global OpenCode
-plugin on Jamie's machine. Nothing starts itself, nothing crosses a gate, nothing reverts
-production without a human.
+line, three new objects in the project-owned `project.json`, one new lane, one new command, and
+one global OpenCode plugin on Jamie's machine. Nothing starts itself, nothing crosses a gate,
+nothing reverts production without a human, and no value of any secret ever appears in a
+command line, a transcript, or git.
 
 ## 1. What was examined
 
 | Layer | Files and commands |
 |---|---|
 | Template contracts | `stages/0{1..4}_*/CONTEXT.md`, `lanes/{bug,tweak,chore,knowledge}/CONTEXT.md`, `intake/CONTEXT.md`, `_shared/{ci,github,stage-preamble,scope-template,project-rules,conventions,knowledge-map}.md`, `runs/README.md`, `raw/README.md`, `MANIFEST`, `project.json` |
-| Template scripts | all 22 under `scripts/` and `scripts/lib/` |
-| Estate scripts | `icm-sync.sh`, `icm-check.sh` (via MANIFEST), `vercel-env.sh` + `vercel-env-registry.json`, `_system/template/claude/hooks/vercel-env-hydrate.sh`, `_system/template/root/opencode.jsonc` |
+| Template scripts and assets | all 22 under `scripts/` and `scripts/lib/`; `_system/template/claude/` (hooks, `ticket-craft`, `pr-conventions`), `_system/template/claude-pipeline/skills/pipeline/SKILL.md` (the router), `_system/template/root/opencode.jsonc` |
+| Estate scripts | `icm-sync.sh`, `icm-check.sh` (`CANONICAL`, `CANONICAL_ROOT`, the MANIFEST walk), `vercel-env.sh` (`link · init · push-notes · pull · audit`) + `vercel-env-registry.json`, `_system/template/claude/hooks/vercel-env-hydrate.sh` |
 | Sustentus | `.icm/project.json`, `.icm/CONTEXT.md`, `_shared/project-rules.md`, `scripts/notify.sh`, `docs/token-metrics.md`, the archived `deployment-economics` epic, `.github/workflows/{release,preview-smoke,db-migrate,quality,daily-digest}.yaml`, `.github/scripts/state-of-play.mjs`, skills `production-readiness`, `changelog-entry`, `browser-smoke`, `notification` |
-| Business layer | `_system/contracts/{PIPELINE,CLIENTS,WORKSPACES}.md`, `_system/knowledge/*`, `workspaces/start/**`, `workspaces/deals/*/DEAL.md`, `.icm/project.md` D1–D22, `.icm/docs/2026-09-02-opencode-parity-report.md`, `intake/opencode-executor/` |
+| Business layer | `_system/contracts/{PIPELINE,CLIENTS,WORKSPACES}.md`, `_system/knowledge/*`, `workspaces/start/**`, `workspaces/deliver/stages/{project,conformance}/CONTEXT.md`, `workspaces/deals/*/DEAL.md`, `.icm/project.md` D1–D22, `.icm/docs/2026-09-02-opencode-parity-report.md`, `intake/opencode-executor/` |
 | Claude Code (this session) | `env` inside the Bash tool; `~/.claude/projects/<cwd-slug>/<session>.jsonl` and `<session>/subagents/`; docs `code.claude.com/docs/en/hooks` |
 | OpenCode (this machine) | `opencode --help`, `export`, `stats`, `session list --format json`; read-only `sqlite3` over `~/.local/share/opencode/opencode.db`; `strings` on the binary; `~/.config/opencode/plugins/*.js`; `@opencode-ai/plugin/dist/index.d.ts` (1.18.25); docs `opencode.ai/docs/{plugins,server,sdk,cli}` |
-| Vercel | `search_vercel_documentation`: `/v6/deployments` (query `sha`, `target`, `state`), `/v13/deployments/{id}`, `POST /v1/projects/{id}/rollback/{dpl}`, `POST /v10/projects/{id}/promote/{dpl}` |
+| Vercel | `search_vercel_documentation`: `/v6/deployments` (query `sha`, `target`, `state`), `/v13/deployments/{id}`, `POST /v1/projects/{id}/rollback/{dpl}`, `POST /v10/projects/{id}/promote/{dpl}`; `vercel env add [name] [environment] < [file]` (value on stdin), `--sensitive`, `vercel env ls`, `vercel env pull --environment` |
 
 ## 2. How the pipeline works today — the surfaces and the seams
 
@@ -51,6 +56,7 @@ production without a human.
 | `03_build/output/notes.md` | Build; Release **appends** `## Release` | Release, the labels job, `release.yaml`'s completeness check | `- key:` lines + sections |
 | `run.md` | Scope; `new-run.sh` **appends** `branch:` + `pr:` | `resolve-run.sh`, `ci-status.sh`, `close-out.sh` | pointer index of `- key:` lines |
 | the intake stub | Scope's cut | Define, `select-model.sh`, `validate-intake.sh` | `- key:` header + four sections |
+| `.env.example` | humans; `vercel-env.sh init` seeds keys | `vercel-env.sh` (notes → Vercel comments; notes → `.env.local`) | keys with `#` notes above them and an optional `[targets]` suffix — values never |
 | the changelog page (sustentus) | Release / lanes | `release.yaml`, the help-centre index | one MDX file = changelog + ship note + Slack post |
 
 A new fact about a run is a new `- key:` line or a new run-scoped file; a new check is a script
@@ -68,17 +74,21 @@ Vercel dependency is implicit: a skip is recognised by the status *description*,
 
 **The announce and close-out seam.** Release step 9 hands a one-line summary to `notify.sh` and
 otherwise leaves announcing to "a CI workflow the repo owns". `close-out.sh` rides in the PR.
-**The template ships no workflow at all**: the labels job, the release workflow, the smoke walk,
-the migrations and the digest are all sustentus's own (`contracts/PIPELINE.md` → `pipeline-full`:
-"not templated — sustentus is its only instance"). The MANIFEST is rooted at `.icm/`, so it
-*cannot* seed `.github/`.
+**The template ships no workflow at all**; the MANIFEST is rooted at `.icm/`, so it *cannot* seed
+`.github/`, and the MANIFEST itself "stays in the template", so a repo cannot self-check its own
+completeness offline.
+
+**The setup seam.** A repo is set up from icm-board: `createClientRepo` scaffolds the baseline,
+`icm-check.sh --fix` seeds, `icm-sync.sh --apply` syncs, and `/project` § 1c (four numbered steps
+plus questions folded into the intent rounds) fills the project-owned files. All of it runs from
+`~/Apps` on Jamie's machine and needs icm-board in view. The env manager is the same shape:
+`vercel-env.sh` walks the registry from icm-board; only the reduced cloud hook lives in a repo.
 
 **What sustentus adds on top:** `release.yaml` (announce from the changelog page to
 `#product-update`, verify the archive landed, faults to `#alerts`); `preview-smoke.yaml`
-(six-persona walk on the `status` event, writes the `Preview smoke` check on the PR head);
-`db-migrate.yaml` (forward-only, preview on PR, production on `main` behind an environment gate);
-`quality.yaml` (tiered, draft-aware); `daily-digest.yaml` + `state-of-play.mjs` (delivery
-economics — Actions billing, runs, pushes, Vercel; infra proxies only).
+(six-persona walk on the `status` event); `db-migrate.yaml` (forward-only, preview on PR,
+production on `main` behind an environment gate); `quality.yaml` (tiered, draft-aware);
+`daily-digest.yaml` + `state-of-play.mjs` (delivery economics — infra proxies only).
 
 ## 3. What was settled in session
 
@@ -86,14 +96,18 @@ economics — Actions billing, runs, pushes, Vercel; infra proxies only).
 |---|---|---|
 | 1 | Client sign-off | **The operator signs off on the client's behalf.** No client-facing gate, no new artifact. |
 | 2 | Deploy targets | **Vercel only** — made explicit by a `deploy` object in `project.json`. |
-| 3 | Cost tracking | **Per stage, on the run, plus a per-client roll-up.** Tokens first, list-price USD second; margin, never an invoice line (the rate card has no hourly rate). |
+| 3 | Cost tracking | **Per stage, on the run, plus a per-client roll-up.** Tokens first, list-price USD second; margin, never an invoice line. |
 | 4 | Rollback | **A `hotfix` lane plus a `rollback.sh` that prepares the recovery and stops.** A human merges or clicks. |
-| 5 | Channels | **Slack via CI on merge** (reference shape), **client email via Resend**, **a GitHub Release per merge.** Not Discord, not Linear/Jira. |
+| 5 | Channels | **A GitHub Release per merge is on by default in every repo**; Slack (via CI on merge, the reference shape) and client email via Resend are added per repo by editing the reporting block. Not Discord, not Linear/Jira. |
 | 6 | Health check | **Release step 9 reads production once** via the Vercel API and records READY/ERROR in the Release record. No standing workflow. |
-| 7 | Roll-up home | **An icm-board script writes `workspaces/deals/<slug>/economics.md`** — read-only, human-invoked, no new store. |
+| 7 | Roll-up home | **An icm-board script writes `workspaces/deals/<slug>/economics.md`** — read-only, human-invoked, no new store. A repo can also print its own numbers without icm-board. |
 | 8 | Hotfix entry | **Always human-invoked.** No alert-carried command, no auto-parked stub. |
 | — | Correction | **There is no alert channel across projects; only sustentus has one.** Reporting is abstracted so a repo can plug in several forms of reporting — or none. |
 | — | Delivery | **No stubs.** This document is the brief for one session that does all of it. |
+| — | Flag 1 | **Nothing a repo runs may depend on seeing icm-board.** Every script, hook and default below works from the repo's own files and the repo's own credentials; icm-board is involved only when it seeds or syncs, and only from Jamie's machine. |
+| — | Flag 2 | **GitHub Release is the seeded default announce channel.** It needs no secret beyond the GitHub route every repo already has. |
+| — | Flag 3 | **`/setup` replaces `/project` § 1c** — one idempotent house-cleaning command, seeded into every repo, that sets a bare repo up or maintains an existing one from the pipeline's point of view. `/project` keeps intent, analysis and tickets. |
+| — | Flag 4 | **The estate env manager is baked into the pipeline** as a per-repo `env.sh` driven by the deploy block: audit across every surface, document keys in `.env.example`, and create variables through the `vercel` and `gh` CLIs with the value taken from stdin and never from an argument. |
 
 Decisions 6 and 8 together mean the pipeline never *watches* production: it looks once at the end
 of Release, writes what it saw, and the human decides. That removes the alert channel from the
@@ -101,34 +115,45 @@ health-check path entirely.
 
 ## 4. Gaps, by domain
 
-### 4.0 Reporting is not abstracted (the correction)
+### 4.0 Reporting is not abstracted (the correction), and it must run in the repo (flag 1)
 
 **Evidence.** `_shared/project-rules.md` (stub) has one section, *Announcing*, with two slots:
 `notify.sh` and a changelog. `notify.sh` takes one argument and knows one kind of message. The
-contracts say "the project's alert channel (→ Announcing), where it has one" (`04_release` step 9,
-`lanes/bug` step 5, `github.md` regime 3, `close-out.sh` header) — hedged in wording, but there is
-no place a repo without a channel can say so and no path by which an alert reaches anyone in such
-a repo. In sustentus both channels are hard-wired as IDs in `release.yaml`
-(`PRODUCT_UPDATE_CHANNEL_ID`, `ALERTS_CHANNEL_ID`) and `notify.sh` is deliberately inert.
+contracts say "the project's alert channel (→ Announcing), where it has one" — hedged in wording,
+but there is no place a repo without a channel can say so and no path by which an alert reaches
+anyone in such a repo. In sustentus both channels are hard-wired as IDs in `release.yaml` and
+`notify.sh` is deliberately inert.
 
-**Recommendation — one project-owned hook, message kinds, channels as configuration.**
+**Recommendation — one project-owned hook, message kinds, channels as configuration, everything
+inside the repo.**
 
-- `scripts/report.sh <kind> "<summary>" [--url <link>] [--body <file>]` (P, seeded once) replaces
-  `notify.sh`. Kinds: `announce | alert | economics`. It reads `project.json → reporting` (§6)
-  mapping each kind to a list of channels, and each channel to the *names* of the environment
-  variables that carry its secrets. Channels shipped in the stub, all implemented, none configured:
-  `slack` (bot token + channel id, or an incoming webhook), `email` (Resend), `github-release`
-  (via `lib/gh.sh`). Exit 0 always; last line `RESULT: SENT <channels> | SKIPPED (no channel for
-  <kind>)`. A configured channel whose variable is absent prints `SKIPPED <channel>: <VAR> unset`
-  (the remi-ai precedent) so a cloud session without the secret loses nothing.
+- `scripts/report.sh <kind> "<summary>" [--url <link>] [--body <file>] [--dry-run]` (P, seeded
+  once) replaces `notify.sh`. Kinds: `announce | alert | economics`. It reads `project.json →
+  reporting` (§6) mapping each kind to a list of channels, and each channel to the *names* of the
+  environment variables that carry its secrets. Channels shipped in the stub, all implemented:
+  `github-release` (via `lib/gh.sh`, **on by default for `announce`**), `slack` (bot token +
+  channel id, or an incoming webhook), `email` (Resend). Exit 0 always; last line
+  `RESULT: SENT <channels> | SKIPPED (no channel for <kind>)`. A configured channel whose variable
+  is absent prints `SKIPPED <channel>: <VAR> unset` (the remi-ai precedent). `--dry-run` prints
+  every payload and sends nothing.
+- **Runtime dependencies: none outside the repo.** `report.sh` reads `.icm/project.json`, sources
+  `.icm/scripts/lib/gh.sh`, and uses the repo's own `GH_TOKEN`/`gh` login (a fine-grained token
+  scoped to that repo is enough for a Release) and whatever channel variables the repo declares.
+  It never reads the registry, the deal folder, or anything under `~/Apps`. The same holds for
+  every other script in this brief (§4.9).
 - **The zero-config alert is a red job.** Where `alert` maps to no channel, the CI workflow that
   found the fault fails, and GitHub's own notification to the repository owner is the alert.
   Vercel's own deployment-failed email is the second free channel. Both are written into the
   `project-rules.md` stub so "none" is a recorded decision, not a hole.
+- **One caller per announce.** `reporting.announce_from` is `session` (default: Release step 9
+  calls `report.sh announce` after the merge, so a repo with no workflow still announces) or `ci`
+  (the reference release workflow calls it; step 9 records `announce: deferred to CI` and does not
+  call). `github-release` is idempotent regardless — it checks the tag first.
 - Every template-owned caller — Release step 9, the lanes' step 5, the reference release workflow
   (§4.7) — calls `report.sh` and never a channel. Sustentus's `release.yaml` becomes
-  `report.sh announce` + `report.sh alert` with the channel IDs moved into `project.json`.
-  `notify.sh` leaves the MANIFEST (reported for `git rm`, never deleted by a script).
+  `report.sh announce` + `report.sh alert` with the channel IDs moved into `project.json` and
+  `announce_from: ci`. `notify.sh` leaves the MANIFEST (reported for `git rm`, never deleted by a
+  script).
 
 ### 4.1 Client review and sign-off — decided: no change
 
@@ -147,18 +172,20 @@ records `author/source:`, the `D-n` table is the audit trail. Nothing records th
 `_system/scripts/vercel-env.sh` (estate-local, three teams, per-team token names in
 `vercel-env-registry.json`), and the cloud hook `vercel-env-hydrate.sh` (plain `VERCEL_TOKEN`,
 resolves the project by git remote). The repo → Vercel project → team mapping lives only in
-icm-board's registry — invisible to a cloud session, which is the deciding fact in §10.
+icm-board's registry — invisible to a cloud session and to any repo, which is the deciding fact
+in §10 and the reason the deploy block carries flag 4 as well.
 
 **Recommendation.**
 - `project.json → deploy` (P; §6): platform, team slug, the token's *variable name*, and one entry
   per Vercel project with its name, `path`, status context, `product | quiet` class and production
-  URL. `/project` § 1c fills it at onboarding from the same API lookup the hydrate hook makes
+  URL. `/setup` fills it from the same API lookup the hydrate hook makes
   (`GET /v9/projects?repoUrl=…`), confirmed by Jamie.
 - `scripts/lib/vercel.sh` (T, new) — the one Vercel transport, the way `lib/gh.sh` is the GitHub
-  one: curl + the token named by `deploy.token_env`, falling back to plain `VERCEL_TOKEN` in a
-  cloud session exactly as the hydrate hook does; `vercel_get`, `vercel_deployments <project>
-  [--target production] [--sha <sha>]` (`GET /v6/deployments`), `vercel_deployment <id>`
-  (`GET /v13/deployments/{id}`), and `--check`. No write verb lives here.
+  one: curl + the token named by `deploy.token_env`, falling back to plain `VERCEL_TOKEN` exactly
+  as the hydrate hook does; `vercel_get`, `vercel_deployments <project> [--target production]
+  [--sha <sha>]` (`GET /v6/deployments`), `vercel_deployment <id>` (`GET /v13/deployments/{id}`),
+  `vercel_env_list <project>` (`GET /v9/projects/{id}/env` — names, targets, comments; never a
+  decrypted value), and `--check`. No write verb lives here.
 - `env-check.sh`: when `deploy` is present, verify the Vercel route (`[WARN]` when the token is
   absent, `[FAIL]` only when `deploy` names a project the team does not have).
 - `ci-status.sh`: read `deploy.projects[].status_context` for the product class and report a
@@ -180,8 +207,7 @@ checks the archive; production state is a one-off Vercel read the `production-re
   `RESULT: READY | ERROR <project> | PENDING`. Read-only.
 - `04_release` step 9 gains one call after the merge and the Release record gains one line:
   `- production: READY on <sha> — web dpl_… (prev dpl_…) · docs dpl_… | ERROR web — see hotfix`.
-  `ERROR` un-merges nothing and starts nothing: it is written down, said plainly in the stop
-  message, and the human opens the hotfix lane. `PENDING` after the bound is recorded as such.
+  `ERROR` un-merges nothing and starts nothing. `PENDING` after the bound is recorded as such.
   Where `deploy` is absent: `- production: not declared (no deploy block)`.
 
 ### 4.4 Token and cost tracking — decided: per stage on the run, plus a per-client roll-up
@@ -197,14 +223,14 @@ deal's `Value` row, never a line a client sees.
 
 | | Claude Code (local and cloud) | OpenCode 1.18.30 |
 |---|---|---|
-| **How a script finds its own session** | `CLAUDE_CODE_SESSION_ID` is exported to every Bash tool call (this session: `2aae8848-…`, equal to the transcript's filename). `CLAUDE_PROJECT_DIR` is exported too. Not `CLAUDE_ENV_FILE` — that mechanism is reported broken or empty in the wild (claude-code issues #15840, #11649) and is not needed. | Nothing is exported by default (the binary's `OPENCODE_*` set has no session variable). The plugin API provides it: `shell.env(input: {cwd, sessionID?, callID?}, output: {env})` — a global plugin sets `output.env.OPENCODE_SESSION_ID = input.sessionID`, with `tool.execute.before(input: {tool, sessionID, callID})` as the fallback that always carries it (`@opencode-ai/plugin` 1.18.25 `index.d.ts`). Verify on the binary, per the standing rule — the types have been stale before. |
-| **Where the numbers are** | The transcript `~/.claude/projects/<cwd-slug>/<session>.jsonl` (cloud: `/root/.claude/projects/-home-user-<repo>/…`, verified in the sustentus note). Every API response is a `type: "assistant"` line with `requestId`, `message.model`, `message.usage = {input_tokens, cache_creation_input_tokens, cache_read_input_tokens, output_tokens, output_tokens_details.thinking_tokens, …}` and an ISO `timestamp`. Streaming repeats a `requestId` (this session: 113 lines, 18 requests) — take the **last line per `requestId`**. The `<cwd-slug>` is the working directory with every non-alphanumeric character replaced by `-` (`.claude` → `-claude`); `find ~/.claude/projects -name "$CLAUDE_CODE_SESSION_ID.jsonl"` sidesteps the encoding. | SQLite at `~/.local/share/opencode/opencode.db` (override: `OPENCODE_DB`; `XDG_DATA_HOME` respected). `session` rows carry cumulative `cost`, `tokens_input`, `tokens_output`, `tokens_reasoning`, `tokens_cache_read`, `tokens_cache_write`, `model` (JSON `{id, providerID}`), `directory`, `project_id`, `parent_id`. `message` rows carry per-response `data.tokens {input, output, reasoning, cache{read, write}}`, `data.cost`, `data.modelID`, `data.providerID`, `data.path.cwd`, `data.time {created, completed}` (epoch ms). Read it with `?mode=ro`; WAL is fine. |
-| **Subagents** | Sibling files under `<session>/subagents/*.jsonl` — same line shape; sum them in. | Child sessions: `session.parent_id = <id>` — sum the children (`client.session.children` in the SDK; one `WHERE parent_id = ?` in SQL). |
-| **Cost** | Not in the transcript. Priced at roll-up from one estate table (below); `cost_usd=unknown` on the line. The cloud session record (`get_session` → `external_metadata.usage.cost_usd`) is a cross-check, not the source. | On the row and on every message, computed by OpenCode from the models.dev catalogue: `$0.0221` across 14 `vercel/zai/glm-5.3-flash` sessions; `0` for Zen free models (`opencode/big-pickle`, 70 sessions). Recorded as-is. |
-| **Turn count** | `type: "user"` lines with `origin.kind == "human"` (two so far in this session; confirm the kind name a mid-turn message carries on a real transcript). | `message` rows with `data.role == "user"` in the session. |
-| **Per-stage split** | Sum the deduped requests whose `timestamp` falls in the stage window; or record cumulative-to-now at `start` and `end` and subtract at roll-up. The latter is what the line below does — one shape for both harnesses. | Same: sum `message` rows with `time.completed` in the window, or cumulative-to-now from the same query. |
-| **Other routes, and why not** | OTel export needs a collector nobody runs and leaks `user.email` by default; `/usage` and the status line are not machine-readable; the Analytics API is per-user-per-day, Admin-key only (sustentus note, unchanged). | `opencode stats` is a human table (no JSON); `opencode export <id>` is the same data as JSON but 13 MB for one long session; `opencode serve` + `GET /session/:id/message` works but needs a server up. The database read is the cheapest and always available. |
-| **Known trap** | The transcript is written asynchronously and may lag the current turn (hooks doc); an `end` snapshot taken as the very last act may miss the final response by one request. Accepted — it under-counts by one turn, never over. | Two OpenCode instances in one directory share the database (issue #31307); the plugin-set `OPENCODE_SESSION_ID` is what disambiguates, and the newest-session-for-this-directory fallback is only a fallback. |
+| **How a script finds its own session** | `CLAUDE_CODE_SESSION_ID` is exported to every Bash tool call (this session: `2aae8848-…`, equal to the transcript's filename). `CLAUDE_PROJECT_DIR` is exported too. Not `CLAUDE_ENV_FILE` — reported broken or empty in the wild (claude-code issues #15840, #11649) and not needed. | Nothing is exported by default (the binary's `OPENCODE_*` set has no session variable). The plugin API provides it: `shell.env(input: {cwd, sessionID?, callID?}, output: {env})` — a global plugin sets `output.env.OPENCODE_SESSION_ID = input.sessionID`, with `tool.execute.before(input: {tool, sessionID, callID})` as the fallback that always carries it (`@opencode-ai/plugin` 1.18.25 `index.d.ts` lines 235–248). Verify on the binary, per the standing rule. |
+| **Where the numbers are** | The transcript `~/.claude/projects/<cwd-slug>/<session>.jsonl` (cloud: `/root/.claude/projects/-home-user-<repo>/…`). Every API response is a `type: "assistant"` line with `requestId`, `message.model`, `message.usage = {input_tokens, cache_creation_input_tokens, cache_read_input_tokens, output_tokens, …}` and an ISO `timestamp`. Streaming repeats a `requestId` (this session: 113 lines, 18 requests) — take the **last line per `requestId`**. `find ~/.claude/projects -name "$CLAUDE_CODE_SESSION_ID.jsonl"` sidesteps the path encoding (`.claude` → `-claude`). | SQLite at `~/.local/share/opencode/opencode.db` (override: `OPENCODE_DB`; `XDG_DATA_HOME` respected). `session` rows carry cumulative `cost`, `tokens_input`, `tokens_output`, `tokens_reasoning`, `tokens_cache_read`, `tokens_cache_write`, `model` (JSON `{id, providerID}`), `directory`, `project_id`, `parent_id`. `message` rows carry per-response `data.tokens {input, output, reasoning, cache{read, write}}`, `data.cost`, `data.modelID`, `data.providerID`, `data.path.cwd`, `data.time {created, completed}` (epoch ms). Read with `?mode=ro`; WAL is fine. |
+| **Subagents** | Sibling files under `<session>/subagents/*.jsonl` — same line shape; sum them in. | Child sessions: `session.parent_id = <id>` — one `WHERE parent_id = ?` in SQL. |
+| **Cost** | Not in the transcript. Priced **in the repo** from the synced table `scripts/lib/model-prices.json` (T; below); `cost_usd=unknown` only when the model is missing from the table. The cloud session record (`get_session` → `external_metadata.usage.cost_usd`) is a cross-check, not the source. | On the row and on every message, computed by OpenCode from the models.dev catalogue: `$0.0221` across 14 `vercel/zai/glm-5.3-flash` sessions; `0` for Zen free models (`opencode/big-pickle`, 70 sessions). Recorded as-is. |
+| **Turn count** | `type: "user"` lines with `origin.kind == "human"` (confirm the kind name a mid-turn message carries). | `message` rows with `data.role == "user"` in the session. |
+| **Per-stage split** | Record cumulative-to-now at `start` and `end`; subtract at roll-up. | Same query, cumulative-to-now. |
+| **Other routes, and why not** | OTel export needs a collector nobody runs and leaks `user.email` by default; `/usage` and the status line are not machine-readable; the Analytics API is per-user-per-day, Admin-key only. | `opencode stats` is a human table; `opencode export <id>` is the same data as JSON but 13 MB for one long session; `opencode serve` + `GET /session/:id/message` needs a server up. The database read is the cheapest and always available. |
+| **Known trap** | The transcript is written asynchronously and may lag the current turn by one request. Accepted — it under-counts, never over. | Two OpenCode instances in one directory share the database (issue #31307); the plugin-set `OPENCODE_SESSION_ID` disambiguates; newest-session-for-this-directory is only a fallback. |
 
 **The line.** One run-scoped file, `.icm/runs/<slug>/usage.md`, append-only, archived with the
 run by `close-out.sh` (its path guard already covers `.icm/runs/**`). Not `run.md`: Scope has no
@@ -215,21 +241,26 @@ run by `close-out.sh` (its path guard already covers `.icm/runs/**`). Not `run.m
 ```
 
 Each number is **cumulative for the session (subagents included) at that moment**; a stage's own
-usage is `end − start` when both lines name the same `session=`, and a stage resumed in a second
-session is two partial pairs the roll-up reports as such rather than subtracting across sessions.
+usage is `end − start` when both lines name the same `session=`; a stage resumed in a second
+session is two partial pairs the roll-up reports as such.
 
 **`scripts/usage-snapshot.sh <slug> <stage> start|end`** (T, new): detects the harness
 (`CLAUDE_CODE_REMOTE` → `claude-cloud`; `CLAUDECODE` → `claude`; `OPENCODE_SESSION_ID` or an
-`OPENCODE*` variable → `opencode`), locates the session as in the table, sums, appends the line,
-prints `RESULT: RECORDED | SKIP (<reason>)`. Needs `jq`; needs `python3` or `sqlite3` for the
-OpenCode reader (whichever is present — `env-check.sh` already lists both classes of binary). It
-never estimates and never blocks: a `SKIP` line is still a line, and `close-out.sh` refuses nothing
-over it. Every stage and lane contract calls it as the first act after the preamble and the last
+`OPENCODE*` variable → `opencode`), locates the session as in the table, sums, prices Claude
+lines from `lib/model-prices.json`, appends the line, prints `RESULT: RECORDED | SKIP (<reason>)`.
+`--report <slug>` prints the run's totals so far — a repo shows its own numbers without icm-board.
+Needs `jq`; needs `python3` or `sqlite3` for the OpenCode reader. It never estimates and never
+blocks. Every stage and lane contract calls it as the first act after the preamble and the last
 act before the stop.
 
+**`scripts/lib/model-prices.json`** (T, synced everywhere): `as_of` dated, per model USD per
+million input, output, cache-read, cache-write tokens. Filled by the implementing session from the
+`claude-api` skill's current table, never from memory; amended deliberately in the template and
+synced like any T file, so every repo prices its own lines identically.
+
 **`~/.config/opencode/plugins/icm-session-env.js`** (Jamie's machine, uncommitted like its two
-siblings; the same file also belongs in `_system/template/root/.opencode/plugins/` if the estate
-ever wants it per repo):
+siblings; the same file is also a canonical root asset, `_system/template/root/.opencode/plugins/`,
+for repos that want it seeded):
 
 ```js
 // Hands the running session's id to the shell, so .icm/scripts/usage-snapshot.sh can read its
@@ -245,21 +276,14 @@ export const IcmSessionEnv = async () => ({
 })
 ```
 
-**Pricing the Claude lines.** `_system/scripts/model-prices.json` — one estate table, `as_of`
-dated, per model: USD per million input, output, cache-read, cache-write tokens. Filled by the
-implementing session from the `claude-api` skill's current table, never from memory, and amended
-deliberately when a model's list price moves. `run-economics.sh` prices `cost_usd=unknown` lines
-from it and says so in the report; OpenCode's own `cost` is used as recorded.
-
 **`_system/scripts/run-economics.sh [--deal <slug>|--repo <name>] [--since <date>]`**
-(icm-board, new, read-only): walks `projects/*/<runs_archive>/*/usage.md` and live `runs/`, pairs
-`start`/`end` per stage and session, sums per run, per repo, per client, and writes
-`workspaces/deals/<slug>/economics.md` (runs, stages, tokens by class, list-price USD, against
-the `Value` row; "unavailable" where no run carries a line). Join key: a machine-readable
-`- repo: <owner/name>` line in `DEAL.md`'s header (today `Repo` is a prose table row — the
-session converts it, keeping the row). Repos with no deal (`jamienisbet`, this repo) get
-`.icm/docs/economics.md` in the repo instead. Nothing is sent: `economics` is a reporting kind
-that maps to no channel by default.
+(icm-board, new, read-only — the one component that *is* icm-board's, because it reads across
+`projects/*`): walks `projects/*/<runs_archive>/*/usage.md` and live `runs/`, pairs `start`/`end`
+per stage and session, sums per run, per repo, per client, and writes
+`workspaces/deals/<slug>/economics.md` (runs, stages, tokens by class, list-price USD, against the
+`Value` row; "unavailable" where no run carries a line). Join key: a machine-readable
+`- repo: <owner/name>` line in `DEAL.md`'s header. Repos with no deal get `.icm/docs/economics.md`
+in the repo. Nothing is sent: `economics` is a reporting kind that maps to no channel by default.
 
 ### 4.5 Rollbacks and hotfixes — decided: hotfix lane + prepared recovery
 
@@ -284,103 +308,262 @@ a bug, the wrong one on a live incident. Vercel exposes instant rollback
   with `--revert`, a `claude/hotfix-revert-<slug>` branch carrying `git revert -m 1 <merge-sha>`
   and a hotfix-lane PR opened through `new-run.sh`; with `--vercel`, the previous READY deployment
   per product project (from `deploy-status.sh`) and the exact CLI and REST call. It **warns** when
-  the merge carried a migration (`migrations.path`, or a tracked `migrations/` diff) and the repo
-  declares `migrations.reversible: false`: "the schema moved forward; the reverted code must
-  tolerate it". It never calls the rollback endpoint and never merges — `RESULT: PREPARED <what>`.
+  the merge carried a migration and the repo declares `migrations.reversible: false`: "the schema
+  moved forward; the reverted code must tolerate it". It never calls the rollback endpoint and
+  never merges — `RESULT: PREPARED <what>`.
 - Reword the three "not a revert" sentences to "not a revert *by a session's own decision* — a
   revert is the hotfix lane's, prepared by `rollback.sh` and merged by the operator".
 
-### 4.6 Client communication and release notes — decided: Slack via CI, client email, GitHub Release
+### 4.6 Client communication and release notes — decided: GitHub Release by default; Slack and email added per repo
 
 **Evidence.** Slack: the reference is CI-on-merge from the changelog page (`release.yaml`), which
 works because sustentus has a help centre; the template's `notify.sh` carries a commented webhook
 example. Email: remi-ai wired `notify.sh` to Resend with a plain `SKIPPED` when the secret is
 absent (decisions log, 2026-09-18). GitHub Releases: none anywhere. A repo with no changelog
-records `announce: none` and therefore announces nothing, ever.
+records `announce: none` and therefore announces nothing, ever — which flag 2 ends.
 
 **Recommendation** (all are `report.sh` channels; the caller never changes):
+- **`github-release` — on by default.** The seeded `project.json` stub ships
+  `announce: ["github-release"]`. `POST /repos/{o}/{r}/releases` via `lib/gh.sh` after the merge:
+  tag `release/<YYYY-MM-DD>-<slug>` on the merge SHA, name = the summary, body = the changelog
+  body or the spec's *Proposed change* plus the PR link, `prerelease: false`. Only for
+  `audience: public` (an `internal` entry is announced on the other channels and gets no
+  Release, mirroring the changelog index). Idempotent by tag. The tag is also the anchor
+  `rollback.sh --revert` names. Every repo therefore has a public ship log from its first merge
+  with zero configuration.
 - **Where the summary comes from** when there is no changelog page: the PR's Summary line, which
-  every run has (`new-run.sh --summary`). `report.sh` takes it as its argument; the CI path reads
-  it from the merged PR body. A changelog page's `summary:` wins where one exists.
-- **`slack`**: bot token + channel id as variable names, one channel per kind. The reference
-  workflow (§4.7) is the sustentus one reduced to a `report.sh` call.
-- **`email` (Resend)**: `POST https://api.resend.com/emails` with `RESEND_API_KEY`; recipients
-  from `REPORT_EMAIL_TO`, sender from `REPORT_EMAIL_FROM` — variable names, never a literal
-  address in the repo. Subject = the summary; body = the summary plus the changelog URL or the PR
-  link. Also Jamie's own inbox as the alert fallback where Slack is absent.
-- **`github-release`**: `POST /repos/{o}/{r}/releases` via `lib/gh.sh` after the merge — tag
-  `release/<YYYY-MM-DD>-<slug>` on the merge SHA, name = the summary, body = the changelog body or
-  the spec's *Proposed change*, `prerelease: false`. Only for `audience: public` (an `internal`
-  entry is announced on the other channels and gets no Release, mirroring the changelog index).
-  The tag is also the anchor `rollback.sh --revert` names.
+  every run has (`new-run.sh --summary`). A changelog page's `summary:` wins where one exists.
+  `announce: none` stays available for a run with truly nothing to say, and stays explicit.
+- **`slack`** (added by editing the block): bot token + channel id as variable names, one channel
+  per kind. The reference workflow (§4.7) is the sustentus one reduced to a `report.sh` call, with
+  `announce_from: ci`.
+- **`email` (Resend)** (added by editing the block): `POST https://api.resend.com/emails` with
+  `RESEND_API_KEY`; recipients from `REPORT_EMAIL_TO`, sender from `REPORT_EMAIL_FROM` —
+  variable names, never a literal address in the repo. Subject = the summary; body = the summary
+  plus the Release URL or the changelog URL. Also Jamie's own inbox as the alert fallback where
+  Slack is absent.
 
-### 4.7 Multi-client onboarding at scale
+### 4.7 `/setup` — one command that sets a repo up or keeps it honest (flag 3)
 
-**Evidence.** `start/06_repo` and `07_kickoff` seed the baseline and hand over to `/project`,
-whose § 1c fills the project-owned files, syncs, and proves the result. Sound. What it cannot fill
-is what does not exist yet: a deploy block, a reporting block, a release workflow. The MANIFEST
-cannot seed `.github/`, so every repo's labels job today is hand-copied or absent.
+**Evidence.** Setup is spread over four places, all outside the repo: `createClientRepo`
+(dashboard), `icm-check.sh --fix` (seed), `icm-sync.sh --apply` (sync), and `/project` § 1c —
+four numbered steps ("declare" now empty after D22, the formatter guard, seed-then-sync, read the
+repo for the P files) plus questions folded into `/project`'s intent rounds, the writing in its
+§ 6, and proofs in its Audit. `start/06_repo` and `07_kickoff` point at those. Maintenance is
+spread the same way: `icm-check.sh` reports gaps and drift from icm-board; nothing in a repo can
+tell whether it is complete, current, or configured, because the MANIFEST "stays in the
+template". The parked stub `profile-wording-sweep` already records that § 1c "is now a step with
+nothing to declare".
 
-**Recommendation.**
-- `/project` § 1c asks two more things in the intent rounds and writes them: `deploy` and
-  `reporting` ("none" is an answer for every kind).
-- `_system/template/github-workflows/release.yaml` — a **reference**, seeded once by § 1c the way
-  `.claude/` assets are (D7: reported, never repaired), never in the MANIFEST: on `pull_request:
-  closed` + merged, checkout, derive the summary, `report.sh announce`, then the archive check →
-  `report.sh alert` on fault, and the job fails red either way. The sustentus one with its wiring
-  moved into `project.json`. A second reference file carries the labels job.
-- `vercel-env-registry.json` becomes a derived artifact regenerated from the repos' `deploy`
-  blocks by a read-only sweep (`vercel-env.sh registry`), so one fact has one home (§10).
+**Recommendation — a template-owned command, seeded into every repo beside `/pipeline`.**
 
-### 4.8 The local-shell ⇄ cloud-platform gap, in one table
+- `_system/template/claude-pipeline/skills/setup/SKILL.md` → `.claude/skills/setup/SKILL.md`
+  (canonical asset, seeded like the router) and `.icm/scripts/setup.sh` (T). `/setup` — re-run
+  any time, from any harness, in any repo. It never needs icm-board in view: everything it checks
+  is in the repo, and the one thing it cannot do without a template source (seed a bare repo, or
+  bring T files up to date) it reports rather than fakes.
+- **`setup.sh [--fix] [--template <path|url>] [--report]`** — the deterministic half, one report,
+  `RESULT: OK | GAPS n`. Sections, in order:
+  1. **Baseline** — every file the repo's own `.icm/MANIFEST` names is present (the MANIFEST
+     becomes a T file, `.icm/MANIFEST`, and `.icm/template-version` records the template commit
+     the last sync came from, so completeness and currency are answerable offline); the router
+     and `/setup` skills; the two hooks registered in `.claude/settings.json`; `opencode.jsonc`;
+     the PR template with both gate anchors. `--fix` seeds only what is missing, from
+     `--template` — never overwrites (D7); a diverged T file is reported as drift with the
+     `icm-sync.sh --apply` command to run from icm-board.
+  2. **Formatter exposure** — a formatter config that would touch T paths and no exclusion for
+     them: reported with the exact lines to add (D17/D19: per-repo, by hand; never written by
+     a script).
+  3. **`project.json`** — `name`, `complexity`, `required_checks`, `personas`, `deploy`,
+     `reporting`, `migrations`: each missing or still at the stub's placeholder is a gap
+     with the question the skill should ask.
+  4. **Environment** — `env-check.sh` (route + binaries) and `env.sh audit` (§4.8): keys
+     declared vs present on every surface, names only.
+  5. **Tickets** — `validate-intake.sh` over every live epic; every triage stub carries a valid
+     `lane:`; `triage-report.sh` against the cap; a loose `TODO.md`/`BACKLOG.md` at the root.
+  6. **Raw** — `process-raw.sh --dry-run`: assets waiting in `.icm/raw/`, and which need a
+     local tool that is missing; the pointer stubs it would park.
+  7. **Runs** — a merged run still in `runs/` (the archive alarm); a live run whose PR is closed;
+     `usage.md` pairs with a `start` and no `end`.
+  8. **Knowledge** — `validate-knowledge-map.sh`.
+  9. **Reporting** — which kinds map to which channels; which channel variables are unset;
+     `announce_from` consistent with whether the reference workflow exists.
+  10. **Workflows** — the reference `release.yaml`/`labels.yaml` present or declared absent in
+      `project-rules.md`; `type:hotfix` in `.github/labels.yml`.
+- **The skill** runs the script, then asks — `AskUserQuestion`, in rounds of at most four —
+  exactly what the report left open: "no Slack or email is configured; `github-release` is on.
+  Add one?" · "deploy block: is `web` the product project and `docs` quiet?" · "complexity:
+  `standard` or `micro`?" · "personas?". It writes the P files, re-runs `setup.sh` until `OK`,
+  and stops with the changes on a `claude/` branch for the operator to merge (a bare repo's first
+  run is one PR; a maintenance run that changed nothing is a valid outcome and says so).
+- **Template source for a bare repo.** `--template` defaults to `../../_system/template`
+  relative to `projects/<repo>` (icm-board's checkout on Jamie's machine — the common case) and
+  accepts any path or tarball URL. A repo the dashboard created already carries the baseline, so
+  "bare" is an adopted external repo, which is adopted from Jamie's machine anyway. If cloud-side
+  bare setup is ever wanted, the template can be mirrored to a public `k0d0minio/icm-template` by
+  icm-board CI on merge — T files carry no identity by construction (D20), so the mirror leaks the
+  method and no client fact; whether the method is public is Jamie's call, and nothing here
+  depends on it. Without a source, `setup.sh` reports `SKIP template (no source)` and still runs
+  every in-repo check.
+- **What moves.** `/project` loses § 1c and gains one precondition: "`/setup` reports `OK` (or
+  the gaps are named in the run)". `start/06_repo` and `07_kickoff` say `/setup` where they said
+  `icm-check.sh --fix` and `/project § 1c`. `/icm-check` stays the estate loop and, once every
+  repo carries `setup.sh`, runs each repo's `setup.sh --report` instead of re-deriving the checks
+  — one implementation, two callers. The dashboard's `createClientRepo` should scaffold from the
+  same template (a jamienisbet ticket, outside this session).
+
+### 4.8 Environment variables across five surfaces (flag 4)
+
+**Evidence.** The estate env manager exists and is good: `_system/scripts/vercel-env.sh` owns
+three one-way flows over one registry — notes (`.env.example` → Vercel comments), values (Vercel →
+a generated `.env.local`), docs (notes interleaved into that file) — with `link`, `init`,
+`push-notes`, `pull` and a read-only `audit`, and a `.env.example` convention (a `#` note directly
+above a key is its note; an optional `[production|preview|development]` suffix scopes it; values
+never). It runs from icm-board, over `vercel-env-registry.json`, on Jamie's machine only. The
+cloud half is `vercel-env-hydrate.sh`: one repo, `pull` only, keyed on plain `VERCEL_TOKEN`. The
+pipeline itself checks environment in two thin places: `env-check.sh` (are `required_env`
+variables set in *this shell*) and the `production-readiness` skill (a human reads whether every
+new `process.env` is in `turbo.json` `globalEnv` and in Vercel). GitHub Actions secrets and
+variables, and the Claude cloud environment panel, are managed by hand and checked by nobody.
+
+**The five surfaces a key can need to exist on**, and who can read each:
+
+| Surface | Holds | Readable by a script | Writable by a script |
+|---|---|---|---|
+| Local `.env.local` | development values | yes (presence) | `vercel env pull` |
+| Claude cloud environment panel | session variables (`VERCEL_TOKEN`, `GH_TOKEN`, …) | no — only its effect inside a cloud session | no (dashboard) |
+| GitHub Actions secrets / variables | what the reference workflows need | names: `gh secret list`, `gh variable list` | `gh secret set`, `gh variable set` (stdin) |
+| Vercel preview / production / development | the app's runtime | names, targets, comments: `GET /v9/projects/{id}/env` | `vercel env add NAME <target> [--sensitive] < file` (value on stdin) |
+| The pipeline's own `required_env` | what `.icm/scripts` need | `env-check.sh` | — |
+
+**Recommendation — `scripts/env.sh` (T), the per-repo generalisation of `vercel-env.sh`, driven by
+the deploy block.** Same convention, same one-way flows, no registry: the Vercel projects and
+paths come from `deploy.projects[]`, the token from `deploy.token_env` (or `VERCEL_TOKEN`), GitHub
+from `lib/gh.sh` and the `gh` CLI. Verbs:
+
+- **`audit [--changed]`** — names only, never values. Reads `.env.example` as the manifest and
+  reports, per key and per surface it is scoped to: declared-but-missing and present-but-undeclared
+  on Vercel (per project, per target), on GitHub (secrets and variables), locally (`.env.local`
+  present and ignored), and in `required_env`. Adds the code's own reads: every `process.env.X`
+  the tree reads (and `turbo.json` `globalEnv` where present) that `.env.example` does not
+  declare. `--changed` limits it to keys the branch added — Build's pre-push check and Release's
+  stop class 3 ("a new env var missing from wherever the repo declares its environment or from
+  Vercel") become this one deterministic call. Surfaces it cannot read (the cloud panel) are
+  listed as a checklist line, not a gap. `RESULT: OK | GAPS n`.
+- **`init`** — seeds `.env.example` with Vercel's key names for every project in the deploy
+  block, `# TODO: note` placeholders, `[targets]` from Vercel's own scoping; never overwrites,
+  reorders or writes a value (the `vercel-env.sh init` rules, unchanged).
+- **`pull`** — `vercel env pull` per project path into `.env.local` with the notes interleaved,
+  refusing before the pull when `.env.local` is not ignored, and restoring the `.gitignore` line
+  the CLI appends. The cloud hook `vercel-env-hydrate.sh` becomes a caller of this verb, so the
+  local and cloud flows are one implementation.
+- **`push-notes`** — `.env.example` notes → Vercel comments (REST, the `comment` field and
+  nothing else; `TODO` placeholders skipped; the 500-character cap named, never truncated).
+- **`add <KEY> [--targets production,preview,development] [--sensitive] [--github secret|variable]
+  [--ci] [--note "<one sentence>"]`** — creates the variable where the flags say, **with the
+  value read from stdin only** (`printf '%s' "$VALUE" | .icm/scripts/env.sh add KEY …` or
+  `< file`), never from an argument, so it can never land in a transcript, a shell history or
+  a log; `vercel env add KEY <target> [--sensitive]` per target per project (the documented
+  `< [file]` form), `gh secret set KEY` / `gh variable set KEY` from the same stdin, then the key
+  and its note appended to `.env.example` with the right suffix. No value on stdin → it prints the
+  exact commands for the human and `RESULT: SKIP (no value on stdin)`. It never prints the value,
+  never echoes stdin, and runs with tracing off.
+- **`doc`** — the documentation half of flag 4 for a session that must not create anything:
+  prints the `.env.example` block a new key needs (key, note, suffix) and the `audit` lines it
+  would clear, so the agent's output is a diff to `.env.example` and a checklist for the
+  dashboards, and the value stays with the human.
+
+**The `.env.example` convention grows two additive suffix tokens**: `[ci]` (the key must exist as
+a GitHub Actions secret or variable — the reference release workflow's `RESEND_API_KEY`,
+`SLACK_BOT_TOKEN`) and `[cloud]` (the key must be set in the Claude cloud environment panel —
+`VERCEL_TOKEN`, `GH_TOKEN`). `audit` uses them to know which surface to check; the older three
+tokens keep their meaning. A key with no suffix means all three Vercel targets, as today.
+
+**Where it plugs in.** `/setup` runs `env.sh audit` (§4.7 section 4). Build's verify runs
+`env.sh audit --changed` before the ready flip. Release step 4's readiness question becomes the
+same call. `report.sh`'s `SKIPPED <channel>: <VAR> unset` names the `env.sh add … --ci` that
+fixes it. icm-board's `vercel-env.sh` keeps its verbs and becomes the estate loop —
+`for repo in registry: projects/<repo>/.icm/scripts/env.sh <verb>` — so one parser and one set of
+rules exist, in the template, and the registry itself is regenerated from the repos' deploy
+blocks (`vercel-env.sh registry`, read-only).
+
+**Rules restated, all already the estate's:** values never in git, never in argv, never printed;
+`.env.example` is the only committed file and carries keys and prose; a value moves Vercel →
+`.env.local` and stdin → Vercel/GitHub, never the other way; `audit` is read-only in the strong
+sense (`GET` only, no CLI); a plaintext credential found anywhere is a P0 to flag, not to commit
+around.
+
+### 4.9 Repo self-sufficiency — nothing calls icm-board at runtime (flag 1)
+
+| Component | Runs in | Reads | Needs icm-board |
+|---|---|---|---|
+| `report.sh` | the repo (session or CI) | `project.json`, `lib/gh.sh`, the repo's own variables | never |
+| `usage-snapshot.sh` + `lib/model-prices.json` | the repo (any harness) | the harness's own session store, the synced price table | never |
+| `deploy-status.sh`, `rollback.sh`, `lib/vercel.sh` | the repo | `project.json → deploy`, the repo's Vercel token | never |
+| `env.sh` | the repo | `.env.example`, `deploy`, the repo's Vercel and GitHub credentials | never |
+| `setup.sh` | the repo | `.icm/MANIFEST`, `.icm/template-version`, everything above | only to **seed or sync T files**, via `--template`, and only then; every check runs without it |
+| the reference workflows | the repo's CI | the repo's secrets | never (seeded once) |
+| `icm-session-env.js` | Jamie's machine / the repo's `.opencode/` | nothing | never |
+| `run-economics.sh`, `vercel-env.sh registry`, `icm-check.sh`, `icm-sync.sh` | **icm-board, Jamie's machine** | `projects/*` | by design — these are the estate's cross-repo tools, and a repo never calls them |
+
+### 4.10 The local-shell ⇄ cloud-platform gap, in one table
 
 | Platform | Template today | Gap | Closed by |
 |---|---|---|---|
-| GitHub | `lib/gh.sh`: curl with token → `gh` CLI fallback → one die naming the fix; `env-check.sh` verifies the route | none | — |
+| GitHub | `lib/gh.sh`: curl with token → `gh` CLI fallback; `env-check.sh` verifies the route | none | — |
 | Vercel (reads) | via GitHub commit statuses only; `vercel-env.sh` is estate-local; hydrate hook cloud-only | no transport, no project ids, no route check | `deploy` block · `lib/vercel.sh` · `env-check.sh` |
-| Vercel (writes) | none | rollback/promote unnamed | `rollback.sh` prints them, never calls them |
+| Vercel (writes) | none | rollback/promote unnamed; env vars by hand | `rollback.sh` prints them; `env.sh add` creates variables from stdin |
+| GitHub Actions secrets/variables | none | unchecked, hand-managed | `env.sh audit` / `env.sh add --ci` |
 | Slack | a commented example in `notify.sh` | one kind, one channel | `report.sh` `slack` |
 | Resend | none in the template (remi-ai precedent) | — | `report.sh` `email` |
-| GitHub Releases | none | — | `report.sh` `github-release` |
-| Usage / cost — Claude Code | none | no line, no reader | `usage-snapshot.sh` transcript reader (`CLAUDE_CODE_SESSION_ID`) |
+| GitHub Releases | none | — | `report.sh` `github-release`, on by default |
+| Usage / cost — Claude Code | none | no line, no reader, no price | `usage-snapshot.sh` transcript reader + `model-prices.json` |
 | Usage / cost — OpenCode | none | no session id in the shell, no reader | the `shell.env` plugin + the SQLite reader |
-| Pricing | none | Claude tokens unpriced | `model-prices.json` at roll-up |
+| Setup and maintenance | from icm-board only | a repo cannot self-check | `/setup` + `setup.sh` + `.icm/MANIFEST` + `.icm/template-version` |
 | Docker / AWS / Cloudflare | none | out of scope by decision 2 | — |
 
 ## 5. Recommended template changes — consolidated
 
 | Path (relative to `.icm/` unless noted) | Owner | New / changed | What |
 |---|---|---|---|
-| `project.json` | P | changed | `deploy`, `reporting`, `migrations` objects (§6) |
-| `_shared/project-rules.md` (stub) | P | changed | *Announcing* → *Reporting*: kinds → channels, "none = a red job + Vercel's email" written down; *People* gains the client contact by variable name; *The factory* gains the migrations line |
-| `scripts/report.sh` | P | new, replaces `notify.sh` | kinds, channels, `SKIPPED` semantics (§4.0) |
-| `scripts/notify.sh` | — | retired | MANIFEST line removed; `icm-check` reports it for `git rm` |
-| `scripts/lib/vercel.sh` | T | new | the one Vercel transport, read verbs + `--check` |
-| `scripts/deploy-status.sh` | T | new | production state per project, previous READY id, `RESULT: READY\|ERROR\|PENDING` |
+| `project.json` | P | changed | `deploy`, `reporting` (default `announce: ["github-release"]`, `announce_from: "session"`), `migrations` (§6) |
+| `_shared/project-rules.md` (stub) | P | changed | *Announcing* → *Reporting*: kinds → channels, "none = a red job + Vercel's email"; *People* gains the client contact by variable name; *The factory* gains the migrations line and the env surfaces |
+| `scripts/report.sh` | P | new, replaces `notify.sh` | kinds, channels, `--dry-run`, `SKIPPED` semantics (§4.0) |
+| `scripts/notify.sh` | — | retired | MANIFEST line removed; reported for `git rm` |
+| `MANIFEST` → `.icm/MANIFEST` | T | changed | seeded and synced into every repo; `.icm/template-version` written by `icm-sync.sh --apply` and `setup.sh --fix` |
+| `scripts/lib/vercel.sh` | T | new | the one Vercel transport, read verbs incl. `vercel_env_list`, `--check` |
+| `scripts/lib/model-prices.json` | T | new | the dated price table (§4.4) |
+| `scripts/deploy-status.sh` | T | new | production state per project, previous READY id |
 | `scripts/rollback.sh` | T | new | prepares revert PR and/or names the Vercel rollback; warns on migrations; never executes |
-| `scripts/usage-snapshot.sh` | T | new | the `- usage:` line into `runs/<slug>/usage.md`, two readers, `SKIP` when none |
-| `scripts/env-check.sh` | T | changed | Vercel route when `deploy` present; reporting variables as `[WARN]`; `python3`/`sqlite3` as recommended |
+| `scripts/usage-snapshot.sh` | T | new | the `- usage:` line into `runs/<slug>/usage.md`, two readers, in-repo pricing, `--report` |
+| `scripts/env.sh` | T | new | `audit · init · pull · push-notes · add · doc` over the deploy block (§4.8) |
+| `scripts/setup.sh` | T | new | the idempotent house-cleaning report and `--fix` (§4.7) |
+| `scripts/env-check.sh` | T | changed | Vercel route when `deploy` present; reporting variables as `[WARN]`; `python3`/`sqlite3` recommended |
 | `scripts/ci-status.sh` | T | changed | expected-product-preview notice from `deploy.projects[]` |
 | `scripts/new-run.sh` | T | changed | `--lane hotfix`; `--ready` opens the PR non-draft; `type:hotfix` label |
-| `scripts/resolve-run.sh`, `project-labels.sh`, `close-out.sh` | T | changed | hotfix lane recognised; `usage.md` travels with the archive (already inside the path guard) |
+| `scripts/resolve-run.sh`, `project-labels.sh`, `close-out.sh` | T | changed | hotfix lane recognised; `usage.md` travels with the archive |
 | `lanes/hotfix/CONTEXT.md` | T | new | §4.5 |
-| `stages/01–04`, `lanes/*` | T | changed | usage-snapshot first/last act; `notify.sh` → `report.sh announce`; Release step 9 adds `deploy-status.sh` + the `- production:` line |
-| `_shared/ci.md`, `lanes/chore`, `04_release` stop class 3 | T | changed | the revert wording; stop class 3 scoped to `migrations.reversible: true` (§10) |
-| `_shared/github.md` | T | changed | lane list gains hotfix; a hotfix PR opens ready |
-| `MANIFEST` | — | changed | the new T lines; `notify.sh` removed; `report.sh` added as P |
-| `.github/labels.yml` guidance in `github.md` | T | changed | `type:hotfix` in the fixed vocabulary |
-| `_system/template/github-workflows/{release,labels}.yaml` | reference | new | seeded once by `/project` § 1c (§4.7) |
-| `_system/template/root/.opencode/plugins/icm-session-env.js` | canonical root asset (optional) | new | the `shell.env` bridge (§4.4a); also installed globally on Jamie's machine |
-| `_system/scripts/run-economics.sh`, `_system/scripts/model-prices.json` | icm-board | new | per-client roll-up → `workspaces/deals/<slug>/economics.md`; the price table (§4.4) |
-| `_system/scripts/vercel-env.sh` | icm-board | changed | `registry` verb regenerates `vercel-env-registry.json` from the repos' `deploy` blocks |
+| `stages/01–04`, `lanes/*` | T | changed | usage-snapshot first/last act; `report.sh announce` (or `deferred to CI`); Build verify runs `env.sh audit --changed`; Release step 4 readiness → `env.sh audit --changed`, step 9 adds `deploy-status.sh` + the `- production:` line |
+| `_shared/ci.md`, `lanes/chore`, `04_release` stop class 3 | T | changed | the revert wording; stop class 3 scoped to `migrations.reversible: true` and measured by `env.sh audit --changed` |
+| `_shared/github.md` | T | changed | lane list gains hotfix; a hotfix PR opens ready; `type:hotfix` in the label vocabulary |
+| `_system/template/claude-pipeline/skills/setup/SKILL.md` | canonical asset | new | the `/setup` command, seeded beside the router (§4.7) |
+| `_system/template/root/.opencode/plugins/icm-session-env.js` | canonical root asset (optional) | new | the `shell.env` bridge (§4.4a) |
+| `_system/template/github-workflows/{release,labels}.yaml` | reference | new | seeded once by `/setup` (`announce_from: ci` repos) |
+| `_system/template/claude/hooks/vercel-env-hydrate.sh` | canonical asset | changed | calls `.icm/scripts/env.sh pull` where the repo has it; keeps its own path otherwise |
+| `_system/scripts/vercel-env.sh` | icm-board | changed | the estate loop over each repo's `env.sh`; `registry` verb regenerates `vercel-env-registry.json` from the repos' deploy blocks |
+| `_system/scripts/run-economics.sh` | icm-board | new | per-client roll-up → `workspaces/deals/<slug>/economics.md` (§4.4) |
 | `workspaces/deals/*/DEAL.md` | icm-board | changed | `- repo: <owner/name>` header line as the join key |
-| `workspaces/deliver/stages/project/CONTEXT.md` § 1c | icm-board | changed | asks and writes `deploy` + `reporting` + `migrations`; seeds the reference workflows |
-| `_system/contracts/PIPELINE.md` | icm-board | changed | `pipeline-full` row → "reporting kinds and the reference workflows"; the file table gains the new scripts |
+| `workspaces/deliver/stages/project/CONTEXT.md` | icm-board | changed | § 1c removed; precondition "`/setup` reports OK"; § 3's "pipeline setup" rounds and § 6's P-file writing move to the `/setup` skill |
+| `workspaces/deliver/stages/conformance/CONTEXT.md` | icm-board | changed | `/icm-check` runs each repo's `setup.sh --report` where present |
+| `workspaces/start/stages/{06_repo,07_kickoff}/CONTEXT.md`, `references/kickoff-checklist.md` | icm-board | changed | `/setup` replaces `icm-check.sh --fix` and `/project § 1c` |
+| `_system/contracts/PIPELINE.md`, `_system/README.md` | icm-board | changed | `pipeline-full` row → "reporting kinds and the reference workflows"; the file table gains the new scripts and the in-repo MANIFEST |
 | `.icm/project.md` | icm-board | changed | decision **D23** recording all of the above |
-| sustentus `.github/workflows/release.yaml`, `.icm/project.json`, `project-rules.md` | repo (a separate session, Jamie's PR) | changed | calls `report.sh`; channel ids move to `project.json`; `notify.sh` removed — the first sync target, as for D20 |
+| sustentus `.github/workflows/release.yaml`, `.icm/project.json`, `project-rules.md` | repo (a separate session, Jamie's PR) | changed | calls `report.sh`; channel ids into `project.json`, `announce_from: ci`; `notify.sh` removed — the first sync target, as for D20 |
+| jamienisbet `createClientRepo` | repo (a ticket there) | changed | scaffolds the baseline from the same template — outside this session |
 
 Every T addition is a one-job script under D11 (reports, prepares, never advances); every P
-addition is configuration a repo owns. No new gate; no script crosses an existing one.
+addition is configuration a repo owns. No new gate; no script crosses an existing one; no script a
+repo carries reads anything outside the repo.
 
 ## 6. `project.json` — the expanded schema
 
@@ -406,13 +589,14 @@ addition is configuration a repo owns. No new gate; no script crosses an existin
   },
 
   "reporting": {
-    "announce":  ["github-release", "email"],
+    "announce_from": "session",
+    "announce":  ["github-release"],
     "alert":     [],
     "economics": [],
     "channels": {
+      "github-release": { "tag_prefix": "release/" },
       "slack":          { "token_env": "SLACK_BOT_TOKEN", "announce_channel_env": "SLACK_ANNOUNCE_CHANNEL_ID", "alert_channel_env": "SLACK_ALERTS_CHANNEL_ID" },
-      "email":          { "api_key_env": "RESEND_API_KEY", "from_env": "REPORT_EMAIL_FROM", "to_env": "REPORT_EMAIL_TO" },
-      "github-release": { "tag_prefix": "release/" }
+      "email":          { "api_key_env": "RESEND_API_KEY", "from_env": "REPORT_EMAIL_FROM", "to_env": "REPORT_EMAIL_TO" }
     }
   },
 
@@ -420,122 +604,160 @@ addition is configuration a repo owns. No new gate; no script crosses an existin
 }
 ```
 
-Rules that keep it honest, all already the estate's: variable *names* only, never values; a missing
-block reads as "not declared", never an error (`lib/project.sh` defaults; the old `migrations_path`
-string is still read as `migrations.path`); `alert: []` is a decision the stub asks `/project` to
-record, and it means a red job. Sustentus's block would read `announce: ["slack"]`,
-`alert: ["slack"]`, `migrations.reversible: false`, with `smoke_check` unchanged beside it.
+The seeded stub ships exactly the `reporting` block above minus the `slack`/`email` entries'
+variables being set anywhere — `github-release` works from the first merge, and adding Slack or
+email is editing two arrays. Variable *names* only, never values; a missing block reads as "not
+declared", never an error (`lib/project.sh` defaults; the old `migrations_path` string is still
+read as `migrations.path`); `alert: []` is a decision `/setup` asks about and records, and it
+means a red job. Sustentus's block reads `announce_from: "ci"`, `announce: ["slack",
+"github-release"]`, `alert: ["slack"]`, `migrations.reversible: false`, with `smoke_check`
+unchanged beside it.
 
 ## 7. Build order — one session, dependency-ordered
 
 Not stubs. Work packages for one implementation session in this repo, on one `claude/` branch,
 one PR. Each package ends with the proof in §8 that applies to it.
 
-1. **Reporting hook.** `report.sh` + the `reporting` block + the `project-rules.md` stub rewrite;
-   `notify.sh` retired from the MANIFEST; Release step 9 and the lanes call `report.sh`.
+1. **Reporting hook.** `report.sh` (three channels, `github-release` default, `announce_from`,
+   `--dry-run`) + the `reporting` block + the `project-rules.md` stub rewrite; `notify.sh` retired
+   from the MANIFEST; Release step 9 and the lanes call `report.sh`.
 2. **Deploy block and the Vercel library.** `deploy` and `migrations` in `project.json`,
    `lib/vercel.sh`, `env-check.sh` and `ci-status.sh` reading them; `lib/project.sh` defaults.
-3. **Production read at Release.** `deploy-status.sh` + the `- production:` line in step 9.
-   *Depends on 2.*
-4. **Hotfix lane and prepared rollback.** `lanes/hotfix/`, `new-run.sh --lane hotfix --ready`,
-   `resolve-run.sh` / `project-labels.sh` recognising it, `rollback.sh`, the revert-wording sweep,
-   stop class 3 scoped to `migrations.reversible`. *Depends on 2 and 3.*
-5. **Usage on the run.** `usage-snapshot.sh` with both readers, the two calls in every stage and
-   lane, `usage.md` in the archive path, the OpenCode `icm-session-env.js` plugin as a canonical
-   root asset. *Independent of 2–4.*
-6. **Economics roll-up.** `run-economics.sh`, `model-prices.json` (filled from the `claude-api`
-   skill), the `- repo:` line in every `DEAL.md`, `economics.md` shape. *Depends on 5.*
-7. **Reference workflows and onboarding.** `_system/template/github-workflows/{release,labels}.yaml`,
-   `/project` § 1c asking and writing the three blocks, `vercel-env.sh registry`. *Depends on 1, 2.*
-8. **Contracts, PIPELINE.md, D23.** The wording sweep across `PIPELINE.md`, `github.md`, `ci.md`,
-   the chore lane, and the D23 row in `.icm/project.md`; the parked `profile-wording-sweep` stub's
-   files may be touched where the same sentence is being edited anyway. *Last.*
+3. **Environment.** `env.sh` with all six verbs, the two new `.env.example` suffix tokens, the
+   Build/Release calls; `vercel-env-hydrate.sh` delegating to it; `vercel-env.sh` looping over
+   repos and gaining `registry`. *Depends on 2.*
+4. **Production read at Release.** `deploy-status.sh` + the `- production:` line. *Depends on 2.*
+5. **Hotfix lane and prepared rollback.** `lanes/hotfix/`, `new-run.sh --lane hotfix --ready`,
+   `resolve-run.sh` / `project-labels.sh`, `rollback.sh`, the revert-wording sweep, stop class 3
+   scoped to `migrations.reversible`. *Depends on 2 and 4.*
+6. **Usage on the run.** `usage-snapshot.sh` with both readers and in-repo pricing,
+   `lib/model-prices.json` from the `claude-api` skill, the two calls in every stage and lane,
+   `usage.md` in the archive path, `icm-session-env.js` as a canonical root asset. *Independent.*
+7. **Economics roll-up.** `run-economics.sh`, the `- repo:` line in every `DEAL.md`,
+   `economics.md` shape. *Depends on 6.*
+8. **`/setup`.** `.icm/MANIFEST` as a T file, `.icm/template-version`, `setup.sh` with the ten
+   sections, the `setup` skill beside the router, `/project` § 1c removed and its questions
+   re-homed, `start/06`, `07` and the kickoff checklist pointing at `/setup`, `/icm-check`
+   calling `setup.sh --report`. *Depends on 1–3 and 6 (it checks all of them).*
+9. **Reference workflows.** `_system/template/github-workflows/{release,labels}.yaml` seeded by
+   `/setup` for `announce_from: ci` repos. *Depends on 1, 8.*
+10. **Contracts, PIPELINE.md, D23.** The wording sweep across `PIPELINE.md`, `_system/README.md`,
+    `github.md`, `ci.md`, the chore lane, and the D23 row in `.icm/project.md`; the parked
+    `profile-wording-sweep` stub's files may be touched where the same sentence is being edited
+    anyway. *Last.*
 
-Sustentus adoption (its `release.yaml` → `report.sh`, ids into `project.json`, `notify.sh` removed,
-`icm-sync.sh --apply`) is **a separate session opened in that repo**, exactly as D20's first sync
-was — never from this one.
+Sustentus adoption (its `release.yaml` → `report.sh`, ids into `project.json`, `notify.sh`
+removed, `icm-sync.sh --apply`) and the dashboard's `createClientRepo` are **separate sessions in
+those repos** — never from this one.
 
 ## 8. Definition of done — what the session proves before its PR opens
 
-- `_system/scripts/self-check.sh` passes (shellcheck, contract links, ticket lint), and every new
-  script has a header in the house shape: what it does, what it never does, `Usage:`, `Verdict:`.
+- `_system/scripts/self-check.sh` passes, and every new script has a header in the house shape:
+  what it does, what it never does, `Usage:`, `Verdict:`.
 - `icm-sync.sh projects/sustentus` (dry run) lists exactly the new and changed T files and nothing
   else; `icm-check.sh --repo projects/sustentus` reports the expected drift and no missing P file
   once the stubs are seeded. Neither is applied.
+- **Self-sufficiency:** every new script under `.icm/scripts/` runs to a `RESULT:` line inside a
+  scratch clone of this repo made *outside* `~/Apps` with `HOME` pointed at an empty directory
+  and no `_system/` in reach — `report.sh --dry-run`, `env.sh audit`, `usage-snapshot.sh`,
+  `deploy-status.sh` (with no `deploy` block: `not declared`), `setup.sh` (no template source:
+  `SKIP template`). Nothing in that run reads a path outside the clone.
+- `setup.sh --fix --template <icm-board's template>` on a scratch bare repo (`git init` in the
+  scratchpad) seeds the baseline and a second run prints `RESULT: OK`; on this repo, `setup.sh`
+  prints `OK` or a named `GAPS` list, and `setup.sh --report` is byte-identical on two consecutive
+  runs.
 - `env-check.sh` on this repo: `PASS`, with the Vercel route line present when `deploy` is
   declared and `[INFO] deploy not declared` when it is not.
+- `env.sh audit` on a scratch copy of sustentus's `deploy` block (read-only, not committed there)
+  prints names-only rows per project and target and a `RESULT:`; `env.sh add TEST_KEY --targets
+  preview` with empty stdin prints the two exact commands and `RESULT: SKIP (no value on stdin)`
+  and creates nothing; `env.sh doc TEST_KEY --note "x" --ci` prints a valid `.env.example` block.
 - `usage-snapshot.sh icm-self-test scope start` then `… end`, run inside the implementing session,
   writes two lines with `harness=claude` (or `claude-cloud`), `source=transcript`, a non-zero
-  `cache_read`, and `session=$CLAUDE_CODE_SESSION_ID`; the same pair run under
+  `cache_read`, a numeric `cost_usd`, and `session=$CLAUDE_CODE_SESSION_ID`; the same pair under
   `opencode run` on Jamie's machine writes `harness=opencode source=sqlite` with the plugin
   installed and `source=skip` with `--pure`. The test run folder is deleted before the commit.
-- `run-economics.sh --repo icm-board` renders a table from those two lines and prices them from
-  `model-prices.json`, naming its `as_of` date.
-- `report.sh announce "x"` with no `reporting` block prints `RESULT: SKIPPED (no channel for
-  announce)` and exits 0; with `announce: ["email"]` and `RESEND_API_KEY` unset prints
-  `SKIPPED email: RESEND_API_KEY unset` and exits 0. Nothing is sent from the session.
-- `deploy-status.sh --sha <any recent sustentus main sha>` run read-only against sustentus's
-  `deploy` block (written on a scratch copy of its `project.json`, not committed there) prints one
-  line per product project and a `RESULT:`; `rollback.sh --sha <that sha> --vercel` prints the
+- `run-economics.sh --repo icm-board` renders a table from those lines and names the price
+  table's `as_of` date.
+- `report.sh announce "x" --dry-run` with the seeded default prints the GitHub Release payload
+  (tag `release/<today>-x`) and sends nothing; with `announce: ["email"]` and `RESEND_API_KEY`
+  unset prints `SKIPPED email: RESEND_API_KEY unset`; with `announce: []` prints
+  `SKIPPED (no channel for announce)`; all exit 0.
+- `deploy-status.sh --sha <a recent sustentus main sha>` against the scratch deploy block prints
+  one line per product project and a `RESULT:`; `rollback.sh --sha <that sha> --vercel` prints the
   rollback call and `RESULT: PREPARED` without opening anything.
 - `new-run.sh <slug> --lane hotfix --summary "x" --dry-run` prints a lane body with no gate
   anchors and the `type:hotfix` label named.
 - `validate-decisions.sh`, `validate-spec.sh` and `validate-intake.sh` are untouched and still
   `RESULT: OK` on this repo's own intake.
 - CI on the PR is green. **No local `build`, `lint`, `typecheck` or `test` was run** — CI is the
-  verdict (global rule).
+  verdict.
 
 ## 9. Constraints for the session
 
 - **Repo boundary.** Everything lands in icm-board, on one `claude/` branch, one PR. Nothing under
   `projects/` is modified — sustentus is proven against read-only, and adopts in its own session.
+- **Self-sufficiency is a hard rule.** No script, hook, skill or default a repo carries may read
+  or call anything outside that repo at runtime; the one exception is `setup.sh --template`, which
+  is explicit, optional, and reports `SKIP` when absent.
 - **Ownership.** T files carry no identity (no owner name, channel, team, path, address). P files
   are stubs the repo fills. New T files are added to the MANIFEST; nothing else can be synced.
+- **Secrets.** A value enters a script only on stdin and leaves it only toward Vercel or GitHub;
+  never argv, never stdout, never git, never a transcript. `.env.example` carries keys and prose.
 - **Doctrine.** No orchestrator (D3, D11): every script reports or prepares; nothing watches,
   retries, or crosses a gate. Gates stay two and stay human. Fix-forward stays the default.
-  `report.sh` exits 0 always. No secret or address in git; variable names only.
+  `report.sh` exits 0 always. Nothing is sent from the implementing session.
 - **Harness facts are verified, not assumed.** Where the report cites a hook signature or an
-  environment variable, the session confirms it on the installed binary before relying on it
-  (the OpenCode types have been stale before — memory note `opencode-machine-setup`).
+  environment variable, the session confirms it on the installed binary before relying on it.
 - **Prices come from the `claude-api` skill**, never from memory, and the table is dated.
 - **No stubs.** The session does not cut tickets from this document; findings it cannot finish
   become one triage stub each, in the ordinary way, named in the PR.
 
-## 10. Settled by research — the former open points
+## 10. Settled by research — the former open points, and the four flags
 
 | Point | Resolution | Evidence |
 |---|---|---|
-| **OpenCode usage source** | SQLite read, keyed by `OPENCODE_SESSION_ID` from a `shell.env` plugin; children by `parent_id`; cost as recorded. | `opencode.db` schema and rows; `@opencode-ai/plugin` 1.18.25 `index.d.ts` lines 235–248; `OPENCODE_DB` in the binary and the docs; `opencode export` and `session list --format json` shapes; `stats` is human-only. |
-| **Claude Code local source** | Transcript by `CLAUDE_CODE_SESSION_ID`; dedupe by `requestId`; subagents under `<session>/subagents/`. No `CLAUDE_ENV_FILE`. | `env` in this session; this session's transcript (113 lines / 18 requests); claude-code issues #15840, #11649 on `CLAUDE_ENV_FILE`. |
+| **Runtime dependence on icm-board (flag 1)** | None, by rule (§4.9, §9). Prices are synced as a T file so a repo prices its own lines; `setup.sh` needs a template source only to seed or sync, and says `SKIP` otherwise; the cross-repo tools stay in icm-board and are never called by a repo. | The registry is invisible to a cloud session (`vercel-env-hydrate.sh` header); a fine-grained token for a client repo cannot read icm-board. |
+| **Default announce channel (flag 2)** | `github-release`, on in the seeded stub; Slack and email are additive; `announce_from` decides the one caller. | A Release needs only the GitHub route every repo has (`lib/gh.sh`); idempotent by tag. |
+| **Setup command (flag 3)** | `/setup` + `setup.sh` seeded into every repo; `/project` § 1c removed; `.icm/MANIFEST` and `.icm/template-version` make completeness and currency answerable offline. | `/project` § 1c is four steps whose first is empty after D22 (parked stub `profile-wording-sweep`); the MANIFEST "stays in the template" today. |
+| **Template source for a bare repo** | `--template` pointing at icm-board's checkout (the common case on Jamie's machine); the dashboard scaffolds the baseline for repos it creates; a public mirror only if cloud-side bare setup is ever wanted, and that is Jamie's call. | D19: `createClientRepo` scaffolds the baseline; D20: T files carry no identity. |
+| **Env management (flag 4)** | `env.sh` in the template, driven by the deploy block, six verbs, `[ci]` and `[cloud]` suffixes; values on stdin only; `vercel-env.sh` becomes the estate loop. | `vercel-env.sh` header (three one-way flows, the convention); `vercel env add [name] [environment] < [file]` and `--sensitive` in the Vercel CLI docs; `gh secret set` reads stdin. |
+| **OpenCode usage source** | SQLite read, keyed by `OPENCODE_SESSION_ID` from a `shell.env` plugin; children by `parent_id`; cost as recorded. | `opencode.db` schema and rows; `@opencode-ai/plugin` 1.18.25 `index.d.ts` lines 235–248; `OPENCODE_DB` in the binary and the docs; `export` and `session list --format json` shapes; `stats` is human-only. |
+| **Claude Code local source** | Transcript by `CLAUDE_CODE_SESSION_ID`; dedupe by `requestId`; subagents under `<session>/subagents/`. No `CLAUDE_ENV_FILE`. | `env` in this session; this session's transcript (113 lines / 18 requests); claude-code issues #15840, #11649. |
 | **Claude Code cloud source** | Same transcript reader (`/root/.claude/projects/…`); the session record is a cross-check. | sustentus `docs/token-metrics.md` → "What was verified". |
-| **Where the usage line lives** | `runs/<slug>/usage.md`, not `run.md`. | Scope has no `run.md` at entry; `run.md` is parsed by `resolve-run.sh`, `ci-status.sh`, `close-out.sh`. |
-| **Registry vs `deploy` block** | The repo's `deploy` block is authoritative; `vercel-env-registry.json` is regenerated from it. | A cloud session cannot see `projects/` or the registry (`vercel-env-hydrate.sh` header); the block is the only copy every session can read. |
-| **GitHub Release tag and audience** | `release/<YYYY-MM-DD>-<slug>`; public entries only. | Unique per run, sortable, no counter to keep; mirrors the changelog index's `internal` rule. |
-| **Client email recipients** | Variable names (`REPORT_EMAIL_TO`, `REPORT_EMAIL_FROM`) in the repo's environment. | T files carry no identity (D12/D20); a client-owned repo must not carry Jamie's routing; the deal folder is not readable from a client repo's CI. |
+| **Where the usage line lives** | `runs/<slug>/usage.md`, not `run.md`. | Scope has no `run.md` at entry; `run.md` is parsed by three scripts. |
+| **Registry vs `deploy` block** | The repo's `deploy` block is authoritative; the registry is regenerated from it. | A cloud session cannot see `projects/` or the registry; the block is the only copy every session can read. |
+| **GitHub Release tag and audience** | `release/<YYYY-MM-DD>-<slug>`; public entries only. | Unique per run, sortable, no counter; mirrors the changelog index's `internal` rule. |
+| **Client email recipients** | Variable names (`REPORT_EMAIL_TO`, `REPORT_EMAIL_FROM`) in the repo's environment, `[ci]`-scoped in `.env.example`. | T files carry no identity (D12/D20); a client-owned repo must not carry Jamie's routing. |
 | **Hotfix cadence on sustentus** | Opens ready; the first ready push builds all three product apps and that cost is accepted on an incident. | sustentus `project-rules.md` → "the first ready push always builds all three"; decision 4. |
-| **Forward-only migrations vs stop class 3** | `migrations.reversible` in `project.json`; stop class 3 reads "a migration without a working `down` *where the repo's migrations are reversible*"; `rollback.sh` warns when they are not. | `db-migrate.yaml` ("forward-only and idempotent") against `04_release` stop class 3 — a contradiction the reference repo already lives with. |
-| **`economics` as a kind** | Kept; maps to no channel by default; no digest templated. | The daily digest is sustentus-only and reads Slack canvases; the kind is the hook if that ever generalises. |
+| **Forward-only migrations vs stop class 3** | `migrations.reversible` in `project.json`; stop class 3 scoped to reversible repos; `rollback.sh` warns when not. | `db-migrate.yaml` ("forward-only and idempotent") against `04_release` stop class 3. |
+| **`economics` as a kind** | Kept; maps to no channel by default; no digest templated. | The daily digest is sustentus-only. |
 | **Alert channel** | Abstracted (§4.0); "none" is a red job plus Vercel's email. | Jamie's correction, 2026-09-22. |
 
 **Operator actions the session cannot do**, listed so nothing is left implicit: paste
 `VERCEL_TOKEN` (and per-team tokens) into the cloud environment panels and GitHub secrets where
-`deploy-status.sh` or a reference workflow will run; set `REPORT_EMAIL_*`, `RESEND_API_KEY` and
-the Slack variables per repo; install `icm-session-env.js` into `~/.config/opencode/plugins/`
-(uncommitted, like its siblings); add `type:hotfix` to each repo's `.github/labels.yml` on
-adoption.
+`deploy-status.sh`, `env.sh` or a reference workflow will run; set `REPORT_EMAIL_*`,
+`RESEND_API_KEY` and the Slack variables per repo (`env.sh add … --ci` does the mechanics once
+the value is on stdin); install `icm-session-env.js` into `~/.config/opencode/plugins/`; add
+`type:hotfix` to each repo's `.github/labels.yml` on adoption; decide whether the template is
+ever mirrored publicly.
 
 ## 11. What this deliberately does not change
 
 - **Never build an orchestrator.** Every new script reports or prepares: `deploy-status.sh` looks
-  once, `rollback.sh` writes a PR and a command, `usage-snapshot.sh` appends a line, `report.sh`
-  sends what a human-authorised merge produced. Nothing watches, nothing retries, nothing crosses a
-  gate (D3, D11).
+  once, `rollback.sh` writes a PR and a command, `usage-snapshot.sh` appends a line, `env.sh`
+  creates only what a human handed it on stdin, `setup.sh` seeds only what is missing,
+  `report.sh` sends what a human-authorised merge produced. Nothing watches, nothing retries,
+  nothing crosses a gate (D3, D11).
 - **Gates stay human, and stay two.** Decision 1 keeps the business out of the PR; the hotfix
   lane's gate is the merge button like every lane.
 - **Fix-forward stays the default.** A revert becomes *available*, prepared and named, and is
   still the operator's click.
-- **T files carry no identity.** Channels, teams, tokens and addresses are variable names in P
-  files; the contracts say "see `_shared/project-rules.md` → Reporting" (D12, D20).
+- **T files carry no identity, and no repo reaches outside itself.** Channels, teams, tokens and
+  addresses are variable names in P files; the contracts say "see `_shared/project-rules.md` →
+  Reporting" (D12, D20); the cross-repo tools stay in icm-board and are never called from a repo.
 - **CI is the verdict; reporting is never a gate.** `report.sh` exits 0 always; the red job is the
   alert, not a blocker.
+- **Drift is reported, never repaired**, except the one human-invoked sync (D20) — `setup.sh
+  --fix` seeds and never overwrites, exactly as `icm-check.sh --fix` does.
 - **Sustentus stays the reference and the first sync target**, exactly as D20 did it.

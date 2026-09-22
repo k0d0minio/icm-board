@@ -26,6 +26,10 @@
 # The lane body carries neither anchor by design; the "missing gate:ready-to-merge anchor is
 # malformed" rule applies to spine PRs only.
 #
+# Before anything is created it reads this run's `- touches:` against every live run's spec and
+# prints `[WARN] overlaps <slug> on <path>` per shared surface (decision D26) — a warning for the
+# operator, never a refusal; the cut is where overlap is avoided, and Build merges main early.
+#
 # --dry-run prints the PR body this call would open (the spine body straight from
 # project-body.sh, or the lane body) and creates NOTHING: no branch, no commit, no push, no PR,
 # no run.md, no labels, no stub move. It needs no GitHub credential. Use it to check the layout.
@@ -56,7 +60,7 @@
 # Verdict (stdout, last line):
 #   RESULT: CREATED   exit 0  — run committed, PR opened + labelled, run.md written/extended,
 #                              stub consumed (if given). The PR URL is echoed above the verdict.
-#   (--dry-run: stdout is the body and nothing else — no verdict line — so it can be piped.)
+#   (--dry-run: stdout is the body and nothing else, so it can be piped; `RESULT: DRY-RUN` goes to stderr.)
 set -euo pipefail
 
 command -v curl >/dev/null || { echo "curl not found" >&2; exit 1; }
@@ -197,12 +201,46 @@ EOF
   [ "$ready_flag" -eq 0 ] || draft=false
 fi
 
+# --- overlap with a live run (D26): warn, never refuse ----------------------------------------------------
+# Runs are cut for disjoint surfaces. Read this run's `- touches:` (the spec's header on the spine,
+# the stub's Notes-for-Define guess in a lane) and every LIVE run's spec (`.icm/runs/*/02_define/
+# output/spec.md`, the archive excluded — the same set resolve-run.sh adopts from), and print one
+# [WARN] per shared path. A warning is information for the operator who cuts and merges; the
+# scaffold proceeds regardless, and --dry-run shows it too.
+
+touches_of() { # <file> → one path per line from its `- touches:` line
+  [ -f "$1" ] || return 0
+  grep -m1 -E '^-[[:space:]]*touches:' "$1" | sed -E 's/^-[[:space:]]*touches:[[:space:]]*//' \
+    | tr ',' '\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g; s/`//g' | grep -v '^$' || true
+}
+my_touches=""
+if [ -n "$spec" ]; then my_touches="$(touches_of "$spec")"
+elif [ -n "$stub" ]; then my_touches="$(touches_of "$stub"; [ -f "$stub" ] && grep -oE 'touches:[^\n]*' "$stub" | head -1 | sed -E 's/^touches:[[:space:]]*//' | tr ',' '\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g; s/`//g' | grep -v '^$' || true)"; fi
+if [ -n "$my_touches" ]; then
+  for other_spec in "$repo_root"/.icm/runs/*/02_define/output/spec.md; do
+    [ -f "$other_spec" ] || continue
+    other_slug="$(basename "$(dirname "$(dirname "$(dirname "$other_spec")")")")"
+    [ "$other_slug" = "$slug" ] && continue
+    while IFS= read -r mine; do
+      [ -n "$mine" ] || continue
+      while IFS= read -r theirs; do
+        [ -n "$theirs" ] || continue
+        # A shared path, or one that contains the other (apps/web vs apps/web/app/x).
+        case "$mine" in "$theirs"|"$theirs"/*) hit=1 ;; *) case "$theirs" in "$mine"/*) hit=1 ;; *) hit=0 ;; esac ;; esac
+        [ "$hit" -eq 1 ] && echo "[WARN] overlaps $other_slug on $mine — two live runs on one surface; sequence them, or merge $other_slug first (D26)" >&2
+      done <<< "$(touches_of "$other_spec")"
+    done <<< "$my_touches"
+  done
+fi
+
 # --- --dry-run: print the body, create nothing ------------------------------------------------------
 
 if [ "$dry_run" -eq 1 ]; then
   label_note="type:feature"; [ -z "$lane" ] || label_note="type:$lane"
   echo "dry run — printing the ${lane:+$lane-lane }PR body for '$slug' (branch $branch, base $base, $([ "$draft" = true ] && echo draft || echo READY), label $label_note); nothing created" >&2
   printf '%s\n' "$body"
+  # The verdict goes to stderr so stdout stays the body alone (pipeable, as the header promises).
+  echo "RESULT: DRY-RUN" >&2
   exit 0
 fi
 

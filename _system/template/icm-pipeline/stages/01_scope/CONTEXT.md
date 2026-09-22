@@ -121,8 +121,15 @@ glossary to follow, rewrite it.
    - **Strict build order.** Every stub gets a unique `sequence: n of m`, contiguous `1..m`; the
      order is a topological linearization of `depends-on` (a stub's number always exceeds every
      in-batch stub it depends on). Where the graph allows parallelism, still pick a deterministic
-     tie-break (foundation first, then impact) and capture the parallel shape under
-     `## Parallelizable`.
+     tie-break (foundation first, then impact).
+   - **`## Parallelizable` is derived from `touches:`, not asserted (D26).** Give every stub a
+     `touches:` guess in its `Notes for Define`; a parallel set holds only stubs whose guesses do
+     not overlap, and two stubs that share a surface are sequenced. **Shared-file stubs first**:
+     the dependency manifest and lockfile, the schema and migrations journal, the app layouts,
+     the message catalogues — the files that conflicted most in the estate's history — go at the
+     head of the build order so every later stub merges over them
+     (`.icm/intake/CONTEXT.md` → Formats). Build merges `origin/main` before its ready flip and
+     `new-run.sh` warns on an overlap with a live run; the cut is where the overlap is avoided.
    - **Trace decisions.** Where a stub rests on a decision, name its `D-n` in `Notes for Define`;
      where it rests on an open point, copy that point into `Notes for Define` too.
    - **`breakdown.md` leads with What I understood**, so a misread is caught before the stubs:

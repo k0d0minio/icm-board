@@ -142,8 +142,12 @@ name throughout. It is also the isolation boundary (D22): a run writes only unde
 `.icm/runs/<slug>/<stage>/`, on its own branch, in a working tree no other live run
 shares — `_shared/stage-preamble.md` → Run-scoped isolation states the rule and every
 stage and lane restates it in its Outputs. That, not a lock or a scheduler, is what lets
-runs be in flight in parallel; the migration check in Release is the one place parallel
-runs can still collide without git noticing.
+runs be in flight in parallel. **Runs are cut for disjointness (D26):** `## Parallelizable`
+is derived from the stubs' `touches:` guesses (no shared surface in a parallel set; the
+shared-file stubs — lockfile, schema and migrations journal, layouts, message catalogues —
+first in the build order), Build merges `origin/main` before its ready flip, and
+`new-run.sh` warns on an overlap with a live run. The migration check in Release is the one
+place parallel runs can still collide without git noticing.
 
 ## Gates — human checkboxes in the PR body
 
@@ -185,7 +189,7 @@ for every key.
 | `validate-spec.sh <slug\|path>` | spec structure: header fields, five sections, criteria-are-checkboxes | `OK` 0 · `INVALID` 2 |
 | `validate-intake.sh <epic\|path>` | the cut's bookkeeping: sequences contiguous, depends-on ordered, build order agrees; triage stubs lane-tagged | `OK` 0 · `SKIP` 0 · `INVALID` 2 |
 | `validate-decisions.sh <slug\|path>` | every `\| D-n \|` row of the scope's Decisions table appears in `spec.md` and `notes.md` (the front's own, or the front of the epic behind the stub); a file not yet written is "not yet", never a failure | `OK` 0 · `SKIP` 0 · `MISSING n` 2 |
-| `new-run.sh <slug> --summary "…" [--stub …] [--lane …] [--ready]` | commit run → consume stub → push → open the one PR (draft on the spine and in bug/tweak/chore/handover; **ready** for a hotfix or with `--ready`), body from `project-body.sh`; labels `type:<lane>` | `CREATED` 0 |
+| `new-run.sh <slug> --summary "…" [--stub …] [--lane …] [--ready]` | commit run → consume stub → push → open the one PR (draft on the spine and in bug/tweak/chore/handover; **ready** for a hotfix or with `--ready`), body from `project-body.sh`; labels `type:<lane>`; **warns** `[WARN] overlaps <slug> on <path>` when this run's `touches:` shares a surface with a live run (D26) — never refuses | `CREATED` 0 |
 | `project-body.sh <slug> [--apply]` | the one implementation of the spine PR body, projected from `spec.md`; `--apply` PATCHes it in place and resets both gate anchors | `APPLIED` 0 |
 | `project-labels.sh <slug> --stage <…\|auto>` | project `type`/`stage`/`complexity` from the spec header onto the run's PR (PUT replaces the whole set) — spine runs only | `APPLIED` 0 |
 | `ci-status.sh <slug> \| --pr <n>` | block until CI settles; reads check runs **and** commit statuses, dedupes by newest attempt, re-reads the head each pass; required names from `required_checks`, a conditional smoke from `smoke_check` | `GREEN` 0 · `RED` 3 · `PENDING` 4 |
@@ -194,7 +198,7 @@ for every key.
 | `env-check.sh [--fix]` | pre-flight: binaries, a GitHub route, `required_env`, `complexity`, the folder shape, executable bits (repaired only with `--fix`), a UTF-8 locale | `PASS` 0 · `FAIL` 1 |
 | `select-model.sh <epic/slug \| stub \| path>` | a stub's, scope's or spec's `complexity` → the model to open the session on (`low`/`medium` → `sonnet`, `high` → `opus`, `research` → `fable`; an explicit `recommended-model` wins). **Prints a recommendation; launches nothing** | `MODEL <alias>` 0 · `INVALID` 2 |
 | `check-migrations.sh [--apply]` | Release step 7, after `main` is merged in: are this run's `YYYYMMDDHHMMSS_*.sql` migrations still newer than `main`'s? Reports; `--apply` re-stamps every local one in order (renames, never commits, never touches a migration `main` has) | `OK` 0 · `SKIP` 0 · `STALE n` 2 · `RESTAMPED n` 0 |
-| `process-raw.sh [--dry-run]` | `.icm/raw/` → `.icm/processed/`: extract text with **local** tools only (email, chat export, PDF, deck, recording, image), log `manifest.json`, archive the original to `raw/_processed/`, park one triage **pointer** stub per asset — it never scopes, cuts or sequences | `PROCESSED n` 0 · `DRY-RUN n` 0 · `EMPTY` 0 |
+| `process-raw.sh [--dry-run]` | `.icm/raw/` → `.icm/processed/`: extract text with **local** tools only (email, chat export, PDF, deck, image; **audio and video** through ffmpeg + whisper.cpp — `SKIP` with the install hints when either is absent, the recording never uploaded and never committed), log `manifest.json` (extractor, model, language for a transcription), archive the original to `raw/_processed/`, park one triage **pointer** stub per asset — it never scopes, cuts or sequences | `PROCESSED n` 0 · `DRY-RUN n` 0 · `EMPTY` 0 |
 | `deploy-status.sh <slug> \| --sha <sha>` | Release step 9, **once**: the merge commit's production deployment per `deploy.projects[]`, waited for (bounded), with the previous READY id — the `- production:` line | `READY` 0 · `ERROR <p>` 3 · `PENDING` 4 · `SKIP` 0 (no deploy block) |
 | `rollback.sh <slug> \| --sha <sha> [--revert] [--vercel]` | **prepares** a recovery: a `claude/hotfix-revert-<slug>` branch + the hotfix PR (through `new-run.sh`), and/or the previous READY deployment with the exact CLI/REST rollback call — printed, never called; warns when the merge carried a migration and `migrations.reversible` is false | `PREPARED …` 0 · `DRY-RUN` 0 · `SKIP` 0 |
 | `usage-snapshot.sh <slug> <stage> start\|end` · `--report <slug>` | appends one cumulative `- usage:` line to the run's `usage.md` from the harness's own store (Claude Code transcript · OpenCode SQLite), priced in-repo from `lib/model-prices.json`; never estimates, never blocks | `RECORDED` 0 · `SKIP (<why>)` 0 · `REPORT` 0 |

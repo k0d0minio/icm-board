@@ -69,7 +69,9 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
   runs/README.md                 ← the repo's own note on its runs                     (P)
   raw/README.md  raw/_processed/.gitkeep  processed/.gitkeep
                                  ← the drop folder for what a client sent, its archive,
-                                    and where process-raw.sh writes the extracted text (T)
+                                    and where process-raw.sh writes the extracted text —
+                                    recordings transcribed locally (ffmpeg + whisper.cpp),
+                                    never committed                                    (T)
   scripts/lib/{gh,changed-files,project,vercel}.sh  scripts/lib/model-prices.json     (T)
   scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
            project-body,project-labels,ci-status,close-out,triage-report,env-check,

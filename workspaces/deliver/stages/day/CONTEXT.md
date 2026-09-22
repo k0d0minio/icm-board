@@ -61,6 +61,10 @@ longest-waiting P1 triage stubs · active repos with nothing ticketed.
   ```
 
   If Jamie wants more than 10, push back once (a diluted list is no list), then obey.
+- *Disjointness (D26):* when two of today's picks in the same repo name overlapping
+  `touches:` guesses (a stub's `Notes for Define`, or a live run's `spec.md`), say so in
+  one line beside the list — the pair is sequenced, not run in parallel; `new-run.sh`
+  will warn again when the second is cut. Say it, never reorder silently.
 - *Week:* walk priorities and build orders — what is genuinely P0/P1 now, what demotes,
   what dies. Dead stubs to their epic's `_done/` with `> Dropped: <reason, date>`, per
   Jamie's call.

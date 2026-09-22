@@ -109,17 +109,31 @@ everything except the source files you actually edit. Record overruns on a one-l
      as green, and never read the verdict off a Vercel deployment event — those arrive per push
      and none of them is the verdict.
 
-10. **Flip ready, then push.** `update_pull_request`, `draft: false` (per `_shared/github.md`),
+10. **Bring `main` in before the flip — a merge commit, never a rebase (D26).**
+
+    ```bash
+    git fetch origin main && git merge --no-edit origin/main
+    ```
+
+    Runs are cut for disjoint surfaces, but `main` has moved since this branch was cut, and
+    the place to meet it is here — on the cheap tier, before the full gate and the previews
+    spend anything — not at Release step 7, where a conflict costs a full gate and a smoke.
+    Resolve conflicts on this branch; **a conflict inside `.icm/runs/<slug>/` itself is a
+    STOP** (someone else wrote to this run — the preamble's run-folder rule). Release's step
+    7(a) stays as the final merge and is usually a no-op after this. A merge that changed
+    code takes the cheap tier again: re-run step 9's `ci-status.sh` before flipping.
+
+11. **Flip ready, then push.** `update_pull_request`, `draft: false` (per `_shared/github.md`),
     **then push** — an empty commit (`git commit --allow-empty -m "chore: <slug> — ready"`) when
     nothing is pending. The flip itself produces no push, and previews build per push: the
     post-flip push is what makes the full-tier run and the affected product-app previews
     materialise on a fresh head, so the full verdict can never rest on a stale draft-era green.
     Open means "reviewable"; it is not the merge authorisation.
-11. **Settle the full verdict on the post-flip head** — the same `ci-status.sh <slug>` call, which
+12. **Settle the full verdict on the post-flip head** — the same `ci-status.sh <slug>` call, which
     now reports the **full gate**: the checks the repo adds on a ready head
     (`_shared/project-rules.md` → The factory) and the affected product-app previews with their
     URLs. RED here is still yours to fix.
-12. **Stop.** Last act: `.icm/scripts/usage-snapshot.sh <slug> build end`. Tell the user Build
+13. **Stop.** Last act: `.icm/scripts/usage-snapshot.sh <slug> build end`. Tell the user Build
     is done, the PR is open **with the full gate green**, and pass on the preview URLs the
     script listed. The path onward is: smoke-test those previews, tick **Ready to merge**, then
     `/pipeline release <slug>` — the tick attests the manual testing, so nothing after it

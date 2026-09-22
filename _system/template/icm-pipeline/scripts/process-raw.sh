@@ -33,9 +33,15 @@
 #   email    eml                                             python3 (headers + the text body; attachments named)
 #   pdf      pdf                                             pdftotext -layout (poppler)
 #   office   docx pptx odt odp                               python3 (zip + XML; slides numbered, notes kept)
-#   audio    ogg opus m4a mp3 wav aac amr flac mp4 mov webm  $ICM_TRANSCRIBE_CMD <file> → stdout, else `whisper`
-#            (minutes per recording, so a dry run names the tool without running it; whisper fetches
-#            its MODEL once on first use — the recording itself is only ever read locally)
+#   audio    ogg opus m4a mp3 wav aac amr flac                ffmpeg → 16 kHz mono wav → whisper-cli (whisper.cpp)
+#   video    mp4 mov webm mkv                                  the same: the audio track is extracted first
+#            Both need ffmpeg AND whisper.cpp's `whisper-cli` (WHISPER_BIN overrides the binary name,
+#            WHISPER_MODEL the model path — default ~/.local/share/whisper/ggml-base.bin; WHISPER_LANG
+#            an optional language flag). Either absent → `SKIP <id>: needs ffmpeg and whisper.cpp
+#            (whisper-cli)` with the install hints, exit 0. $ICM_TRANSCRIBE_CMD <file> → stdout still
+#            wins when set. Minutes per recording, so a dry run names the tool without running it; the
+#            manifest records extractor `whisper.cpp`, the model file's basename and the language flag.
+#            The recording itself is only ever read locally, and is NEVER committed (raw/README.md).
 #   image    png jpg jpeg webp tif tiff                      tesseract
 # An extraction that yields no text (a scanned PDF, a silent recording) is a skip, not a success.
 #
@@ -184,19 +190,31 @@ extract() {
       kind="office"; extractor="python3 zipfile"
       command -v python3 >/dev/null 2>&1 || { why="python3 not found"; return 3; }
       py_extract office "$f" > "$tmp" 2>/dev/null || { why="python3 could not read it as a $ext"; return 3; } ;;
-    ogg|opus|m4a|mp3|wav|aac|amr|flac|mp4|mov|webm)
-      kind="audio"
+    ogg|opus|m4a|mp3|wav|aac|amr|flac|mp4|mov|webm|mkv)
+      case "$ext" in mp4|mov|webm|mkv) kind="video" ;; *) kind="audio" ;; esac
+      local wbin="${WHISPER_BIN:-whisper-cli}" wmodel="${WHISPER_MODEL:-$HOME/.local/share/whisper/ggml-base.bin}"
       if [ -n "${ICM_TRANSCRIBE_CMD:-}" ]; then extractor="ICM_TRANSCRIBE_CMD"
-      elif command -v whisper >/dev/null 2>&1; then extractor="whisper"
-      else why="no local transcriber (set ICM_TRANSCRIBE_CMD, or install whisper) — a recording is never uploaded to be read"; return 3
+      elif command -v ffmpeg >/dev/null 2>&1 && command -v "$wbin" >/dev/null 2>&1 && [ -f "$wmodel" ]; then extractor="whisper.cpp"
+      else
+        local missing=""
+        command -v ffmpeg >/dev/null 2>&1 || missing="ffmpeg (brew install ffmpeg | apt install ffmpeg)"
+        command -v "$wbin" >/dev/null 2>&1 || missing="${missing:+$missing, }whisper.cpp's $wbin (brew install whisper-cpp, or build github.com/ggml-org/whisper.cpp; WHISPER_BIN names another binary)"
+        [ -f "$wmodel" ] || missing="${missing:+$missing, }the model at $wmodel (download ggml-base.bin from whisper.cpp's models; WHISPER_MODEL names another)"
+        why="needs ffmpeg and whisper.cpp (whisper-cli) — missing: $missing — a recording is never uploaded to be read"; return 3
       fi
       # A transcription takes minutes, not milliseconds: a dry run names the tool and stops there.
       [ "$dry" -eq 0 ] || return 4
-      if [ "$extractor" = "whisper" ]; then
+      if [ "$extractor" = "whisper.cpp" ]; then
         local wd; wd="$(mktemp -d)"
-        whisper "$f" --output_format txt --output_dir "$wd" >/dev/null 2>&1 \
-          && cat "$wd"/*.txt > "$tmp" 2>/dev/null || { rm -rf "$wd"; why="whisper failed on it"; return 3; }
+        # 16 kHz mono PCM is what whisper.cpp reads; the video kinds lose their picture here.
+        ffmpeg -nostdin -loglevel error -y -i "$f" -ar 16000 -ac 1 -c:a pcm_s16le "$wd/in.wav" </dev/null \
+          || { rm -rf "$wd"; why="ffmpeg could not extract a 16 kHz mono track from it"; return 3; }
+        local wargs=(-m "$wmodel" -f "$wd/in.wav" -otxt -of "$wd/out" -np)
+        [ -z "${WHISPER_LANG:-}" ] || wargs+=(-l "$WHISPER_LANG")
+        "$wbin" "${wargs[@]}" >/dev/null 2>&1 && [ -f "$wd/out.txt" ] && cat "$wd/out.txt" > "$tmp" \
+          || { rm -rf "$wd"; why="$wbin failed on it"; return 3; }
         rm -rf "$wd"
+        extractor="whisper.cpp ($(basename "$wmodel")${WHISPER_LANG:+, lang=$WHISPER_LANG})"
       else
         # shellcheck disable=SC2086
         $ICM_TRANSCRIBE_CMD "$f" > "$tmp" 2>/dev/null || { why="\$ICM_TRANSCRIBE_CMD failed on it"; return 3; }
@@ -208,6 +226,9 @@ extract() {
     *)
       kind="unknown"; why="no extractor for '.${ext:-no extension}' — convert it to one of the kinds in the header"; return 3 ;;
   esac
+  # A recording may legitimately transcribe to nothing (a silent two seconds); it is still
+  # processed — an empty transcript is a fact, and the original is archived beside it.
+  case "$kind" in audio|video) return 0 ;; esac
   grep -q '[^[:space:]]' "$tmp" 2>/dev/null || { why="$extractor extracted no text (a scan with no text layer? a silent recording?)"; return 3; }
   return 0
 }
@@ -288,12 +309,17 @@ STUB
   fi
 
   [ -f "$manifest" ] || echo '{"version":1,"entries":[]}' > "$manifest"
+  # The transcription kinds record the model and the language flag beside the extractor name.
+  wmodel_base=""; wlang=""
+  case "$extractor" in "whisper.cpp ("*) wmodel_base="$(basename "${WHISPER_MODEL:-$HOME/.local/share/whisper/ggml-base.bin}")"; wlang="${WHISPER_LANG:-}"; extractor="whisper.cpp" ;; esac
   jq --arg id "$id" --arg source "$rel" --arg sha "$sha" --arg kind "$kind" --arg ex "$extractor" \
      --argjson bytes "$bytes" --argjson chars "$chars" --arg at "$stamp" \
      --arg text "$out/$id.txt" --arg arch "$archive/$id.$ext" --arg stub "$stub_path" \
+     --arg model "$wmodel_base" --arg lang "$wlang" \
      '.entries += [{id: $id, source: $source, sha256: $sha, kind: $kind, extractor: $ex,
                     bytes: $bytes, chars: $chars, processed_at: $at, text: $text,
-                    archived: $arch, stub: (if $stub == "" then null else $stub end)}]' \
+                    archived: $arch, stub: (if $stub == "" then null else $stub end)}
+                   + (if $model == "" then {} else {model: $model, language: (if $lang == "" then null else $lang end)} end)]' \
      "$manifest" > "$manifest.tmp" && mv "$manifest.tmp" "$manifest"
 
   echo "  processed  $rel → $out/$id.txt ($kind via $extractor, $chars chars)"

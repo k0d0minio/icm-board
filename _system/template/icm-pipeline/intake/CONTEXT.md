@@ -59,7 +59,8 @@ no breakdown, no sequence, never walked by `/pipeline new`, never archived.
 
 ## Parallelizable
 
-<Optional — the dependency shape behind the linear order. Omit if a plain chain.>
+<Derived, never asserted (decision D26): a parallel set holds only stubs whose `touches:`
+guesses do not overlap; omit if a plain chain. See "Parallelizable is derived" below.>
 
 ## Out of scope (whole scope)
 
@@ -102,6 +103,18 @@ fields map mechanically onto Define's `spec.md`.
 <scope-level decisions Define must honour (name the `D-n` behind each) and any point left under
 `## Open for Define` in scope.md that lands here; optional `touches:` guess>
 ```
+
+**`## Parallelizable` is derived from `- touches:`, never asserted (decision D26).** Runs
+are cut for disjointness: a parallel set contains only stubs whose optional `touches:`
+guesses (in `Notes for Define`) do not overlap; two stubs that share a surface are sequenced,
+not parallelised. **The shared-file stubs go first in the build order** — the ones that touch
+the dependency manifest and lockfile (`pnpm-lock.yaml` conflicted 120 times in sustentus's
+last 300 commits, more than every other file combined), the schema and the migrations
+journal (`schema.ts` and `meta/_journal.json` lead remi-ai's list), the app layouts
+(`app/**/layout.tsx`) and the message catalogues — because every later stub merges over
+them. A stub with no `touches:` guess is sequenced after the ones that have one. Nothing
+here is a script: Scope reads the guesses and writes the section; `new-run.sh` warns when a
+new run's `touches:` overlaps a live run's; the operator decides.
 
 **`complexity` and `recommended-model` are optional, and older stubs carry neither.** Where they are
 present, `.icm/scripts/select-model.sh <epic>/<feature-slug>` reads them and prints the model the

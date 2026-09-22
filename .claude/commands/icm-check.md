@@ -9,3 +9,5 @@ Read [`workspaces/deliver/stages/conformance/CONTEXT.md`](../../workspaces/deliv
 and follow it exactly — **the stage contract is the process**; this file only routes.
 Where a repo carries `.icm/scripts/setup.sh`, the contract runs that repo's `setup.sh
 --report` — its own answer to "complete, current, configured" — rather than re-deriving it.
+Every repo drift-reports the template's canonical assets (ticket-craft, `intake/README.md`)
+until its own PR carries the new bytes — that is the D7 rule working, not a fault.

@@ -70,8 +70,8 @@ machine lacks (pandoc, whisper.cpp, a Vercel token) are recorded as `SKIP`, not 
 | Proof | Result |
 |---|---|
 | `validate-deal.sh --all` | `alix-hahusseau/berceo-platform` **OK** · `billy-carlson/vinecliff-site` **OK** · `casey-hebbel/opening-night` **OK** · `diogo-rita/agorasim-v1` **OK** · `magali/collabimmo-followon` **OK** · `alex-valexo`, `dragon`, `jerome`, `karen`, `remi`, `rui-matias`, `sustentus`: `RESULT: SKIP (no engagement)`. No DRIFT on any adopted artefact |
-| `render-deal.sh alix-hahusseau/berceo-platform` | `RESULT: SKIP (pandoc not found)` — install hint printed; exit 0 |
-| `render-deal.sh` on an engagement with no `04-` file | exit 2 with the missing-artefact line |
+| `render-deal.sh alix-hahusseau/berceo-platform 04-devis-berceo.md` | `RESULT: SKIP (pandoc not found — install it: brew install pandoc \| apt install pandoc)`; the markdown named as the deliverable meanwhile; exit 0 |
+| `render-deal.sh magali/collabimmo-followon 04-proposal.md` (no such file) | `no such artefact: workspaces/deals/magali/collabimmo-followon/04-proposal.md`, exit 2 |
 | The three forms under the dashboard's grammar | scratchpad node script over the parser (`node --experimental-strip-types`, not committed): `intake-diagnostic` 8 questions · `onboarding` 8 · `content-and-brand` 11 — all parse |
 | Dead-link scan over the moved files | clean (alix's relative links re-pointed one level deeper) |
 

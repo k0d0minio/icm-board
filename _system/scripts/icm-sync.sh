@@ -129,8 +129,10 @@ while IFS= read -r f; do
   rel="${f#"$ICM_TARGET"/}"
   grep -qxF "$rel" "$list" || retired="${retired:+$retired$'\n'}    $rel"
 done < <(find "$ICM_TARGET/stages" "$ICM_TARGET/lanes" -name 'CONTEXT.md' 2>/dev/null | sort)
-# Files the template retired by name — replaced, never deleted here.
-for r in scripts/notify.sh; do
+# Files the template retired by name — replaced, never deleted here. One entry today; the
+# array is the list future retirements join.
+retired_by_name=(scripts/notify.sh)
+for r in "${retired_by_name[@]}"; do
   [ -e "$ICM_TARGET/$r" ] && retired="${retired:+$retired$'\n'}    $r   ← retired (report.sh replaces it)"
 done
 if [ -n "$retired" ]; then

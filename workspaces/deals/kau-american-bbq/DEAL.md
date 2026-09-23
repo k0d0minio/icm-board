@@ -1,6 +1,6 @@
 # Rui Matias (Kau) — client
 
-- client: rui-matias
+- client: kau-american-bbq
 - company: Kau
 - contacts: Rui
 - repo: k0d0minio/kau-american-bbq
@@ -20,6 +20,7 @@
   `01-intake.md` is reconstructed. The stage runs forward from here — qualification
   verdict and the next reply are its job.
 - 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
+- 2026-09-23 — folder renamed from `rui-matias` to `kau-american-bbq`: the slug is now the repo name (Jamie's decision, 2026-09-23; decision D27).
 
 ## Notes (adopted)
 

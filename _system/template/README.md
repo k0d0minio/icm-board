@@ -116,7 +116,7 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
                                     notify.sh is RETIRED — reported by icm-sync.sh for git rm
 claude-pipeline/                 → copied to <repo>/.claude/        (every repo — D22)
   skills/pipeline/SKILL.md       ← the /pipeline router (seeded; drift-reported)
-  skills/setup/SKILL.md          ← /setup: the report, the questions, the P files
+  skills/setup/SKILL.md          ← /setup: the report, the questions, the P files (seeded; drift-reported)
 github-pipeline/                 → copied to <repo>/.github/        (every repo — D22)
   pull_request_template.md       ← carries both gate anchors
   workflows/{release,labels}.yaml ← REFERENCE workflows: seeded ONCE by /setup into a repo

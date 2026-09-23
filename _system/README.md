@@ -149,8 +149,12 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
 - **Redirect files, not copies**, for cross-layer references — except where a repo must
   stand alone in a cloud session, which is why `.icm/intake/README.md` is a deliberate
   micro-copy.
-- **Ticket-only commits go straight to `main`** (planning is data); code goes through a
-  PR on a `claude/` branch.
+- **Ticket state goes through a ticket PR into the repo's ticket base branch** — the UAT
+  branch where one is declared, else `main` — merged at once by the session that opened it
+  once its path guard (`.icm/intake/**`) holds; code goes through a PR on a `claude/`
+  branch that the operator merges. **icm-board alone** commits its tickets (`Plan:`/`Wrap:`)
+  and deals (`Deal:`) straight to `main`: no UAT branch, nothing to drift (D37; the
+  canonical `pr-conventions` skill → The ticket PR).
 - **No secrets in git, ever** — env vars only; flag any plaintext credential found. Deal
   folders record that access exists, never its value.
 - **`settings.local.json` is the accretion layer**; `settings.json` stays clean policy.

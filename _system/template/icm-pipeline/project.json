@@ -39,7 +39,7 @@
     "mongodb": {
       "name_env": "MONGODB_DATABASE_NAME", "production_name": "", "preview_name": "",
       "seed_command": "", "migrate_command": "", "migrations_collection": "migrations",
-      "previews": "none", "limits": { "databases": 100, "collections": 500 }
+      "previews": "none", "limits": { "databases": 100, "collections": 500, "name_bytes": 38 }
     }
   },
 

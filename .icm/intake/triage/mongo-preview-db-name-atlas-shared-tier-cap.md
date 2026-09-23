@@ -39,6 +39,20 @@ In `_system/template/icm-pipeline/scripts/lib/db-name.mjs`:
 - Re-derive `preview_claude_sentry_web_instrumentation` under the new cap and confirm it lands
   under 38 bytes with the hash suffix, then re-run PR #1150's `Migrate preview database` step.
 
+## Progress
+
+- 2026-09-23, night: fix up as k0d0minio/icm-board#64 (D37 — `limits.name_bytes`, default 38; the
+  CLI reads it from `project.json`), CI green, **unmerged** (merging is Jamie's call). Synced from
+  its branch (stamp `be76910`) as sustentus/sustentus#1152, **unmerged**. That PR's own branch
+  proved the copy on the real cluster: `claude/sync-template-d37-db-name-cap` →
+  `preview_claude_sync_template__fbabc977` (38 bytes), 6907 documents restored, no pending
+  migrations. Its `Preview smoke` failed 4 of 6 walks on React #418, sustentus's own parked
+  `triage/react-418-hydration-mismatch-on-three-routes`, not this bug. (The branch in this stub
+  normalises to 41 bytes, not 42.) **Left:** merge #64, merge #1152, then
+  `gh pr update-branch 1150` in sustentus. A re-run of the old job would reuse the old merge ref
+  and fail again. #1150's `Migrate preview database` should then copy into
+  `preview_claude_sentry_web_ins_65692577`. Then move this stub to `_done/`.
+
 ## Prompt
 
 In icm-board, read `.icm/intake/triage/mongo-preview-db-name-atlas-shared-tier-cap.md` and the

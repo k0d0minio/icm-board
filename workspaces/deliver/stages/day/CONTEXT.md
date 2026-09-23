@@ -85,11 +85,22 @@ this ritual. Say so and move on.
 - *Note the drift:* work no stub described gets said plainly in the summary — that's how
   off-ticket work gets caught next time.
 
-**5. Ship — pushing is publishing.** The board reads each repo's `main`; an unpushed
-stub does not exist. Per changed repo: commit **only** `.icm/` paths on `main` (message
-`Plan: <one line>` or `Wrap: <one line>`) and push — stage paths explicitly, **never
-`git add -A`**; anything else dirty is left strictly alone. A rejected push gets one
-`pull --rebase` and retry; otherwise report and move on. Never force-push.
+**5. Ship — merging is publishing.** The board reads each repo's **ticket base branch** —
+`uat` where its `.icm/project.json` declares one, else `main` (`.icm/scripts/lib/project.sh →
+pipeline_base_branch`; D37) — so a stub exists once it lands there. Per changed client repo:
+**one ticket PR** into that branch, merged at once — the shape and the merge rule are the
+repo's `pr-conventions` skill → The ticket PR (branch `claude/tickets-<topic>-<YYYYMMDD>`,
+title `Plan: <one line>` or `Wrap: <one line>`, label `type:tickets`, path guard
+`.icm/intake/**` verified before the merge, `--admin` where a ruleset requires checks). Cut
+the branch **in a worktree** of the repo (`git -C projects/<repo> worktree add …` from
+`origin/<base>`), never by switching the shared `projects/<repo>` checkout — one tree serves
+every session and the sweeper; a checkout that had to move goes back to `main` before this
+step ends. Stage paths explicitly, **never `git add -A`**; anything else dirty is left
+strictly alone. A PR that will not merge cleanly is rebased on `origin/<base>` and retried
+once; otherwise report and move on. Never force-push.
+- **This repo is exempt**: its own stub moves and `.icm/today.md` commit straight to `main`
+  (`Plan:` / `Wrap:`) and push — no UAT branch, nothing to drift. A rejected push gets one
+  `pull --rebase` and retry.
 
 ## Gate — Jamie
 
@@ -102,7 +113,7 @@ stub does not exist. Per changed repo: commit **only** `.icm/` paths on `main` (
 
 | Artifact | Lands in |
 |---|---|
-| Stub moves, cuts, epic archives | each repo's `.icm/intake/`, pushed to `main` |
+| Stub moves, cuts, epic archives | each client repo's `.icm/intake/`, through one merged ticket PR into its ticket base branch (this repo's own: pushed to `main`) |
 | `.icm/today.md` | this repo, pushed to `main` — the worklist on the phone |
 
 ## Audit

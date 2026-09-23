@@ -86,7 +86,9 @@
 #                   "none" (default) | "branch" (the app derives `preview_<branch>` at runtime
 #                   behind MONGODB_PREVIEW_PER_BRANCH=1 — lib/db-name.mjs), limits {databases,
 #                   collections} — the cluster's caps (default 100 and 500, the shared Atlas
-#                   tiers'; 0 = uncapped)}. Names only; lib/mongo.mjs, db-branch.sh, db-env.sh,
+#                   tiers'; 0 = uncapped) and name_bytes — the longest database name it takes
+#                   (default 38, the shared Atlas tiers'; 63 on a dedicated cluster; read by
+#                   lib/db-name.mjs itself)}. Names only; lib/mongo.mjs, db-branch.sh, db-env.sh,
 #                   setup.sh, env-check.sh and the mongodb-cleanup workflow read it.
 #   security        object {audit_command} — security-check.sh's dependency audit for an
 #                   ecosystem it does not detect itself (npm/pnpm/yarn lockfiles are detected):
@@ -325,6 +327,10 @@ mongo_limit_databases() {
 mongo_limit_collections() {
   local v; v="$(project_field '.database.mongodb.limits.collections' '500')"
   case "$v" in ''|*[!0-9]*) echo 500 ;; *) echo "$v" ;; esac
+}
+mongo_limit_name_bytes() {
+  local v; v="$(project_field '.database.mongodb.limits.name_bytes' '38')"
+  case "$v" in ''|*[!0-9]*) echo 38 ;; *) echo "$v" ;; esac
 }
 mongo_uat_database() {
   { uat_declared && [ "$(mongo_previews)" = branch ]; } || return 0

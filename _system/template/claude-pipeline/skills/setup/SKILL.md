@@ -61,7 +61,8 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
    Every question has an escape hatch: "don't know" leaves the stub value and the report line.
 
 4. **Write the project-owned files** from the answers — `.icm/project.json` (valid JSON;
-   `jq -e .` before saving), `_shared/project-rules.md` (every section a sentence or "none"),
+   `jq -e .` before saving), `_shared/project-rules.md` (every section a sentence or "none" — `## Learned rules` stays as
+   seeded; `retrospective.sh` fills it at Release),
    `_shared/knowledge-map.md` where the repo has a docs tree, `scripts/format.sh` / `lint.sh` on
    the repo's own tools or left as `SKIP` stubs, `runs/README.md`. Nothing else: `T` files are
    the template's, code is the pipeline's.

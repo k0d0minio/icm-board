@@ -19,16 +19,16 @@
 #                an obvious placeholder or an environment lookup. The patterns are a floor, not
 #                gitleaks — env-check.sh names the install. Lockfiles, minified bundles, source
 #                maps, media and binaries are never scanned; `error.log` itself is skipped.
-#   2. Dependencies   the audit the repo's lockfile implies, at the repo root, WHEN THIS BRANCH
-#                CHANGED A MANIFEST OR LOCKFILE (`--audit` forces it, `--no-audit` skips it — the
-#                audit is the one network call here): pnpm-lock.yaml → `pnpm audit --audit-level=high`;
-#                package-lock.json → `npm audit --audit-level=high`; yarn.lock → `yarn npm audit
-#                --severity high` (berry) or `yarn audit --level high` (classic); Cargo.lock →
-#                `cargo audit`; requirements.txt / poetry.lock / pyproject.toml → `pip-audit`.
-#                High and critical count; a lockfile whose tool is not installed, or a registry
-#                that cannot be reached, is SKIPPED with the reason — a fact about the machine,
-#                never a finding. A dependency this branch did not touch is not this diff's:
-#                the repo's own standing audit (Dependabot, a CI job) owns that question.
+#   2. Dependencies   the audit the repo's lockfile implies, at the repo root, on EVERY call
+#                (`--no-audit` skips it — the audit is the one network call here, and the skip is
+#                the operator's recorded waiver, never the stage's shortcut): pnpm-lock.yaml →
+#                `pnpm audit --audit-level=high`; package-lock.json → `npm audit --audit-level=high`;
+#                yarn.lock → `yarn npm audit --severity high` (berry) or `yarn audit --level high`
+#                (classic); Cargo.lock → `cargo audit`; requirements.txt / poetry.lock /
+#                pyproject.toml → `pip-audit`. High and critical count, whether or not this branch
+#                touched the dependency — the repo ships what its lockfile pins. A lockfile whose
+#                tool is not installed, or a registry that cannot be reached, is SKIPPED with the
+#                reason — a fact about the machine, never a finding.
 #
 # What a finding does: it is printed as `[SECRET] <file>:<line> — <rule>` or `[AUDIT] <tool> →
 # <summary>` — the matched VALUE is never printed, never logged — and, when the run is known
@@ -43,8 +43,8 @@
 #
 # It never fetches, installs, upgrades, commits or edits anything; there is no `--fix`.
 #
-# Usage: .icm/scripts/security-check.sh [<slug>] [--base <ref>] [--all] [--audit | --no-audit]
-#                                        [--no-secrets] [--log <file>] [--quiet]
+# Usage: .icm/scripts/security-check.sh [<slug>] [--base <ref>] [--all] [--no-audit] [--no-secrets]
+#                                        [--log <file>] [--quiet]
 # Verdict (stdout, last line):
 #   RESULT: CLEAN         exit 0  — nothing in the added lines, no high/critical advisory (or none owed)
 #   RESULT: FINDINGS n    exit 1  — n findings, listed above (and in error.log) — Release stop class 2
@@ -59,18 +59,17 @@ die() { echo "error: $*" >&2; exit 1; }
 command -v git >/dev/null 2>&1 || die "git not found"
 command -v jq  >/dev/null 2>&1 || die "jq not found"
 
-slug=""; base=""; all=0; audit="auto"; do_secrets=1; log=""; quiet=0
+slug=""; base=""; all=0; audit="yes"; do_secrets=1; log=""; quiet=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --base)       base="${2:-}"; [ -n "$base" ] || die "--base needs a ref"; shift 2 ;;
     --all)        all=1; shift ;;
-    --audit)      audit="yes"; shift ;;
     --no-audit)   audit="no"; shift ;;
     --no-secrets) do_secrets=0; shift ;;
     --log)        log="${2:-}"; [ -n "$log" ] || die "--log needs a file"; shift 2 ;;
     --quiet)      quiet=1; shift ;;
     -h|--help)    sed -n '2,45p' "${BASH_SOURCE[0]}"; exit 0 ;;
-    --*)          die "unknown flag: $1 (usage: security-check.sh [<slug>] [--base <ref>] [--all] [--audit|--no-audit] [--no-secrets] [--log <file>] [--quiet])" ;;
+    --*)          die "unknown flag: $1 (usage: security-check.sh [<slug>] [--base <ref>] [--all] [--no-audit] [--no-secrets] [--log <file>] [--quiet])" ;;
     *)            [ -z "$slug" ] && slug="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
@@ -276,10 +275,6 @@ fi
 
 # --- pass 2: dependencies ------------------------------------------------------------------------------------
 
-manifest_re='(^|/)(package\.json|pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?|Cargo\.(toml|lock)|requirements[^/]*\.txt|poetry\.lock|pyproject\.toml|Pipfile(\.lock)?)$'
-deps_changed=0
-[ "$all" -eq 1 ] || { printf '%s\n' "${files[@]}" | grep -Eq -- "$manifest_re" && deps_changed=1; } || true
-
 net_re='ENOAUDIT|ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|ERR_PNPM_(FETCH|META_FETCH|NO_OFFLINE)|fetch failed|couldn.t fetch|unable to fetch|Network|network|unexpected error occurred|getaddrinfo'
 
 run_audit() { # <label> <hint> <cmd...>  — prints one line per outcome; a vulnerability is a finding
@@ -312,9 +307,7 @@ run_audit() { # <label> <hint> <cmd...>  — prints one line per outcome; a vuln
 
 audit_ran=0
 if [ "$audit" = "no" ]; then
-  echo "[2/2] dependencies — skipped (--no-audit)"
-elif [ "$audit" = "auto" ] && [ "$all" -eq 0 ] && [ "$deps_changed" -eq 0 ]; then
-  echo "[2/2] dependencies — this branch changed no manifest or lockfile; nothing owed (--audit forces it)"
+  echo "[2/2] dependencies — skipped (--no-audit: the operator's waiver, recorded in the run's record)"
 else
   echo "[2/2] dependencies — the lockfile's own audit, at high"
   [ -f pnpm-lock.yaml ]   && { audit_ran=1; run_audit "pnpm audit" "the repo's package manager" pnpm audit --audit-level=high; }
@@ -367,7 +360,7 @@ elif [ "$n" -gt 0 ]; then
 fi
 
 if [ "$n" -gt 0 ]; then
-  echo "a secret is rotated by the operator, never just deleted from the diff; an advisory is bumped in-ticket or handed to Release with its reason"
+  echo "a secret is rotated by the operator, never just deleted from the diff; an advisory is bumped on the branch, or waived by the operator in the run's record (--no-audit)"
   echo "RESULT: FINDINGS $n"; exit 1
 fi
 if [ "$secrets_ran" -eq 0 ] && [ "$audit_ran" -eq 0 ]; then

@@ -18,9 +18,11 @@ What a channel is — a GitHub Release by default, Slack, email — is the repo'
 1. A **blocking CI failure** (`RESULT: RED`, or a `PENDING` that will not settle).
 2. A **security-critical finding introduced by this diff** — an exploitable defect: auth bypass,
    leaked secret, tenant-scoping hole. **Measured first** by `security-check.sh <slug>`: a
-   secret in the lines this branch added, or a high/critical advisory in a lockfile it changed,
-   is `FINDINGS n` (the same lines in `03_build/output/error.log`); the review passes cover what
-   a pattern cannot.
+   secret in the lines this branch added, or a high/critical advisory in the repo's lockfile
+   (the audit runs on every read, whether or not this branch touched the dependency), is
+   `FINDINGS n` (the same lines in `03_build/output/error.log`); the review passes cover what a
+   pattern cannot. The one waiver is the operator's: a pre-existing advisory that cannot be
+   bumped on this branch, recorded in the `## Release` record and re-read with `--no-audit`.
 3. A **deploy-breaking config finding** — measured, not eyeballed: `env.sh audit --changed`
    reports `GAPS` (a key this branch added is missing from a surface it is scoped to); a
    migration without a working `down` **in a repo that declares `migrations.reversible: true`**
@@ -103,9 +105,11 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
      or Sentry key (`setup.sh` section 11) is the same class.
    - **Security, measured first:** `.icm/scripts/security-check.sh <slug>` → `RESULT: CLEAN` (or
      `SKIP`). `FINDINGS n` is stop class 2 with the `file:line` named: a secret is rotated by the
-     operator and removed from the diff, never merely deleted; an advisory is bumped in-ticket
-     when the bump is trivial, else the run goes back to Build with the line quoted. The value
-     is never in the output and never in the record.
+     operator and removed from the diff, never merely deleted. An advisory is bumped on the
+     branch when the bump is a lockfile change; otherwise **STOP and put it to the operator** —
+     a chore lane fixes it first, or they waive it: `security-check: audit waived — <advisory>,
+     <why>` in the `## Release` record, and the re-read is `security-check.sh <slug> --no-audit`.
+     The waiver is theirs, never yours. The value is never in the output and never in the record.
    - **Code review — always, in-session.** Run **`/code-review`** at the spec's complexity
      (`trivial → low`, `standard → medium`, `complex → high`). There is no CI review job; this
      pass is the review.
@@ -264,7 +268,7 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 - gate: Ready to merge ticked — merge authorised
 - ci: GREEN on <sha> (ci-status.sh, after the last push)
 - reviews: code <effort> · security <run — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
-- security-check: <CLEAN on <sha> | SKIP — nothing to scan> <· secret rotated: <what>, where one was found on the way>
+- security-check: <CLEAN on <sha> | SKIP — nothing to scan | audit waived — <advisory>, <why> (the operator)> <· secret rotated: <what>, where one was found on the way>
 - parked: <triage stub filename(s) | none>
 - migrations: <ok | skip — none of this run's own | re-stamped <n> after main (check-migrations.sh --apply)>
 - learned: <n rule(s) appended to _shared/project-rules.md | none | skip — no error.log>
@@ -288,7 +292,8 @@ all in the one PR.
 - `check-migrations.sh` read `OK` or `SKIP` on the head that merged — after the merge of `main`,
   and after any re-stamp it asked for. A `STALE` was fixed on the branch, never merged past.
 - `security-check.sh` read `CLEAN` or `SKIP` on the head that merged. A `FINDINGS` was fixed on
-  the branch and its secret rotated by the operator, never merged past and never argued down.
+  the branch and its secret rotated by the operator, never merged past and never argued down;
+  an audit waiver, where there is one, is in the record in the operator's words, not yours.
 - `retrospective.sh` ran on the live run folder **before** the close-out moved it; what it
   appended is in the head that merged, and the record's `- learned:` line says how many. A rule
   you judged a slip was deleted from the file, never left for the next run to obey.

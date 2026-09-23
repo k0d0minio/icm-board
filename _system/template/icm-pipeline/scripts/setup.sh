@@ -216,7 +216,8 @@ if [ -f .icm/project.json ]; then
   if [ -n "$(migrations_paths)" ]; then ok "migrations: $(migrations_paths | paste -sd', ' -) · reversible: $(migrations_reversible)"; else info "migrations.path empty — check-migrations.sh looks for tracked migrations/ folders; rollback.sh assumes forward-only (reversible: false)"; fi
   ok "support: tier $(support_tier)$( [ -n "$(support_failsafe)" ] && echo " · fail-safe $(support_failsafe)") · sentry via \$$(support_sentry_env)"
   if [ -n "$(health_endpoints | head -n1)" ]; then ok "health_endpoint: $(health_endpoints | paste -sd', ' -) — health-check.sh reads it once after the merge"
-  else info "health_endpoint empty — health-check.sh reports SKIP after the merge; which URL answers 200 when production is up (e.g. /api/health)?"; fi
+  elif project_has '.deploy.projects'; then warn "health_endpoint empty while deploy is declared — which URL on each production project answers 200 when it is up (e.g. https://<production_url>/api/health)? Until it is set, health-check.sh reports SKIP after every merge and nobody is told production is down"
+  else info "health_endpoint empty — health-check.sh reports SKIP after the merge; set it with the deploy block (which URL answers 200 when production is up?)"; fi
   jq -e '.profile' .icm/project.json >/dev/null 2>&1 && info "a \"profile\" key is present and ignored (D22) — remove it when convenient"
 else
   fail ".icm/project.json missing — the manifest every script reads"

@@ -43,8 +43,9 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   `deploy.projects[]`): <the URL that answers 200 when production is up; `health-check.sh`
   reads it once after the merge>. <Or: none declared — the read reports SKIP.>
 - **Secret scanning** — `security-check.sh` runs <gitleaks (the repo's `.gitleaks.toml`) |
-  the built-in patterns> over the lines a branch adds; the dependency audit is <the lockfile's
-  own tool at high | owned by CI / Dependabot, so the branch-time audit is advisory here>.
+  the built-in patterns> over the lines a branch adds, and <pnpm | npm | yarn audit | cargo
+  audit | pip-audit> at high on every read. <Who bumps a pre-existing advisory, and who may
+  waive one in a Release record — the operator by default.>
 - **Archive** — `runs_archive` / `intake_archive` in `.icm/project.json`. <Where they are served
   from, if anywhere; the default `_done/` folders need no note.>
 

@@ -107,13 +107,15 @@ everything except the source files you actually edit. Record overruns on a one-l
 
    Then the diff itself, scanned: `.icm/scripts/security-check.sh <slug>` → `RESULT: CLEAN` (or
    `SKIP`). `FINDINGS n` names a secret this branch **adds** (`file:line` and the rule — never
-   the value) or a high/critical advisory in a lockfile this branch changed, and writes each
-   one as an entry in `.icm/runs/<slug>/03_build/output/error.log` (the shape step 4
-   describes — the header carries the rule or the tool as the class). A secret is removed from
-   the diff **and rotated by the operator** — say so in `## Notes for Release` and in the
-   entry's `- resolved:` line; an advisory is bumped here when the bump is in-ticket, else
-   recorded there with its reason. Release re-runs the same call as stop class 2, so a finding
-   left here is a finding that stops the merge.
+   the value) or a high/critical advisory in the repo's lockfile (the audit runs on every call,
+   whether or not this branch touched the dependency), and writes each one as an entry in
+   `.icm/runs/<slug>/03_build/output/error.log` (the shape step 4 describes — the header
+   carries the rule or the tool as the class). A secret is removed from the diff **and rotated
+   by the operator** — say so in `## Notes for Release` and in the entry's `- resolved:` line.
+   An advisory is bumped here when the bump is a lockfile change; when it is not (a major
+   upgrade, a transitive pin nobody can move today), record it in `## Notes for Release` — the
+   waiver is the operator's, taken at Release, never yours. Release re-runs the same call as
+   stop class 2, so a finding left here is a finding that stops the merge.
 
    ```bash
    .icm/scripts/ci-status.sh <slug>

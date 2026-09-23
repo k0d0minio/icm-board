@@ -6,12 +6,13 @@ sessions, and past deals are precedent for future quotes (decisions D5 and D24,
 [`.icm/project.md`](../../.icm/project.md)). Grammar:
 [`WORKSPACES.md`](../../_system/contracts/WORKSPACES.md) § The deal folder. Re-cut
 2026-09-22: one folder per client, one folder per engagement inside it, dash-fields
-instead of a table, no mirror of any Neon column.*
+instead of a table, no mirror of any Neon column. Re-slugged 2026-09-23: the slug is
+the repo name (decision D28).*
 
 ## A client folder
 
 ```
-deals/<client>/                     ← the relationship; slug = the person's name, kebab-case
+deals/<repo>/                       ← the relationship; slug = the client repo's name
   DEAL.md                           ← dash-fields + the engagements table + the log
   <engagement>/                     ← one per deal, sequential, never two live
     01-intake.md                    ← the verdict + the sent first message
@@ -39,7 +40,7 @@ the `02-` prefix is the look's position.
 ```markdown
 # <Company or name> — client
 
-- client: <slug>                 ← this folder; the dashboard's deal_slug
+- client: <slug>                 ← this folder = the repo name; the dashboard finds it from github_repo
 - company: <name>
 - contacts: <first names and roles — never an email or phone>
 - repo: <owner/name | none yet>
@@ -90,7 +91,8 @@ nothing gets a fake history:
   `git mv` and a provenance line, never removed. Slugs are never reused for a different
   person.
 - **A returning client gets a new engagement, never a new folder.** One folder per
-  relationship, one engagement folder per deal, sequential; never two live at once.
+  repo (a person with two businesses has two repos, two folders), one engagement folder
+  per deal, sequential; never two live at once.
 - **Jamie's edits win.** Whatever he leaves in an artefact is what the next stage reads.
 - **One home per fact.** State in Neon, documents here; a copy only when it is immutable
   and provenance-stamped — the kickoff snapshots into a client repo's `.icm/docs/`

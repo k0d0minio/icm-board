@@ -45,8 +45,8 @@ without it STOPs at step 1 and says so.
 
 - Marks **Work started** on the profile (`work_started_at`) when the doing begins —
   distinct from the signature.
-- Sets `deal_slug` on the row if it is not set; confirms ConvertFlow shows no remaining
-  gap (repo · deal terms · Stripe).
+- Confirms `github_repo` on the row names this folder (D28: the folder is the repo's
+  name); confirms ConvertFlow shows no remaining gap (repo · deal terms · Stripe).
 - Merges `/setup`'s PR in the client repo.
 
 ## Outputs
@@ -62,5 +62,5 @@ without it STOPs at step 1 and says so.
 - Every scope line in the quote is visible in the client repo — as a feature row or a
   ticket, not left behind in the deal folder; no number and nothing from `private/` went.
 - `setup.sh --report` in the repo ends `RESULT: OK`, or its gaps are named in `07-kickoff.md`.
-- ConvertFlow gaps are clear; the profile wears no badge; `deal_slug` names this folder.
+- ConvertFlow gaps are clear; the profile wears no badge; `github_repo` names this folder.
 - The lessons row is honest — "nothing to amend" is a valid entry, a blank one is not.

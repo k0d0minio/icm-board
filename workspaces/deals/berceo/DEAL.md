@@ -11,7 +11,7 @@
 ## Engagements
 | slug | shape | started | ended | outcome |
 |---|---|---|---|---|
-| berceo-platform | one-off (fixed, €7,500 quoted; Jamie-hosted; support presented as the equity conversation) | 2026-08-27 |  | quoted 2026-08-27 (`03-quote.md`, client devis `04-devis-berceo.md`); awaiting the gate and their answer |
+| berceo-platform | one-off (fixed, €7,500; Jamie-hosted; post-launch support renegotiated before go-live) | 2026-08-27 |  | accepted on the devis, deposit paid, work under way; agreement `05-agreement.md` drafted 2026-09-23, signature pending |
 
 ## Log
 - 2026-08-12 — last touched, per the dashboard at adoption.
@@ -31,6 +31,7 @@
 - 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
 - 2026-09-22 — `04-devis-berceo.pdf` stays where it was committed (nothing is deleted); binaries are no longer committed — rendered documents live under `out/` (gitignored) and in the client's Drive folder from now on.
 - 2026-09-23 — folder renamed from `alix-hahusseau` to `berceo`: the slug is now the repo name (Jamie's decision, 2026-09-23; decision D28).
+- 2026-09-23 — `05-agreement.md` drafted (fr): the work was already running without paper — devis accepted, €3,750 deposit paid, 5 h/week since September. It restates the devis unchanged (second half at the earlier of 25+25 or 120 days after go-live, Jamie's call) except the date: soft launch mid-December 2026, public push January 2027. Rendered and placed in Drive (01-Clients › Berceo, [05-agreement](https://drive.google.com/file/d/1t651NjXy7c_Pfa5SsgUDF5hl9YzwpMzZ/view)); `signed: pending` until Jamie sends it for eSignature. `validate-deal.sh`: one DRIFT — `tier: full-build` is not named in the adopted single-price quote, which predates tiers.
 
 ## Notes (adopted)
 

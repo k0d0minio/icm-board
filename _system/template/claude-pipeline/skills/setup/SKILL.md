@@ -82,7 +82,8 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
      dropped or reset), the repo's own seed and migrate commands (`seed_command`,
      `migrate_command`; the migrate command takes `up [<name>]` and `down <name>`), the runner's
      collection if not `migrations`, the cluster's caps (`limits` — 100 databases / 500
-     collections on a shared Atlas tier, 0 for uncapped), and `previews: branch` when each
+     collections on a shared Atlas tier, 0 for uncapped; `name_bytes` 38 there, 63 on a
+     dedicated M10+ cluster), and `previews: branch` when each
      preview should read its own `preview_<branch>` (the app derives it; one flag on the Preview
      target switches it on). Isolation for a run: `neon` (one Neon branch per run — curl and the
      key, no psql or docker), `database` (one MongoDB database per run, `run_<slug>`, on the

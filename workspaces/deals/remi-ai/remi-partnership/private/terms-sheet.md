@@ -1,14 +1,16 @@
+> *Moved 2026-09-23 from `workspaces/deals/remi-ai/private/terms-sheet.md` (the folder was `remi/` until the same day) into this engagement folder — `private/` lives under the engagement (README grammar). Written 2026-09-22; every value still blank.*
+
 # REMI — partnership term sheet
 
 *`private/` — never leaves this repo, never restated in a proposal, an agreement or any
-client repo ([terms.md](../../../../_system/knowledge/terms.md) § Partnerships,
-[pricing.md](../../../../_system/knowledge/pricing.md) § The four shapes). The agreement
+client repo ([terms.md](../../../../../_system/knowledge/terms.md) § Partnerships,
+[pricing.md](../../../../../_system/knowledge/pricing.md) § The four shapes). The agreement
 references this sheet by its date only. Every figure below is `[LAWYER]`. Skeleton
 written 2026-09-22 at Jamie's request; every value is his to fill — nothing here is
 established until he writes it.*
 
-- client: remi
-- engagement: — (the relationship predates the deal workspace; adopted)
+- client: remi-ai
+- engagement: remi-partnership (the relationship predates the deal workspace; adopted in delivery)
 - shape: partnership — equity
 - dated: — (the date the agreement will cite: "per the separate agreement of <date>")
 - status: draft — not yet agreed | agreed | signed
@@ -74,3 +76,4 @@ established until he writes it.*
 ## Log
 
 - 2026-09-22 — skeleton created; every value blank, Jamie to fill.
+- 2026-09-23 — moved under the engagement folder `remi-partnership/`; links and identifiers updated, no value filled.

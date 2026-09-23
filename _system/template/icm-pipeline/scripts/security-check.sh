@@ -33,9 +33,13 @@
 # What a finding does: it is printed as `[SECRET] <file>:<line> — <rule>` or `[AUDIT] <tool> →
 # <summary>` — the matched VALUE is never printed, never logged — and, when the run is known
 # (`<slug>`, or the run whose run.md records the current branch), appended to
-# `.icm/runs/<slug>/03_build/output/error.log` as one dated block, so Release reads what Build
-# saw (`--log <file>` names another file). Then `RESULT: FINDINGS n`, exit 1. A secret found is a
-# secret to ROTATE, not merely to remove from the diff — say so in the run's notes.
+# `.icm/runs/<slug>/03_build/output/error.log` (`--log <file>` names another file) as ONE ENTRY
+# PER FINDING in the shape Build's Outputs define for that file: a dated `## ` header naming the
+# source and the class (`security-check.sh — secret: <rule>` · `— audit: <tool>`), then the finding
+# line verbatim. The session adds the `- resolved:` line once the secret is rotated or the bump
+# landed — that is what lets `retrospective.sh` learn from it; this script never edits an entry it
+# wrote. Then `RESULT: FINDINGS n`, exit 1. A secret found is a secret to ROTATE, not merely to
+# remove from the diff — say so in the run's notes.
 #
 # It never fetches, installs, upgrades, commits or edits anything; there is no `--fix`.
 #
@@ -342,12 +346,22 @@ echo "-------------------------------------------------"
 n="${#findings[@]}"
 if [ "$n" -gt 0 ] && [ -n "$log" ]; then
   mkdir -p "$(dirname "$log")"
+  stamp="$(date -u +%FT%TZ)"
   {
-    echo "## security-check · $(date -u +%FT%TZ) · $branch @ $head_sha"
-    printf -- '- %s\n' "${findings[@]}"
-    echo
+    for line in "${findings[@]}"; do
+      # One entry per finding, in error.log's shape: the header carries the CLASS (the rule, or
+      # the audit tool) so retrospective.sh signs it as a class, never as this file:line.
+      case "$line" in
+        "[SECRET] "*) cls="secret: $(printf '%s' "$line" | sed -E 's/^.* — ([^ ]+) \((pattern|gitleaks)\)$/\1/')" ;;
+        "[AUDIT] "*)  cls="audit: $(printf '%s' "$line" | sed -E 's/^\[AUDIT\] ([^→]+) →.*$/\1/; s/[[:space:]]+$//')" ;;
+        *)            cls="finding" ;;
+      esac
+      echo "## $stamp security-check.sh — $cls ($branch @ $head_sha)"
+      echo "$line"
+      echo
+    done
   } >> "$log"
-  echo "appended $n finding(s) to $log"
+  echo "appended $n entr$( [ "$n" -eq 1 ] && echo y || echo ies) to $log — add each entry's '- resolved:' line once the secret is rotated or the bump landed"
 elif [ "$n" -gt 0 ]; then
   echo "no run resolved for this branch — findings printed only (pass <slug> or --log <file> to record them)"
 fi

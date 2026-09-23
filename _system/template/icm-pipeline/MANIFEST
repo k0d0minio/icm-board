@@ -58,6 +58,7 @@ T scripts/health-check.sh
 T scripts/usage-snapshot.sh
 T scripts/env.sh
 T scripts/setup.sh
+T scripts/retrospective.sh
 T raw/README.md
 T raw/_processed/.gitkeep
 T processed/.gitkeep

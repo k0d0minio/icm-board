@@ -72,3 +72,12 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 <The one-job skills under `.claude/skills/` a stage names — e.g. a docs skill for the
 knowledge lane, a smoke-test skill for Release. "None" is a fine answer; the contracts say what to
 do when a named skill is absent.>
+
+## Learned rules
+
+*The constraints earlier runs paid for — appended by `.icm/scripts/retrospective.sh --apply` at
+Release and at the end of every lane, one per error class a run fixed and flagged (`- rule:` in
+its `error.log`) or fixed again after an earlier run already had (the archive's `error.log`s).
+Each line carries the run it was learned in. Build and the lanes read this section before their
+first edit, with the same standing as the code rules. Edit or delete lines freely — this file is
+the repo's own, never synced — and delete a line that reads as a slip rather than a constraint.*

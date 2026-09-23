@@ -77,7 +77,7 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
            project-body,project-labels,ci-status,close-out,triage-report,env-check,
            select-model,check-migrations,process-raw,
            deploy-status,rollback,security-check,health-check,
-           usage-snapshot,env,setup}.sh                                              (T)
+           usage-snapshot,env,setup,retrospective}.sh                                     (T)
   scripts/{format,lint,validate-knowledge-map,report}.sh   ← the repo's own hooks      (P)
                                     report.sh is the reporting hook: complete as seeded,
                                     steered by project.json → reporting, never edited.

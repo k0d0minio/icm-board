@@ -72,6 +72,7 @@ Two rows survive from the first, tiered design because they still describe real 
     stage-preamble.md        ← resolve the run or STOP; run-scoped isolation               (T)
     scope-template.md        ← the shape of a settled scope; the D-n table                 (T)
     conventions.md           ← redirect to the repo's code rules                           (T)
+    template-change.md       ← a T file asked to change in a repo → a prompt for icm-board   (T)
     run-pack/*.md            ← the seven canonical run files run-pack.sh seeds              (T)
     project-rules.md         ← what is true of THIS repo: people, factory, reporting, support,
                                 and the Learned rules retrospective.sh (error.log) and
@@ -121,6 +122,19 @@ which:
   `run-economics.sh`, `vercel-env.sh registry`, `icm-check.sh`, `icm-sync.sh` — are
   icm-board's and are never called from a repo; `setup.sh --template` is the one explicit,
   optional reach, and it reports `SKIP` without one.
+
+**A template-owned file is changed at its source (decision D33).** A request made *in a
+repo* to change a `T` file — or a canonical `.claude/` asset (the router, `/setup`,
+`pr-conventions`, `ticket-craft`, the hooks) — is not that repo's change to make: the
+session edits nothing and writes a **template change request** — a self-contained prompt
+for an icm-board session (the file by template path, today's lines quoted, the change in
+full, the evidence, the repo), parked in the repo as one `found-by: template-change` triage
+stub whose `## Prompt` is the request. No lane consumes it; the board's "Copy prompt" hands
+it over. Here the change ships on a `claude/` PR, `icm-sync.sh --apply <repo>` brings a `T`
+file back (a `.claude/` asset comes back by hand, drift-reported until it does), and the
+stub retires in that commit. The only override is the operator's spoken "patch it here
+now" — a named `Patch:` commit the next sync overwrites, the request written all the same.
+The shape and the check live in [`_shared/template-change.md`](../template/icm-pipeline/_shared/template-change.md).
 
 **No placeholders.** A template-owned contract never says `{{PROJECT}}`; it says "the
 operator", "the docs tree (`docs_path` in `.icm/project.json`)", "the repo's required
@@ -303,4 +317,6 @@ If a change makes a stage run itself, that is still the signal to stop.
 numbered folder `.icm/stages/NN_<name>/CONTEXT.md` (or `.icm/lanes/<name>/`), a row to
 the repo's `/pipeline` routing table, and a note in its `_shared/project-rules.md`;
 `icm-check.sh` will list it as "not in the template's manifest" so the addition stays
-visible. Either way the pipeline grows in the folder tree, not the skills list.
+visible. Either way the pipeline grows in the folder tree, not the skills list. Asked for
+*in* a repo, the estate-wide form is a template change request (D33) — the repo's session
+writes the prompt, icm-board makes the change.

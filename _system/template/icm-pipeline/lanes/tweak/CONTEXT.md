@@ -28,7 +28,9 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 ## Process
 
 1. **Pick a slug** — then the first act of every lane: `.icm/scripts/usage-snapshot.sh <slug> tweak start` (`SKIP` is fine, never a stop). Pick it (kebab-case) and confirm the change is fully specified by the request — a
-   tweak has no open questions by definition. An open question → STOP and route.
+   tweak has no open questions by definition. An open question → STOP and route. A request whose subject is a **template-owned file** — a `T` line of `.icm/MANIFEST`, or a
+   canonical `.claude/` asset — is not lane work: STOP before the slug, write the template change
+   request (`_shared/template-change.md`), park it, open no run.
 2. **Make the adjustment** — smallest possible diff, house style, matching capability skill if one
    applies (where the repo ships one — `_shared/project-rules.md` → Capability skills). Write
    `notes.md` (template below), then open the lane PR:

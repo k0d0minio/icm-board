@@ -154,6 +154,12 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
 - **No secrets in git, ever** — env vars only; flag any plaintext credential found. Deal
   folders record that access exists, never its value.
 - **`settings.local.json` is the accretion layer**; `settings.json` stays clean policy.
+- **A template-owned file is changed at its source.** The `T` lines of a repo's
+  `.icm/MANIFEST` and the canonical `.claude/` assets are icm-board's: a request to change
+  one, made in a repo, becomes a **template change request** — a prompt for an icm-board
+  session, parked in that repo as a `found-by: template-change` triage stub — never an
+  edit there. The change ships here on a PR and the sync carries it back (D33;
+  `template/icm-pipeline/_shared/template-change.md`).
 - **Sustentus is exempt** from all of this — its `.icm/` carries its own pipeline
   semantics, and is the source the estate pipeline was extracted from
   ([contracts/PIPELINE.md](contracts/PIPELINE.md)). The board reads it; the tooling

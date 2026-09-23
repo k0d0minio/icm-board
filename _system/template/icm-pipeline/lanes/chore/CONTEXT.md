@@ -29,7 +29,9 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 
 1. **Pick a slug** — then the first act of every lane: `.icm/scripts/usage-snapshot.sh <slug> chore start` (`SKIP` is fine, never a stop). Pick it (kebab-case) and state the invariant: what must be true before and after
    (behaviour unchanged; only <X> differs). A dep bump names the version delta; a refactor names
-   the shape change; a migration names the data delta and its `down`.
+   the shape change; a migration names the data delta and its `down`. A request whose subject is a **template-owned file** — a `T` line of `.icm/MANIFEST`, or a
+   canonical `.claude/` asset — is not lane work: STOP before the slug, write the template change
+   request (`_shared/template-change.md`), park it, open no run.
 2. **Do the work** with the matching capability skill where one exists. Keep it single-purpose —
    a chore PR that also "fixes a few things on the way" is two PRs pretending to be one. Write
    `notes.md` (template below), then open the lane PR:

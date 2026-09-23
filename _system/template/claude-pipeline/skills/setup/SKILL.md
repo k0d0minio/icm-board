@@ -42,7 +42,9 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
 
    `--fix` creates only what is absent (D7 — the same discipline as `icm-check.sh --fix`) and
    writes `.icm/template-version`. A template-owned file that has **diverged** is reported with
-   the `icm-sync.sh --apply` command to run from icm-board; never edit a `T` file here. Without a
+   the `icm-sync.sh --apply` command to run from icm-board; never edit a `T` file here — a change
+   one is owed is a template change request (`.icm/_shared/template-change.md`: a prompt for
+   icm-board, parked as a `found-by: template-change` triage stub, never an edit). Without a
    source the report says `SKIP template (no source)` and every in-repo check still runs.
 
 3. **Ask what the report left open — and only that.** `AskUserQuestion`, rounds of ≤ 4, highest

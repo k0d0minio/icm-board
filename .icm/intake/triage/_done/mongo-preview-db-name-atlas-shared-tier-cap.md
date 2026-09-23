@@ -53,6 +53,11 @@ In `_system/template/icm-pipeline/scripts/lib/db-name.mjs`:
   and fail again. #1150's `Migrate preview database` should then copy into
   `preview_claude_sentry_web_ins_65692577`. Then move this stub to `_done/`.
 
+- 2026-09-23, night: Jamie merged #64 and #1152 and updated #1150's branch. #1150's `Migrate
+  preview database` passed: `preview_claude_sentry_web_ins_65692577`, 6907 documents restored, no
+  pending migrations. Done. The preview smoke, the app-side name on the preview and cleanup on
+  close belong to `triage/sync-mongodb-databases-sustentus`.
+
 ## Prompt
 
 In icm-board, read `.icm/intake/triage/mongo-preview-db-name-atlas-shared-tier-cap.md` and the

@@ -57,7 +57,7 @@ const dbc = pj.database ?? {};
 const mdb = dbc.mongodb ?? {};
 const urlEnv = dbc.url_env || "MONGODB_URI";
 const protectedNames = [mdb.production_name, mdb.preview_name].filter(Boolean);
-const uatDb = pj.uat?.branch && mdb.previews === "branch" ? previewDbName(pj.uat.branch) : "";
+const uatDb = pj.uat?.branch && mdb.previews === "branch" ? previewDbName(pj.uat.branch, mdb.limits?.name_bytes) : "";
 
 function loadDriver() {
   const paths = [pj.migrations?.path ?? pj.migrations_path ?? []].flat().filter(Boolean);

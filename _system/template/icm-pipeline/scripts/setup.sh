@@ -260,7 +260,7 @@ if [ -f .icm/project.json ]; then
     mp="$(mongo_production_name)"; ms="$(mongo_preview_name)"
     if [ -z "$mp" ] || [ -z "$ms" ]; then fail "database.provider is mongodb but database.mongodb.production_name or preview_name is empty — the names of the two long-lived databases (never dropped or reset; every drop refuses them by name)"
     elif [ "$mp" = "$ms" ]; then fail "database.mongodb.production_name and preview_name are the same ($mp) — previews would share production's database"
-    else ok "mongodb: cluster via \$$(database_url_env) · production $mp · shared preview $ms · name via \$$(mongo_name_env) · previews $(mongo_previews)$( [ -n "$(mongo_uat_database)" ] && echo " · UAT $(mongo_uat_database)") · caps $(mongo_limit_databases)/$(mongo_limit_collections)"; fi
+    else ok "mongodb: cluster via \$$(database_url_env) · production $mp · shared preview $ms · name via \$$(mongo_name_env) · previews $(mongo_previews)$( [ -n "$(mongo_uat_database)" ] && echo " · UAT $(mongo_uat_database)") · caps $(mongo_limit_databases)/$(mongo_limit_collections) · names ≤ $(mongo_limit_name_bytes)B"; fi
     { [ -n "$(mongo_seed_command)" ] && [ -n "$(mongo_migrate_command)" ]; } && ok "mongodb: seed \`$(mongo_seed_command)\` · migrate \`$(mongo_migrate_command)\`" \
       || fail "database.mongodb.seed_command or migrate_command is empty — the repo's own commands (the migrate command takes up [<name>] and down <name>); the template never designs seeding"
     [ "$(migrations_tool)" = mongodb ] || warn "database.provider is mongodb but migrations.tool is $(migrations_tool) — db-branch.sh prove reads the epoch form a MongoDB runner writes (migrations.stamp: epoch, tool: mongodb)"

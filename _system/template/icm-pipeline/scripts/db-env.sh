@@ -108,19 +108,20 @@ if [ "$(database_provider)" = mongodb ]; then
     echo "$head_line"
     echo
     echo "One-time setup the operator completes by hand (this script does none of it):"
-    [ -n "${!url_env:-}" ] && echo "  [OK]   \$$url_env is set in this shell" || echo "  [TODO] export $url_env (the cluster URI — the one the repo already uses; never in git) on the machines that drive the pipeline"
+    [ -n "${!url_env:-}" ] && echo "  [OK]   \$$url_env is set in this shell" || echo "  [TODO] export $url_env (the NON-production cluster's URI — never production's credentials; never in git) on the machines that drive the pipeline"
     { [ -n "$prod" ] && [ -n "$shared" ] && [ "$prod" != "$shared" ]; } && echo "  [OK]   production_name and preview_name declared, and different" || echo "  [TODO] declare database.mongodb.production_name and preview_name in .icm/project.json (/setup) — every drop refuses them by name"
     { [ -n "$(mongo_seed_command)" ] && [ -n "$(mongo_migrate_command)" ]; } && echo "  [OK]   seed_command and migrate_command declared" || echo "  [TODO] declare database.mongodb.seed_command and migrate_command (the repo's own; the migrate command takes up [<name>] and down <name>)"
-    echo "  [INFO] the database user behind \$$url_env creates and drops run_* and preview_* databases beside production: it needs readWrite on them and the dropDatabase action (Atlas: a custom role, or readWriteAnyDatabase + dbAdminAnyDatabase) — without dropDatabase, lib/mongo.mjs drops every collection instead"
+    echo "  [INFO] the database user behind \$$url_env creates and drops run_* and preview_* databases: it needs readWrite on them and the dropDatabase action (Atlas: readWriteAnyDatabase + dbAdminAnyDatabase) — without dropDatabase, lib/mongo.mjs drops every collection instead"
+    echo "  [INFO] no role can fence $prod off from a user that creates databases by prefix: keep production on a cluster of its own, behind a user limited to it, and point \$$url_env, the Preview target and the preview CI secret at the non-production cluster (D36) — here production then reads absent, by design. A Vercel storage integration's one variable spans every environment: set the two URIs by hand instead"
     echo "  [INFO] cluster caps (database.mongodb.limits): $(mongo_limit_databases) databases · $(mongo_limit_collections) collections (0 = uncapped; the shared Atlas tiers cap both — every run and preview database counts)"
     if [ "$previews" = branch ]; then
-      echo "  [TODO] Vercel → each product project → Settings → Environment Variables: 'Automatically expose System Environment Variables' ON — the app reads VERCEL_ENV and VERCEL_GIT_COMMIT_REF at runtime"
+      echo "  [INFO] the app reads VERCEL_ENV and VERCEL_GIT_COMMIT_REF at runtime — Vercel exposes its system variables by default (there is no project toggle any more); nothing to switch on"
       echo "  [TODO] the app reads its database name through lib/db-name.mjs → databaseName(process.env, \"$(mongo_name_env)\") — the one line in its connection code (a chore; record it in project-rules.md)"
-      echo "  [TODO] the repo's preview-migrate workflow seeds and migrates preview_<branch> on each PR push instead of the shared database:  $(mongo_name_env)=\"\$(node .icm/scripts/lib/db-name.mjs preview \"\$HEAD_REF\")\"  then the seed command and \`<migrate_command> up\`; its concurrency keys on the PR (one database per branch — no global queue)"
+      echo "  [TODO] the repo's preview-migrate workflow makes and migrates preview_<branch> on each PR push instead of the shared database:  $(mongo_name_env)=\"\$(node .icm/scripts/lib/db-name.mjs preview \"\$HEAD_REF\")\"  then the seed command and \`<migrate_command> up\`; its concurrency keys on the PR (one database per branch — no global queue). Where the seed creates no tenant or login, the preview opens on nothing: make the database on first push as a copy of $shared instead (mongodump | mongorestore --nsFrom/--nsTo on the one cluster — D36), and migrate $shared on each merge so it stays at main's shape"
       echo "  [TODO] the preview smoke check waits for that job — a preview's first request otherwise meets an empty database"
       if [ -f .github/workflows/mongodb-cleanup.yaml ] || [ -f .github/workflows/mongodb-cleanup.yml ]; then echo "  [OK]   .github/workflows/mongodb-cleanup.yaml present — drops preview_<branch> and run_<slug> when a PR closes"
       else echo "  [TODO] seed the reference cleanup workflow (setup.sh --fix --template <path>, or copy github-pipeline/workflows/mongodb-cleanup.yaml) — nothing else drops a closed PR's database"; fi
-      echo "  [LAST] set MONGODB_PREVIEW_PER_BRANCH=1 once on the Preview target — the switch; unsetting it is the whole revert (every preview back on $shared)"
+      echo "  [LAST] set MONGODB_PREVIEW_PER_BRANCH=1 once on the Preview target — and as a repository variable of the same name where the repo's workflows read it (a workflow cannot read Vercel's) — the switch; unsetting it is the whole revert (every preview back on $shared)"
     else
       echo "  [INFO] database.mongodb.previews is none — every preview uses the shared preview database $shared, as before; previews: branch gives each its own"
     fi
@@ -147,7 +148,7 @@ if [ "$(database_provider)" = mongodb ]; then
     echo "MongoDB cluster via \$$url_env — $total database(s), $ncol collection(s) (caps: $(mongo_limit_databases) · $(mongo_limit_collections); 0 = none)"
     ps="absent"; [ -n "$prod" ] && has "$prod" && ps="present"
     ss="absent"; [ -n "$shared" ] && has "$shared" && ss="present"
-    echo "production: ${prod:-<undeclared>} — $ps · never dropped or reset"
+    echo "production: ${prod:-<undeclared>} — $ps$( [ "$ps" = absent ] && echo " on this cluster (on its own cluster, as D36 prefers)") · never dropped or reset"
     echo "shared:     ${shared:-<undeclared>} — $ss · the preview database while MONGODB_PREVIEW_PER_BRANCH is unset"
     us="n/a"
     if [ -n "$uat_db" ]; then us="not yet"; has "$uat_db" && us="present"; echo "uat:        $uat_db — $us (reset-uat --apply re-seeds and re-migrates it)"; fi

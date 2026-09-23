@@ -48,6 +48,12 @@ After icm-board's D35 PR merges, in this order — each its own step, Jamie's me
   in advance: 6 `down`s throw. What it measures is where it stops and whether the re-applied
   `up` is idempotent. Afterwards, `db-branch.sh agentic-dashboard down`.
 - The template findings are parked as `triage/db-branch-prove-runner-semantics`.
+- 2026-09-23, later: #1143 merged (`a51f3b9a0`). D36 put non-production on its own M0
+  (`sustentus-staging`) and makes each `preview_<branch>` as a copy of `sustentus-preview`;
+  sustentus#1146 carries that. Step 5 now waits on the operator cutover (the session checklist,
+  phases 1–7: restore `sustentus-preview` onto the new cluster, split the Vercel and GitHub URIs,
+  retire `Vercel-Admin-sustentus`), then #1146, then the two flags. The live `prove` runs
+  against the non-production cluster, never production's.
 
 ## Prompt
 

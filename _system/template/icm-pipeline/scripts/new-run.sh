@@ -306,6 +306,10 @@ if [ ! -f "$run_md" ]; then
     [ -n "$lane" ] && echo "- lane: $lane"
   } > "$run_md"
 fi
+# The stub this run was spun from — the pointer validate-decisions.sh and run-pack.sh follow to
+# the epic's scope (`intake/<epic>/<slug>.md`, without the `.icm/` prefix; it has just moved to
+# that epic's `_done/`, which both readers tolerate).
+[ -z "$stub" ] || grep -Eq '^- stub:' "$run_md" || echo "- stub: ${stub#./}" | sed 's#^- stub: \.icm/#- stub: #' >> "$run_md"
 grep -Eq '^- branch:' "$run_md" || echo "- branch: $branch" >> "$run_md"
 grep -Eq '^- pr:'     "$run_md" || echo "- pr: #$pr_number" >> "$run_md"
 # The canonical file pack (run-pack.sh header): seeded once, here, so every run has project.md,

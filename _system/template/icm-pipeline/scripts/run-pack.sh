@@ -27,9 +27,15 @@
 #                      run has the pack from birth; Scope calls it for a front.
 #   --sync-rules       copy the `## Learned rules` bullets of `FAILURE.md` into
 #                      `.icm/_shared/project-rules.md` → `## Learned rules` (created at the end of
-#                      the file when absent), each stamped `(<slug>, <date>)`, skipping a rule whose
-#                      text is already there. `close-out.sh` calls this before it archives the run,
-#                      so the rules ride the same commit; it edits nothing else in that file.
+#                      the file when absent), in the shape `retrospective.sh --apply` uses — a
+#                      `<!-- Retrospective Learned Rule [date] -->` stamp, then the rule with
+#                      `(\`FAILURE.md\` — <slug>)` as its provenance — skipping a rule whose text is
+#                      already there. `close-out.sh` calls this before it archives the run, so the
+#                      rules ride the same commit; it edits nothing else in that file. The two
+#                      writers split one job: retrospective.sh learns from `error.log` (the errors
+#                      a tool reported, judged at the fix), this from `FAILURE.md` (what the run
+#                      as a whole learned — a wrong assumption, a STOP, a skipped step — which no
+#                      tool ever logged).
 #
 # It never creates a run: `.icm/runs/<slug>/` must exist (live — an archived run is finished).
 #
@@ -107,6 +113,11 @@ case "$verb" in
     seeded=0
     spec="$run_dir/02_define/output/spec.md"
     scope="$(scope_md || true)"
+    # A placeholder line in a template is REPLACED by its seeded value(s) — never left beside them,
+    # so `grep -m1 '^- phase:'` reads the truth and a reader sees one line per fact.
+    replace_line() { # <file> <line-prefix-regex> <replacement text (may be several lines)>
+      awk -v pre="$2" -v rep="$3" 'BEGIN { done = 0 } { if (!done && $0 ~ pre) { print rep; done = 1 } else print }' "$1" > "$1.tmp" && mv "$1.tmp" "$1"
+    }
     for f in "${pack[@]}"; do
       dst="$run_dir/$f"
       if [ -f "$dst" ]; then echo "  kept     $dst"; continue; fi
@@ -117,35 +128,35 @@ case "$verb" in
         tasks.md)
           if [ -f "$spec" ]; then
             crit="$(section_body "$spec" 'Acceptance criteria' | grep -E '^- \[[ xX]\] ' | sed -E 's/^- \[[ xX]\] /- [ ] /' || true)"
-            if [ -n "$crit" ]; then
-              { echo; echo "<!-- seeded from spec.md → Acceptance criteria -->"; printf '%s\n' "$crit"; } >> "$dst"
-            fi
+            [ -z "$crit" ] || replace_line "$dst" '^- \[ \] <criterion' "$crit"
           fi ;;
         decisions.md)
           if [ -n "$scope" ]; then
             rows="$(section_body "$scope" 'Decisions' | awk -F'|' '$2 ~ /^[[:space:]]*D-[0-9]+[[:space:]]*$/ { id=$2; txt=$3; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id); gsub(/^[[:space:]]+|[[:space:]]+$/, "", txt); print "- " id " — " txt }' || true)"
-            if [ -n "$rows" ]; then
-              { echo; echo "<!-- seeded from $scope → Decisions -->"; printf '%s\n' "$rows"; } >> "$dst"
-            fi
+            [ -z "$rows" ] || replace_line "$dst" '^- <D-n — the decision' "$rows"
           fi ;;
         status.md)
-          { echo; echo "<!-- seeded: phase read from the run's folders on $(date -u +%F) -->"; echo "- phase: $(phase_of)"; echo "- step: 1"; echo "- ci: none yet"; echo "- blocked: no"; echo "- updated: $(date -u +%F)"; } >> "$dst" ;;
+          replace_line "$dst" '^- phase:'   "- phase: $(phase_of)"
+          replace_line "$dst" '^- step:'    "- step: 1"
+          replace_line "$dst" '^- ci:'      "- ci: none yet"
+          replace_line "$dst" '^- blocked:' "- blocked: no"
+          replace_line "$dst" '^- updated:' "- updated: $(date -u +%F)" ;;
         project.md)
-          {
-            echo; echo "<!-- seeded from run.md and spec.md -->"
-            stub_line="$(grep -m1 -E '^- stub:' "$run_dir/run.md" 2>/dev/null | sed -E 's/^- stub:[[:space:]]*//' || true)"
-            echo "- stub: ${stub_line:-none}"
-            echo "- scope: ${scope:-none}"
-            [ -f "$spec" ] && echo "- spec: 02_define/output/spec.md" || echo "- spec: none yet"
-            if [ -f "$spec" ]; then
-              t="$(grep -m1 -E '^- touches:' "$spec" | sed -E 's/^- touches:[[:space:]]*//' || true)"; [ -z "$t" ] || echo "- touches: $t"
-              c="$(grep -m1 -E '^- complexity:' "$spec" | sed -E 's/^- complexity:[[:space:]]*//' || true)"
-              if [ -n "$c" ]; then
-                m="$("$here/select-model.sh" "$spec" --stage 03_build 2>/dev/null | sed -n 's/^RESULT: MODEL //p' || true)"
-                echo "- complexity: $c${m:+ → model: $m (executor)}"
-              fi
+          stub_line="$(grep -m1 -E '^- stub:' "$run_dir/run.md" 2>/dev/null | sed -E 's/^- stub:[[:space:]]*//; s/[[:space:]]+#.*$//' || true)"
+          replace_line "$dst" '^- stub:'  "- stub: ${stub_line:-none}"
+          replace_line "$dst" '^- scope:' "- scope: ${scope:-none}"
+          if [ -f "$spec" ]; then
+            replace_line "$dst" '^- spec:' "- spec: 02_define/output/spec.md"
+            t="$(grep -m1 -E '^- touches:' "$spec" | sed -E 's/^- touches:[[:space:]]*//' || true)"
+            [ -z "$t" ] || replace_line "$dst" '^- touches:' "- touches: $t"
+            c="$(grep -m1 -E '^- complexity:' "$spec" | sed -E 's/^- complexity:[[:space:]]*//' || true)"
+            if [ -n "$c" ]; then
+              m="$("$here/select-model.sh" "$spec" --stage 03_build 2>/dev/null | sed -n 's/^RESULT: MODEL //p' || true)"
+              replace_line "$dst" '^- complexity:' "- complexity: $c${m:+ → model: $m (executor — select-model.sh --stage 03_build)}"
             fi
-          } >> "$dst" ;;
+          else
+            replace_line "$dst" '^- spec:' "- spec: none yet (Define writes 02_define/output/spec.md)"
+          fi ;;
       esac
       echo "  seeded   $dst"; seeded=$((seeded + 1))
     done
@@ -162,22 +173,24 @@ case "$verb" in
     stamp="$(date -u +%F)"; added=0
     if ! grep -q '^## Learned rules' "$rules_md"; then
       if [ "$dry_run" -eq 0 ]; then
-        printf '\n## Learned rules\n\nOne line per rule a run learned the hard way, copied from its `FAILURE.md` at close-out\n(`run-pack.sh --sync-rules`). Prune by hand when a rule is absorbed into the sections above.\n\n' >> "$rules_md"
+        printf '\n## Learned rules\n\n*The constraints earlier runs paid for — appended by `retrospective.sh --apply` (from a run'"'"'s\n`error.log`) and by `run-pack.sh --sync-rules` (from its `FAILURE.md`) before the close-out. Edit or\ndelete lines freely — this file is the repo'"'"'s own, never synced.*\n\n' >> "$rules_md"
       fi
       echo "  (adding the ## Learned rules section to $rules_md)"
     fi
+    # The same shape retrospective.sh appends in (its header documents it): a provenance stamp,
+    # then the rule with its source in the trailing parenthesis — one section, two writers, one look.
     for r in "${rules[@]}"; do
       if grep -qF -- "- $r (" "$rules_md" || grep -qxF -- "- $r" "$rules_md"; then echo "  known    $r"; continue; fi
       if [ "$dry_run" -eq 1 ]; then echo "  [dry-run] would add: $r"; else
-        # Append inside the section: after its last non-empty line.
-        awk -v line="- $r ($slug, $stamp)" '
+        # Append at the end of the file: the section is the file's last, by construction and by
+        # retrospective.sh's own rule; `## Learned rules` elsewhere is honoured the same way it does.
+        awk -v stamp="<!-- Retrospective Learned Rule [$stamp] -->" -v line="- $r (\`FAILURE.md\` — $slug)" '
           { buf[NR] = $0 }
-          /^## Learned rules/ { insec = 1 }
           END {
             last = NR
             for (i = NR; i >= 1; i--) { if (buf[i] ~ /[^[:space:]]/) { last = i; break } }
-            for (i = 1; i <= NR; i++) { print buf[i]; if (i == last) print line }
-            if (NR == 0) print line
+            for (i = 1; i <= NR; i++) { print buf[i]; if (i == last) { print stamp; print line } }
+            if (NR == 0) { print stamp; print line }
           }' "$rules_md" > "$rules_md.tmp" && mv "$rules_md.tmp" "$rules_md"
         echo "  added    $r"
       fi

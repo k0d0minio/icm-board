@@ -1,7 +1,7 @@
 # Agent Directive: Advanced ICM System Enhancements (Skills, Model Routing, DB Branching, Security & Canonical Files)
 
 *Received 2026-09-23 (Jamie, via the session prompt). Recorded as received; the narrowings
-and what shipped are in `.icm/project.md` → D27 and the verification report of the same date.*
+and what shipped are in `.icm/project.md` → D28 and the verification report of the same date.*
 
 ## EXPLICIT EXECUTION BOUNDARY
 - **Target Directories**: `_system/template/icm-pipeline` (in `icm-board`)

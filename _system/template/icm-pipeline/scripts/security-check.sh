@@ -27,7 +27,10 @@
 # Every finding is REDACTED before it is printed or written: the rule, the file and the line, the
 # first four characters of the match and nothing more. On a finding the gate writes the redacted
 # trace to the run's own error log — `.icm/runs/<slug>/03_build/output/error.log`, or
-# `lane/output/error.log` for a lane run — and exits 1, which is what aborts a pre-commit hook. It
+# `lane/output/error.log` for a lane run — as one entry in error.log's shape (a dated `## ` header
+# naming `security-check.sh` and the rule ids, the findings, a `- resolved:` line left pending for
+# the session to complete), so `retrospective.sh` reads it like any other error the run fixed —
+# and exits 1, which is what aborts a pre-commit hook. It
 # never edits a file, never unstages anything, never rotates a key: the secret is removed by the
 # person who staged it, and rotated by the operator through the provider (the `security-audit` skill
 # says how). `--no-verify` is not an answer the pipeline accepts.
@@ -273,12 +276,20 @@ if [ "$n" -gt 0 ]; then
   head="$(git rev-parse --short HEAD 2>/dev/null || echo none)"
   if [ -n "$log" ]; then
     mkdir -p "$(dirname "$log")"
+    # The entry takes error.log's one shape (stages/03_build/CONTEXT.md → Outputs; retrospective.sh
+    # reads it): a dated header naming the source and the error CLASS — here the rule ids, so the
+    # collector's signature is "security-check.sh — <rule>" and not a file name — then the
+    # redacted findings verbatim. The `- resolved:` line is the session's to add once the secret
+    # is out of the change; a `- rule:` line only when the leak was a constraint of this repo.
+    rules_hit="$(printf '%s\n' "${findings[@]}" | awk '{ sub(/:.*$/, "", $1); print $1 }' | sort -u | paste -sd', ' -)"
     {
-      echo "## security-check $(date -u +%Y-%m-%dT%H:%M:%SZ) scope=$scope head=$head branch=${branch:-?} — BLOCKED $n"
-      printf -- '- %s\n' "${findings[@]}"
+      echo "## $(date -u +%Y-%m-%dT%H:%M:%SZ) security-check.sh — $rules_hit"
+      echo "scope=$scope head=$head branch=${branch:-?} — BLOCKED $n (redacted trace; the secret itself is never written)"
+      printf -- '%s\n' "${findings[@]}"
+      echo "- resolved: <pending — remove the secret from the change, have the operator rotate it, re-run the gate, then write what was wrong and what is true now>"
       echo
     } >> "$log"
-    echo "trace (redacted) appended to $log"
+    echo "trace (redacted) appended to $log — add its \`- resolved:\` line once the gate passes"
   else
     echo "no live run resolved for this branch — trace printed only (pass <slug> to log it)"
   fi

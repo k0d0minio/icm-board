@@ -4,12 +4,16 @@ name: Self-check
 # both fast:
 #   - shellcheck over every script and hook. They are the estate's only executables and
 #     they run against real repos with --fix; a quoting bug here does damage elsewhere.
+#   - env-audit-stability.sh: the template's `env.sh audit` against a mock Vercel API that
+#     rate-limits and pages — two runs byte-identical, an unreadable surface UNKNOWN, never
+#     a gap. A nondeterministic audit makes every repo's `setup.sh --report` unstable.
 #   - self-check.sh: every relative markdown link resolves, and every ticket meets
 #     contracts/TICKETS.md. This repo is almost entirely docs and contracts, so a dead
 #     link IS a defect — it is the estate's named failure mode ("aspirational docs are
 #     richer than the running system", _system/AUDIT.md) in miniature.
 #
 # Deliberately absent: any build, lint or test of application code. There is none here.
+# (The audit fixture tests a template script, not an application.)
 
 on:
   push:
@@ -35,3 +39,6 @@ jobs:
 
       - name: Links and ticket contract
         run: _system/scripts/self-check.sh
+
+      - name: env.sh audit is deterministic
+        run: _system/scripts/env-audit-stability.sh

@@ -54,6 +54,13 @@ After icm-board's D35 PR merges, in this order — each its own step, Jamie's me
   phases 1–7: restore `sustentus-preview` onto the new cluster, split the Vercel and GitHub URIs,
   retire `Vercel-Admin-sustentus`), then #1146, then the two flags. The live `prove` runs
   against the non-production cluster, never production's.
+- 2026-09-23, evening: #1146 merged (with `database.isolation: none` — no run databases, so no
+  `prove`); icm-board #63 (D36) merged. Jamie confirmed the cutover done (`sustentus-preview`
+  restored on `sustentus-staging`; Vercel and GitHub URIs split; both exposed passwords changed;
+  local `.env` on the new cluster) and set `MONGODB_PREVIEW_PER_BRANCH=1` on GitHub and the three
+  Vercel projects. **Left:** the first real ready PR proves the path — the copy step on a runner,
+  the preview on `preview_<branch>`, the smoke waiting, `MongoDB cleanup` on close. Then close
+  this stub.
 
 ## Prompt
 

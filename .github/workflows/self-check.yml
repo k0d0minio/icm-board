@@ -35,7 +35,7 @@ jobs:
       # Preinstalled on ubuntu-latest, but pinning the invocation keeps the failure
       # legible if that ever changes.
       - name: Shellcheck the estate scripts
-        run: shellcheck --severity=warning _system/scripts/*.sh _system/hooks/*.sh
+        run: shellcheck --severity=warning _system/scripts/*.sh _system/scripts/lib/*.sh _system/hooks/*.sh
 
       - name: Links and ticket contract
         run: _system/scripts/self-check.sh

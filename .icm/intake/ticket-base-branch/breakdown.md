@@ -78,7 +78,7 @@ The dashboard's half is a jamienisbet ticket (tickets live next to their logic):
 
 ## Build order
 
-1. ticket-base-contract — D37 recorded; contracts, stage docs and canonical skills say "ticket base branch, through a PR" — depends-on: none
+1. ticket-base-contract — D38 recorded; contracts, stage docs and canonical skills say "ticket base branch, through a PR" — depends-on: none
 2. template-ticket-scripts — the template's scripts and workflows read and guard the ticket base branch — depends-on: ticket-base-contract
 3. board-scripts-ticket-base — icm-board's board, hygiene and `/day` read and write each repo's ticket base branch — depends-on: ticket-base-contract
 4. ticket-base-rollout — sync the estate, the operator's per-repo acts, prove it on berceo — depends-on: template-ticket-scripts, board-scripts-ticket-base

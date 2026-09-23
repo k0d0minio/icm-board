@@ -1,5 +1,8 @@
 # Stub: Record D37 and rewrite the ticket rule — the ticket base branch, reached through a PR
 
+> Numbering: cut when D37 was the next free number; #64 (the Mongo name cap) took D37 first, so
+> this decision is **D38** in `.icm/project.md`. Every "D37" below means D38 (noted 2026-09-23).
+
 - feature-slug: ticket-base-contract
 - epic: ticket-base-branch
 - priority: P1

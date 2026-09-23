@@ -1,6 +1,6 @@
 # Diogo & Rita (Agorasim) — client
 
-- client: diogo-rita
+- client: agorasim
 - company: Agorasim — guided classic-car tours, Saloia region
 - contacts: Diogo (account owner) · Rita
 - repo: k0d0minio/agorasim
@@ -36,6 +36,7 @@
   decide the history purge) is still open.
 - 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
 - 2026-09-22 — the old table's Contacts row carried two phone numbers and an email; `DEAL.md` no longer holds contact details (the Neon row does — deals/README.md § Rules).
+- 2026-09-23 — folder renamed from `diogo-rita` to `agorasim`: the slug is now the repo name (Jamie's decision, 2026-09-23; decision D27).
 
 ## Notes (adopted)
 

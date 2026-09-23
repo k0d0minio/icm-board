@@ -67,14 +67,15 @@ Two rows survive from the first, tiered design because they still describe real 
     conventions.md           ← redirect to the repo's code rules                           (T)
     run-pack/*.md            ← the seven canonical run files run-pack.sh seeds              (T)
     project-rules.md         ← what is true of THIS repo: people, factory, reporting, support,
-                                and the Learned rules close-out appends                     (P)
+                                and the Learned rules retrospective.sh (error.log) and
+                                close-out (FAILURE.md) append                              (P)
     knowledge-map.md         ← which docs page each stage reads                            (P)
   scripts/
     lib/{gh,changed-files,project,vercel}.sh  lib/model-prices.json                       (T)
     resolve-run.sh validate-spec.sh validate-intake.sh validate-decisions.sh new-run.sh
     project-body.sh project-labels.sh ci-status.sh close-out.sh triage-report.sh
     env-check.sh select-model.sh check-migrations.sh process-raw.sh
-    deploy-status.sh rollback.sh usage-snapshot.sh env.sh setup.sh
+    deploy-status.sh rollback.sh usage-snapshot.sh env.sh setup.sh retrospective.sh
     list-skills.sh db-branch.sh security-check.sh run-pack.sh                             (T)
     format.sh lint.sh validate-knowledge-map.sh report.sh                                 (P)
 .claude/skills/pipeline/SKILL.md   ← the /pipeline router (one skill, many stages)
@@ -138,7 +139,9 @@ the cheap tier and flips the PR draft → open, which is what builds the preview
 operator smoke-tests and ticks **Ready to merge** → **Release** establishes
 `ci-status.sh` GREEN on the full gate, runs the review pass, parks off-ticket findings in
 `triage/`, syncs the docs the change made stale, writes the changelog page where the repo
-has one, runs `close-out.sh` **on the branch**, and squash-merges once. The squash is
+has one, runs `retrospective.sh` (what Build fixed on the way, promoted into
+`project-rules.md` → Learned rules for the next run), runs `close-out.sh` **on the branch**,
+and squash-merges once. The squash is
 what publishes the archive move — and the epic's move, plus the front run that cut it,
 when this stub was the last one it had left unshipped ([TICKETS.md](TICKETS.md)).
 `revise <slug> "<change>"` is the only way a spec changes after that: it re-projects the
@@ -209,7 +212,8 @@ for every key.
 | `list-skills.sh [--json \| --bare] [--check]` | the Level-1 registry of `.icm/skills/*/SKILL.md` — one line per skill from its front matter (`name`, `description`, `triggers`), for the session-start hook and a stage's Inputs; `--check` validates the three keys, a body, the folder name, a ≤80-token Level 1. Loads nothing | `OK n` 0 · `INVALID n` 2 |
 | `db-branch.sh <slug> [status\|up\|env\|down]` | one database per run, named after the slug: a Postgres schema `run_<slug>` on the variable `database.url_env` names, or a local container `icm-db-<slug>`; `up` records a `- db:` pointer (the variable's NAME) in `run.md`, `env` prints the exports to eval (stdout is only the exports), `down` drops only what `up` made. Adopts a live run, never creates one; runs no migration; `none` isolation → SKIP | `BOUND` 0 · `ABSENT` 0 · `ENV` 0 · `RELEASED` 0 · `SKIP` 0 |
 | `security-check.sh [<slug>] [--staged\|--branch\|--all] [--audit\|--no-audit] [--strict]` | the zero-trust gate before a commit (Build) or a push (every lane): `gitleaks` over the staged change / the branch / the tree (`gitleaks protect --staged --redact`; a built-in pattern scan as the fallback, said aloud), a real `.env*` in the change set, and `npm\|pnpm\|yarn audit --audit-level=high` (or `security.audit_command`) when a manifest moved or the scope is wider; every finding redacted, the trace appended to the run's `03_build/output/error.log` (a lane: `lane/output/`), exit 1 aborts the commit. Never edits, never rotates, never `--no-verify` | `OK` 0 · `SKIP` 0 · `BLOCKED n` 1 · `FAIL` 1 |
-| `run-pack.sh <slug> [--check\|--init\|--sync-rules]` | the canonical file pack for session continuity — `project.md`, `plan.md`, `tasks.md` (DoD from the spec's criteria), `decisions.md` (the scope's `D-n` rows), `status.md`, `handoff.md`, `FAILURE.md` — seeded from `_shared/run-pack/` by `new-run.sh` (never overwritten); `--sync-rules` copies `FAILURE.md` → Learned rules into `_shared/project-rules.md` (append-only, deduplicated), called by `close-out.sh` | `OK` 0 · `MISSING n` 2 · `SEEDED n` 0 · `SYNCED n` 0 |
+| `run-pack.sh <slug> [--check\|--init\|--sync-rules]` | the canonical file pack for session continuity — `project.md`, `plan.md`, `tasks.md` (DoD from the spec's criteria), `decisions.md` (the scope's `D-n` rows), `status.md`, `handoff.md`, `FAILURE.md` — seeded from `_shared/run-pack/` by `new-run.sh` (never overwritten); `--sync-rules` copies `FAILURE.md` → Learned rules into `_shared/project-rules.md` (append-only, deduplicated, in `retrospective.sh`'s shape — the two writers split one section: error.log's errors there, what no tool logged here), called by `close-out.sh` | `OK` 0 · `MISSING n` 2 · `SEEDED n` 0 · `SYNCED n` 0 |
+| `retrospective.sh <slug\|path> [--apply] [--min n]` | Release step 7 and every lane's last act before the close-out: the run's `error.log` (what a stage fixed, entry by entry, with its `- resolved:` / `- rule:` lines) → a signature per entry (`TS2532`, an ESLint rule id, an errno, an exception class — the class, never the instance), counted across the archive's `error.log`s; an entry flagged `- rule:`, or one whose signature recurs (`--min`, default 2) and carries a resolution, is a candidate; a signature already in `project-rules.md` is skipped. Reports; `--apply` appends each candidate under `## Learned rules` in the project-owned `_shared/project-rules.md` with its provenance — **never commits, never judges** (the rule is the session's words at the moment of the fix; a slip is deleted by hand before the commit) | `SKIP` 0 · `NONE` 0 · `CANDIDATES n` 0 · `APPENDED n` 0 |
 | `process-raw.sh [--dry-run]` | `.icm/raw/` → `.icm/processed/`: extract text with **local** tools only (email, chat export, PDF, deck, image; **audio and video** through ffmpeg + whisper.cpp — `SKIP` with the install hints when either is absent, the recording never uploaded and never committed), log `manifest.json` (extractor, model, language for a transcription), archive the original to `raw/_processed/`, park one triage **pointer** stub per asset — it never scopes, cuts or sequences | `PROCESSED n` 0 · `DRY-RUN n` 0 · `EMPTY` 0 |
 | `deploy-status.sh <slug> \| --sha <sha>` | Release step 9, **once**: the merge commit's production deployment per `deploy.projects[]`, waited for (bounded), with the previous READY id — the `- production:` line | `READY` 0 · `ERROR <p>` 3 · `PENDING` 4 · `SKIP` 0 (no deploy block) |
 | `rollback.sh <slug> \| --sha <sha> [--revert] [--vercel]` | **prepares** a recovery: a `claude/hotfix-revert-<slug>` branch + the hotfix PR (through `new-run.sh`), and/or the previous READY deployment with the exact CLI/REST rollback call — printed, never called; warns when the merge carried a migration and `migrations.reversible` is false | `PREPARED …` 0 · `DRY-RUN` 0 · `SKIP` 0 |

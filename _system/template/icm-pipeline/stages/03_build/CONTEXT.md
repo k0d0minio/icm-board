@@ -25,6 +25,9 @@ order.
   `SKILL.md` body is loaded only when one of its triggers matches a step below).
 - The repo's code rules — the file `_shared/conventions.md` points at — plus the subtree
   `AGENTS.md` files, where the repo has them: the canonical code rules you must follow.
+- `.icm/_shared/project-rules.md` → **Learned rules** — the constraints earlier runs paid for,
+  one per error class a run fixed (`retrospective.sh` appends them at Release and at the end of
+  every lane). Read them before the first edit, with the same standing as the code rules.
 - `.icm/_shared/knowledge-map.md` — routes to the docs tree (`docs_path` in `.icm/project.json`).
   Read only the page(s) it names for Build: the architecture and package pages that say where
   code lives and which workspace package is the right entrypoint.
@@ -79,6 +82,16 @@ everything except the source files you actually edit. Record overruns on a one-l
    - **Build does not gather requirements.** If the spec is ambiguous, or an `## Open questions`
      entry blocks an acceptance criterion, **do not** decide it here or invent an answer —
      **STOP** and send the user back to `revise <slug> "<what to change>"`, then re-run Build.
+   - **Errors are recorded where they are fixed.** A CI `RED`, a `lint.sh` `PROBLEMS`, a script
+     that failed, an error you hit that cost a turn to understand — each is an entry in
+     `.icm/runs/<slug>/03_build/output/error.log` (the shape in Outputs): a dated `## ` header
+     naming the source, the failing lines verbatim, and — once the fix landed — a `- resolved:`
+     line written as a sentence the next run can act on. Add a `- rule:` line only when the fix
+     is a constraint of **this repo** the next run would hit again (a nullable field every
+     route must guard, a package that must be imported from one place), never for a slip.
+     Release's `retrospective.sh` reads the file: a flagged rule, or a signature that recurs
+     across the archive, becomes a line in `_shared/project-rules.md` → Learned rules. A clean
+     run writes no `error.log` at all.
 5. **Use capability skills where they apply — and only then.** The registry from Inputs lists
    each skill's triggers; when a step's work matches one, load that `SKILL.md` body and follow
    it (`security-audit` for a gate finding, `database-migration` for a schema change,
@@ -93,7 +106,8 @@ everything except the source files you actually edit. Record overruns on a one-l
    `.icm/scripts/security-check.sh <slug>` → `RESULT: OK` (the staged change, seconds, no
    network unless a lockfile moved). `BLOCKED n` is a **STOP for that commit**: the redacted
    trace is in `03_build/output/error.log`; follow `.icm/skills/security-audit/SKILL.md` → On
-   BLOCKED (remove the secret, the operator rotates it, a retrospective in `FAILURE.md`) — never
+   BLOCKED (remove the secret, the operator rotates it, then complete the `error.log` entry the
+   gate wrote — its `- resolved:` line) — never
    `--no-verify`. Where the repo wires the same call as its git pre-commit hook it runs on its
    own. Don't run the full sweep — format, lint,
    typecheck, test, build (see Verify below). A pre-commit hook formats on commit, where the repo
@@ -129,11 +143,14 @@ everything except the source files you actually edit. Record overruns on a one-l
    authorises exactly one thing: the flip.
    - **GREEN** → go to step 10.
    - **RED** → this is your failure to fix, not Release's: read the failing job
-     (`get_job_logs`, `failed_only: true`), fix on the branch, push, and re-run the call. Handing
+     (`get_job_logs`, `failed_only: true`), record it in `error.log` (step 4), fix on the
+     branch, add the entry's `- resolved:` line, push, and re-run the call. Handing
      a red branch onward wastes the reviews on code that doesn't compile. If it is
      genuinely not yours to fix, say which check and why in `## Notes for Release` — never silently.
-     Every RED that cost a turn is a retrospective in `FAILURE.md` — what failed, why, the rule —
-     so the next run in this repo starts with it (`run-pack.sh --sync-rules` at close-out).
+     The `error.log` entry is the ledger of what a tool reported (`retrospective.sh` reads it at
+     Release); `FAILURE.md` takes only what no tool logged — a wrong assumption, a STOP, a plan
+     rewritten — and its `## Learned rules` reach `_shared/project-rules.md` through
+     `close-out.sh` (`run-pack.sh --sync-rules`).
    - **PENDING** → the run didn't settle. Re-run the call. Never treat "nothing has failed yet"
      as green, and never read the verdict off a Vercel deployment event — those arrive per push
      and none of them is the verdict.
@@ -186,7 +203,8 @@ lists, intermediate results — lands under `.icm/runs/<slug>/03_build/`, on the
   `security-check.sh <slug> --branch` → `OK`.
 - The canonical file pack, current: `plan.md` (the passes), `tasks.md` (ticked as landed),
   `status.md` (`phase: build`, the step, the CI verdict), `handoff.md` (rewritten at the stop),
-  `decisions.md` (anything decided here), `FAILURE.md` (every RED or STOP that cost a turn).
+  `decisions.md` (anything decided here), `FAILURE.md` (what no tool logged — a STOP, a wrong
+  assumption, a rewritten plan; a tool's error is an `error.log` entry, below).
 - `.icm/runs/<slug>/usage.md` with the `build start` and `build end` lines.
 - The PR flipped from draft to open, satisfied acceptance criteria ticked.
 - `.icm/runs/<slug>/03_build/output/notes.md`:
@@ -214,6 +232,23 @@ lists, intermediate results — lands under `.icm/runs/<slug>/03_build/`, on the
 (Release later appends its own `## Release` record to this same file — leave the file ending
 clean so the append reads naturally.)
 
+- `.icm/runs/<slug>/03_build/output/error.log` — **only when something failed on the way**
+  (step 4); absent on a clean run. One entry per error, in the order they were hit:
+
+```md
+## <ISO-8601Z> <source: ci <check> | lint.sh | format.sh | session> — <what failed, one line>
+<the failing lines, verbatim — the error text, the rule id, the file:line; trimmed to what
+fails, never the whole log>
+- resolved: <one line, a sentence the next run can act on: what was wrong and what is true now>
+- rule: <optional, 1–2 lines — a constraint of THIS repo the next run would hit again; omit
+  for a slip. A second line is indented two spaces.>
+```
+
+`retrospective.sh` reads it at Release, gives each entry a signature (the error class — `TS2532`,
+an ESLint rule id, an errno, an exception class — never the instance), counts it across the
+archive, and appends the entries that earn it to `_shared/project-rules.md` → Learned rules. The
+file travels with the run into the archive, where later runs' retrospectives count it.
+
 ## Verify (owned by the factory, not this agent)
 
 Mechanical checks are deterministic, non-AI work — they belong to the factory (a pre-commit hook
@@ -233,6 +268,10 @@ full sweep — format, lint, typecheck, test, build** — the `.claude/hooks/blo
   failed to compile looks entirely green. `.icm/_shared/ci.md` says how to read both surfaces and
   `_shared/project-rules.md` → The factory names the repo's deploy projects; `ci-status.sh` reads
   both surfaces for you.
+- **Errors, recorded** — every `error.log` entry carries its `- resolved:` line, or names the
+  check handed over under `_shared/ci.md`'s one exit. An entry with neither is a fix that never
+  landed or a record never finished; `retrospective.sh` lists it as unresolved and learns
+  nothing from it.
 
 Build, Release and every lane gate on the settled verdict from `ci-status.sh`. The only local
 exception: if you _already know_ an edit introduced a type error, fix it before pushing rather than

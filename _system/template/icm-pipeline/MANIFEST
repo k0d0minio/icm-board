@@ -82,6 +82,7 @@ T skills/database-migration/scripts/preflight.sh
 T skills/preview-deploy/SKILL.md
 T skills/preview-deploy/references/checklist.md
 T skills/preview-deploy/scripts/status.sh
+T scripts/retrospective.sh
 T raw/README.md
 T raw/_processed/.gitkeep
 T processed/.gitkeep

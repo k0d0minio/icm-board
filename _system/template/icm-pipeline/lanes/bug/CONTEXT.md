@@ -15,6 +15,8 @@ test passes; the merge button is the gate, and nothing is left for a second invo
   leads you to.
 - The repo's code rules — the file `_shared/conventions.md` points at — and the subtree
   `AGENTS.md` files, where the repo has them.
+- `.icm/_shared/project-rules.md` → **Learned rules** — the constraints earlier runs paid for;
+  read them before the first edit, with the same standing as the code rules.
 - `.icm/_shared/github.md` — the lane-PR regime (no gate checkboxes; a human merges in the
   GitHub UI).
 - `.icm/_shared/ci.md` — what the checks are and what green means; the hand-off rests on it.
@@ -39,7 +41,8 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    the push: the redacted trace is in `lane/output/error.log`; follow
    `.icm/skills/security-audit/SKILL.md` → On BLOCKED — never `--no-verify`. The script also
    seeds the run's canonical file pack (`run-pack.sh --init`); a lane keeps `status.md` and
-   `FAILURE.md` current (a RED that cost a turn is a retrospective) and leaves `handoff.md`
+   `FAILURE.md` current (`error.log` takes what a tool reported; `FAILURE.md` what no tool
+   logged) and leaves `handoff.md`
    to say "PR open — smoke, then squash-merge from GitHub".
 
    ```bash
@@ -50,14 +53,20 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    It commits `.icm/runs/<slug>/`, pushes, opens a **draft** PR (body: Summary with a
    `- slug:` line, Steps to test — **no checklist**), and labels it `type:bug`.
 
-3. **Settle the cheap tier.** `ci-status.sh <slug>` on the draft head → `GREEN`. `RED` → fix on
-   the branch, push, re-run the call. `PENDING` → re-run it; nothing-has-failed-yet is not green.
+3. **Settle the cheap tier.** `ci-status.sh <slug>` on the draft head → `GREEN`. `RED` → record
+   it in `.icm/runs/<slug>/lane/output/error.log` (the shape in `stages/03_build/CONTEXT.md` →
+   Outputs: a dated `## ` header, the failing lines, a `- resolved:` line once fixed, a
+   `- rule:` line only for a constraint of this repo), fix on the branch, push, re-run the
+   call. `PENDING` → re-run it; nothing-has-failed-yet is not green.
    The one blocking script call is the only CI read — lane PRs, like every pipeline PR, are
    **never subscribed to PR activity** (`_shared/github.md` → PR events).
 4. **Finish the run on the branch, while the PR is still draft.** If the fix was user-visible,
    write the repo's changelog page (`_shared/project-rules.md` → Announcing names where it lives
    and the skill that owns its shape; a repo with no changelog records `announce: none`) —
-   otherwise record `not user-visible` in `notes.md`. Run the close-out:
+   otherwise record `not user-visible` in `notes.md`. Run the retrospective —
+   `.icm/scripts/retrospective.sh <slug>`: `SKIP` or `NONE` → carry on; `CANDIDATES n` → read
+   them, re-run with `--apply`, delete any that reads as a slip, and commit the appended rules
+   with `notes.md` (its `- learned:` line) before the close-out. Then run the close-out:
 
    ```bash
    .icm/scripts/close-out.sh <slug>
@@ -99,6 +108,7 @@ default) under `<slug>/` by step 4:
 - cause: <one line — the actual defect>
 - fix: <file/area>: <what changed>
 - changelog: <entry added | not user-visible | announce: none>
+- learned: <n rule(s) appended to _shared/project-rules.md | none>
 ```
 
 ## Verify
@@ -116,5 +126,6 @@ default) under `<slug>/` by step 4:
   Never a verdict inherited from an earlier head, and never `GREEN` claimed for either.
 - The changelog page is in the PR, or `notes.md` records the fix as not user-visible (or
   `announce: none`, where the repo has no changelog).
-- `close-out.sh` reported `CLOSED` and its commit is pushed on the PR's head — the archive move
-  rides in the PR, so the merge publishes it.
+- `retrospective.sh` ran before the close-out, on the live run folder; `close-out.sh` reported
+  `CLOSED` and its commit is pushed on the PR's head — the archive move rides in the PR, so the
+  merge publishes it.

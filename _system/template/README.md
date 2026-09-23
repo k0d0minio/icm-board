@@ -84,7 +84,7 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
   scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
            project-body,project-labels,ci-status,close-out,triage-report,env-check,
            select-model,check-migrations,process-raw,
-           deploy-status,rollback,usage-snapshot,env,setup,
+           deploy-status,rollback,usage-snapshot,env,setup,retrospective,
            list-skills,db-branch,security-check,run-pack}.sh                          (T)
                                     select-model.sh routes complexity × stage → tier
                                     (haiku · sonnet · opus/fable; advisor for Scope and

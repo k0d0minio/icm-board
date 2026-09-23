@@ -40,6 +40,8 @@ hold it.
   effort) + `touches:` (conditional-pass triggers) + personas.
 - `.icm/runs/<slug>/03_build/output/notes.md` — what changed, known gaps; the `## Release`
   record is appended here.
+- `.icm/runs/<slug>/03_build/output/error.log` — what Build fixed on the way, entry by entry
+  (absent on a clean run); `retrospective.sh` reads it in step 7.
 - The branch diff (`git diff main...HEAD`) — what the reviews run against.
 - `.icm/_shared/github.md` — gate read, review comments, merge; **pipeline PRs are never
   subscribed to PR activity** (its PR-events rule) — CI is read via `ci-status.sh` only.
@@ -167,12 +169,30 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    re-made (`down`, then `up`; the `database-migration` skill). The script renames and never
    commits; it never touches a migration `main` already has.
 
-   **(b) Append the `## Release` record to `notes.md`** (template below); bring the pack to its
-   final state — `status.md` (`phase: release · step: done · ci: GREEN`), `handoff.md` ("merged
-   and archived; nothing to pick up"), `FAILURE.md` with any retrospective this stage added —
-   then commit it all **with the docs edits and the changelog page**, and push. This push is the one the Pipeline workflow's
-   release-completeness step reads — it sees `notes.md` at its `.icm/runs/` path, with the
-   record in it, next to the docs and changelog files it checks for.
+   **(b) Run the retrospective, then append the `## Release` record.** First, while the run
+   folder is still live:
+
+   ```bash
+   .icm/scripts/retrospective.sh <slug>
+   ```
+
+   It reads the run's `error.log` (what Build fixed, entry by entry — a `security-check.sh`
+   block among them) and the archive's, and names the error classes that earn a rule: one Build
+   flagged with `- rule:`, or one that recurred (`--min`, default 2, across this run and the
+   archived runs) and carries a `- resolved:` line. `RESULT: SKIP` (no `error.log` — a clean
+   run) or `NONE` → carry on. `CANDIDATES n` → read them: they are the session's own words from
+   the moment of the fix. Re-run with `--apply` to append them to `_shared/project-rules.md` →
+   Learned rules (it appends, never commits); a candidate that reads as a slip rather than a
+   constraint is deleted from the file before the commit — that edit is the editorial control,
+   and the PR is where the operator sees the rest. (`FAILURE.md`'s own `## Learned rules` — what
+   no tool logged — reach the same section through `close-out.sh` in step (c).) Then bring the
+   pack to its final state — `status.md` (`phase: release · step: done · ci: GREEN`),
+   `handoff.md` ("merged and archived; nothing to pick up"), `FAILURE.md` with any retrospective
+   this stage added — and **append the `## Release` record to `notes.md`** (template below) with
+   its `- learned:` line, commit it all **with the docs edits, the changelog page and the
+   appended rules**, and push. This push is the one the Pipeline workflow's release-completeness
+   step reads — it sees `notes.md` at its `.icm/runs/` path, with the record in it, next to the
+   docs and changelog files it checks for.
 
    **(c) Then close the run out, as its own commit and its own push:**
 
@@ -241,6 +261,7 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 - reviews: code <effort> · security <security-check.sh --branch: OK | BLOCKED → sent back> <+ /security-review — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
 - parked: <triage stub filename(s) | none>
 - migrations: <ok | skip — none of this run's own | re-stamped <n> after main (check-migrations.sh --apply)>
+- learned: <n rule(s) appended to _shared/project-rules.md | none | skip — no error.log>
 - docs: <pages updated | no docs impact> · announce: <public | internal | none | deferred to CI>
 ```
 
@@ -262,6 +283,9 @@ all in the one PR.
   was never merged around.
 - `check-migrations.sh` read `OK` or `SKIP` on the head that merged — after the merge of `main`,
   and after any re-stamp it asked for. A `STALE` was fixed on the branch, never merged past.
+- `retrospective.sh` ran on the live run folder **before** the close-out moved it; what it
+  appended is in the head that merged, and the record's `- learned:` line says how many. A rule
+  you judged a slip was deleted from the file, never left for the next run to obey.
 - The only holds you applied were the three stop classes. Every other finding is a triage stub
   (named in the record), not an unmerged PR and not a widened diff.
 - The conditional passes ran whenever `touches:`/the diff matched — "n/a" is recorded with the

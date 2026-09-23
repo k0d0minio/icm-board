@@ -47,9 +47,10 @@ redacts everything it prints. This skill is the procedure around it.
    rotation is theirs (the provider's dashboard), never yours, and never something the session
    does through an MCP on its own initiative.
 4. **Never `--no-verify`, never bypass the hook, never commit "for now".**
-5. **Write the retrospective** in the run's `FAILURE.md` (what was staged, why the gate caught
-   it, the rule that prevents it next time) — the learned rule reaches
-   `_shared/project-rules.md` at close-out.
+5. **Complete the `error.log` entry the gate wrote** — its `- resolved:` line (what was staged,
+   why the gate caught it, what is true now) and a `- rule:` line only when the leak was a
+   constraint of this repo (a key some script reads from a file it should not); `retrospective.sh`
+   promotes it at Release. What no tool logged — the habit behind the paste — is `FAILURE.md`'s.
 6. Re-run the gate → `OK`, then commit.
 
 ## Dependency findings

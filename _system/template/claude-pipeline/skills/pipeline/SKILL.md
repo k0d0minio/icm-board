@@ -111,8 +111,10 @@ the source, settles the scope in session and cuts the intake batch in one sittin
    After each stage, say what's done, where the output is, and which `/pipeline <next>` comes
    when the human is ready.
 6. **A run ends at the merge, and the merge is what closes it out.** Release (and every lane)
-   runs `close-out.sh` on the branch as its last commit — the archive move rides in the run's own
-   PR, so the squash publishes it. Release then merges, reads production once
+   runs `retrospective.sh` — what the run fixed on the way, promoted into
+   `_shared/project-rules.md` → Learned rules for the next run — and then `close-out.sh` on the
+   branch as its last commit — the archive move rides in the run's own PR, so the squash
+   publishes it. Release then merges, reads production once
    (`deploy-status.sh`) and announces through the repo's reporting hook (`report.sh announce`,
    or `deferred to CI` — `_shared/project-rules.md` → Reporting); a lane **stops** after its
    last push and hands the PR to the operator to merge from GitHub. Nothing watches production
@@ -123,7 +125,8 @@ the source, settles the scope in session and cuts the intake batch in one sittin
    the last before the stop. `SKIP` is a fine answer; the line is never a gate.
 8. **Every stage leaves the run resumable.** `status.md` (phase · step · ci · blocked · updated)
    and `handoff.md` (next steps, blockers, do-nots) are rewritten at every stop, including a
-   STOP mid-way; a RED or a blocked gate that cost a turn is a retrospective in `FAILURE.md`.
+   STOP mid-way; a RED or a blocked gate is an `error.log` entry (`retrospective.sh` reads it),
+   and what no tool logged — a wrong assumption, a STOP — is a retrospective in `FAILURE.md`.
    `security-check.sh` runs before every commit in Build and before every lane push — a
    `BLOCKED` is never committed around.
 

@@ -5,7 +5,10 @@ branch, PR, and a `- db:` line when `db-branch.sh` bound a database), `usage.md`
 `- usage:` line per stage start and end, appended by `usage-snapshot.sh`, never edited), the
 **canonical file pack** (below) plus each stage's `output/`. Spine runs carry
 `02_define/output/spec.md` and `03_build/output/notes.md` (Release appends its
-`## Release` record there); lane runs carry `lane/output/notes.md` instead. A **front**
+`## Release` record there); lane runs carry `lane/output/notes.md` instead — and, where
+something failed on the way, an `error.log` beside it (each error and its fix;
+`retrospective.sh` reads it at Release, and the archive keeps it so later runs can count what
+recurs). A **front**
 run — Scope — carries `01_scope/_source/story.md` and `01_scope/output/scope.md`, and
 opens no PR of its own.
 
@@ -31,7 +34,7 @@ session on any machine can resume from what the last one left, not from memory:
 | `decisions.md` | the `D-n` ids the run rests on, and any it made itself | seeded from the scope; any stage that decides |
 | `status.md` | phase · step · ci · blocked · updated — read first on a resume | every stage, at start, stop and every flag flip |
 | `handoff.md` | next steps and blockers for the next session — rewritten at every stop | every stage, last thing before it stops |
-| `FAILURE.md` | retrospectives and the learned rules they produced | the stage that hit the error; `close-out.sh` copies the rules into `_shared/project-rules.md` |
+| `FAILURE.md` | what the run learned that no tool logged — a wrong assumption, a STOP, a rewritten plan — and its learned rules (a tool's error is an `error.log` entry, `retrospective.sh`'s) | the stage that learned it; `close-out.sh` copies the rules into `_shared/project-rules.md` (`run-pack.sh --sync-rules`) |
 
 `run-pack.sh <slug> --check` says whether a run has all seven. The `03_build/output/error.log`
 (a lane: `lane/output/error.log`) is where `security-check.sh` writes its redacted trace when it

@@ -82,6 +82,12 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 
 ## Learned rules
 
-One line per rule a run learned the hard way, copied from its `FAILURE.md` at close-out
-(`run-pack.sh --sync-rules`, appends only). Prune by hand when a rule is absorbed into the
-sections above; never edit a rule's text — retire it.
+*The constraints earlier runs paid for, appended before each close-out by two writers with one
+shape: `.icm/scripts/retrospective.sh --apply` (at Release and at the end of every lane — one
+line per error class a run fixed and flagged with `- rule:` in its `error.log`, or fixed again
+after an earlier run already had, counted across the archive's `error.log`s) and
+`.icm/scripts/run-pack.sh --sync-rules` (called by `close-out.sh` — the `## Learned rules` a run
+wrote in its `FAILURE.md`: what no tool logged — a wrong assumption, a STOP, a skipped step).
+Each line carries the run it was learned in. Build and the lanes read this section before their
+first edit, with the same standing as the code rules. Edit or delete lines freely — this file is
+the repo's own, never synced — and delete a line that reads as a slip rather than a constraint.*

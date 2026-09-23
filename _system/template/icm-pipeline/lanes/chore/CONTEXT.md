@@ -64,6 +64,10 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    them, re-run with `--apply`, delete any that reads as a slip, and commit the appended rules
    with `notes.md` (its `- learned:` line) before the close-out. Then run the close-out:
 
+   Record the lane's end first — `.icm/scripts/usage-snapshot.sh <slug> chore end` — so the
+   line rides in the close-out commit: nothing written after the close-out reaches the PR. Then
+   run the close-out:
+
    ```bash
    .icm/scripts/close-out.sh <slug>
    ```
@@ -80,8 +84,8 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    re-invoke the lane — the operator's merge click is the gate. A chore announces nothing (the reporting hook
    is for user-visible change — `_shared/project-rules.md` → Reporting); nothing watches the
    merge. On a UAT repo the PR targets the UAT branch and reaches `main` with the batch's
-   promotion (`.icm/uat/CONTEXT.md`). Last act before the stop:
-   `.icm/scripts/usage-snapshot.sh <slug> chore end`. If you
+   promotion (`.icm/uat/CONTEXT.md`). The usage `end` line was written
+   just before the close-out (above); nothing is written now. If you
    parked a finding in `.icm/intake/triage/` on the way and the folder now holds more than 60
    active stubs (`ls .icm/intake/triage/*.md | wc -l`; `intake/CONTEXT.md` → Triage → cap), say
    so here — `triage/ holds N active stubs (cap 60) — run triage report` — and name

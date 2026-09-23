@@ -36,6 +36,19 @@ After icm-board's D35 PR merges, in this order — each its own step, Jamie's me
 5. Operator: expose Vercel's system variables on the product projects, then set
    `MONGODB_PREVIEW_PER_BRANCH=1` on the Preview target — last. Unsetting it reverts.
 
+## Progress (2026-09-23)
+
+- Steps 1, 2 and 4 are in sustentus/sustentus#1143 (`claude/sync-template-d35`, unmerged). The
+  per-branch switch has two halves there: the Vercel Preview flag plus a repository variable of
+  the same name, which the workflows read.
+- Step 3 is not run: `MONGODB_URI` was not in the session, and Jamie deferred it. Run it from a
+  shell that has the URI, in a checkout of the #1143 branch with the services deps installed:
+  `env -u DEMO_TENANT_CLERK_ORG_ID .icm/scripts/db-branch.sh agentic-dashboard prove --base b9ffc066f^`
+  (the full-history round trip; `agentic-dashboard` is the one live run). It is known UNPROVEN
+  in advance: 6 `down`s throw. What it measures is where it stops and whether the re-applied
+  `up` is idempotent. Afterwards, `db-branch.sh agentic-dashboard down`.
+- The template findings are parked as `triage/db-branch-prove-runner-semantics`.
+
 ## Prompt
 
 In the icm-board repo (`~/Apps`), confirm the D35 PR is merged (`.icm/project.md` → D35), then

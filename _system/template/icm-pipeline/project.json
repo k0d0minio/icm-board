@@ -35,7 +35,12 @@
   "database": {
     "url_env": "DATABASE_URL", "isolation": "none", "image": "postgres:16", "name": "app",
     "provider": "",
-    "neon": { "project_id": "", "api_key_env": "NEON_API_KEY", "production_branch": "main", "previews": "none", "uat_branch": "" }
+    "neon": { "project_id": "", "api_key_env": "NEON_API_KEY", "production_branch": "main", "previews": "none", "uat_branch": "" },
+    "mongodb": {
+      "name_env": "MONGODB_DATABASE_NAME", "production_name": "", "preview_name": "",
+      "seed_command": "", "migrate_command": "", "migrations_collection": "migrations",
+      "previews": "none", "limits": { "databases": 100, "collections": 500 }
+    }
   },
 
   "security": { "audit_command": "" },

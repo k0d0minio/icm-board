@@ -51,7 +51,10 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   non-npm ecosystem: <…>.
 - **The run's database** — `database` in `.icm/project.json`: <`neon` — one Neon branch per run,
   `run/<slug>`, a child of the production branch (`database.provider: neon`, the project id, the
-  key's NAME in `neon.api_key_env`) | `schema` — one Postgres schema per run on `$DATABASE_URL` |
+  key's NAME in `neon.api_key_env`) | `database` — one MongoDB database per run, `run_<slug>`, on
+  the cluster `$MONGODB_URI` names, seeded by `<seed_command>` and migrated by `<migrate_command>
+  up`; `db-branch.sh <slug> prove` round-trips this branch's migrations before the ready flip and
+  the merge | `schema` — one Postgres schema per run on `$DATABASE_URL` |
   `container` — one local Postgres per run | `none` — no database, or migrations are applied by
   the preview and CI only>. Migrations: <the declared stamp form (`millis` default; `epoch`
   with `extension` for a MongoDB runner such as ts-migrate-mongoose), the tool, and whether
@@ -61,7 +64,16 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   (`neon.previews: vercel` — the toggle is on: yes/no); the UAT branch's database is
   `preview/<uat>`; migrations reach previews and UAT at build because <the build command / the
   `vercel-build` script> runs the migrate step; production migrates by <the workflow / the same
-  build step>; `neon-cleanup.yaml` deletes a PR's branches on close (or: absent, because …)>.
+  build step>; `neon-cleanup.yaml` deletes a PR's branches on close (or: absent, because …) |
+  MongoDB cluster via `$MONGODB_URI`: production is `<production_name>`, the shared preview
+  database `<preview_name>` (both never dropped or reset); previews <share `<preview_name>` |
+  each read `preview_<branch>` — `MONGODB_PREVIEW_PER_BRANCH=1` on the Preview target (set: yes/no),
+  Vercel's system variables exposed (yes/no), the app's connection code reads the name through
+  `.icm/scripts/lib/db-name.mjs` (yes/no — the file that does it)>; `<the preview-migrate
+  workflow>` seeds and migrates the PR's database on each push and the smoke check waits for it;
+  the UAT branch's database is `preview_<uat>`; production migrates by <the workflow>;
+  `mongodb-cleanup.yaml` drops a PR's databases on close (or: absent, because …); the cluster's
+  caps are <100 databases / 500 collections (a shared tier) | uncapped>>.
 - **Health endpoint** — `health_endpoint` in `.icm/project.json` (or per project under
   `deploy.projects[]`): <the URL that answers 200 when production is up; `health-check.sh`
   reads it once after the merge>. <Or: none declared — the read reports SKIP.>

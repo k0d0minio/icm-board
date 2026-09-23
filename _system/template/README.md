@@ -89,7 +89,9 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every ado
                                     never committed                                    (T)
   output/.gitkeep                ← where client-status.sh writes client-status-latest.md
                                     (the client's view; committing it is the repo's call)  (T)
-  scripts/lib/{gh,changed-files,project,vercel}.sh  scripts/lib/model-prices.json     (T)
+  scripts/lib/{gh,changed-files,project,vercel,neon}.sh  scripts/lib/model-prices.json (T)
+  scripts/lib/{mongo,db-name}.mjs  ← run with node (the MongoDB transport on the repo's own
+                                    driver; the one database-name rule the app imports — D35) (T)
   scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
            project-body,project-labels,ci-status,close-out,triage-report,env-check,
            select-model,check-migrations,process-raw,
@@ -103,7 +105,8 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every ado
                                     millisecond stamp (V<17>__name.sql — or the epoch form
                                     <13>-name.<ext> a MongoDB runner writes, D34) and names
                                     new files (--new); db-branch.sh binds a run to its own
-                                    schema or container; security-check.sh is the
+                                    schema, container, Neon branch or MongoDB database, and
+                                    on MongoDB proves the migrations' round trip (prove); security-check.sh is the
                                     pre-commit zero-trust gate (gitleaks + npm audit, a
                                     built-in fallback, a redacted trace in the run's
                                     error.log); run-pack.sh seeds and checks the pack;
@@ -123,6 +126,9 @@ github-pipeline/                 → copied to <repo>/.github/        (every ado
                                     whose reporting.announce_from is `ci` — deliberately NOT
                                     in icm-check.sh's PIPELINE_GITHUB list, so the estate walk
                                     never seeds a workflow uninvited
+  workflows/{neon,mongodb}-cleanup.yaml ← REFERENCE workflows: seeded ONCE by /setup where the
+                                    database block asks for one (D32, D35) — drop a closed
+                                    PR's preview and run databases
 ```
 
 Layer 0 itself — `AGENTS.md`, or a legacy full `CLAUDE.md` — is **never templated**.

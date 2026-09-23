@@ -1,0 +1,90 @@
+name: MongoDB cleanup
+
+# The reference database-cleanup workflow (decision D35) — the neon-cleanup.yaml counterpart, seeded
+# ONCE by /setup into a repo whose `.icm/project.json` reads `database.provider: "mongodb"` with
+# `database.mongodb.previews: "branch"`, never by the estate walk. With per-branch previews on, a
+# PR's preview reads `preview_<branch>` on the repo's cluster (lib/db-name.mjs derives the name;
+# the repo's preview-migrate workflow seeds and migrates it). Nothing else drops that database when
+# the PR closes, so this job does — and the run's own `run_<slug>` beside it, where db-branch.sh
+# made one and the session never ran `down`. It names nothing else: never production_name or
+# preview_name (lib/mongo.mjs refuses both by name, whatever their shape), never the UAT database
+# — the UAT git branch has no PR that closes, and a PR INTO it closes the head branch's only.
+#
+# One home per fact: the names come from `.icm/project.json`, the derivation from lib/db-name.mjs,
+# the guards from lib/mongo.mjs — the same files every pipeline script reads. The cluster URI is
+# the secret the variable `database.url_env` names (default MONGODB_URI). Where the repo keeps it
+# in a GitHub environment rather than as a repository secret, set `environment:` below to that
+# environment's name (the preview one — the same cluster serves every database). A missing secret
+# fails the job — the red job is the alert, as everywhere. A database that does not exist is not a
+# failure: a docs-only PR migrated nothing.
+#
+# The driver: lib/mongo.mjs uses the repo's own when it is installed; this job installs only the
+# `mongodb` package into a scratch folder (ICM_MONGO_DRIVER_DIR) instead of the whole workspace.
+
+on:
+  pull_request:
+    types: [closed]
+
+concurrency:
+  group: mongodb-cleanup-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    name: Drop the PR's MongoDB databases
+    timeout-minutes: 5
+    # environment: preview   # uncomment when the URI is an environment secret, not a repository one
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .icm/project.json
+            .icm/scripts/lib/db-name.mjs
+            .icm/scripts/lib/mongo.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Read the database block
+        id: cfg
+        run: |
+          set -euo pipefail
+          f=.icm/project.json
+          {
+            echo "provider=$(jq -r '.database.provider // ""' "$f")"
+            echo "previews=$(jq -r '.database.mongodb.previews // ""' "$f")"
+            echo "url_env=$(jq -r '.database.url_env // "MONGODB_URI"' "$f")"
+            echo "uat_branch=$(jq -r '.uat.branch // ""' "$f")"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.provider == 'mongodb' && github.head_ref != steps.cfg.outputs.uat_branch
+        with:
+          node-version: 24
+
+      - name: Drop preview_<branch> and run_<slug> when they exist
+        if: steps.cfg.outputs.provider == 'mongodb' && github.head_ref != steps.cfg.outputs.uat_branch
+        env:
+          URI_VALUE: ${{ secrets[steps.cfg.outputs.url_env] }}
+          URL_ENV: ${{ steps.cfg.outputs.url_env }}
+          PREVIEWS: ${{ steps.cfg.outputs.previews }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          [ -n "$URI_VALUE" ] || { echo "::error::the secret $URL_ENV is not set for this job — a repository secret, or set environment: on the job"; exit 1; }
+          export "$URL_ENV=$URI_VALUE"
+          export ICM_MONGO_DRIVER_DIR="$RUNNER_TEMP/driver"
+          npm install --silent --no-audit --no-fund --prefix "$ICM_MONGO_DRIVER_DIR" mongodb@6 >/dev/null
+          lib=.icm/scripts/lib
+          wanted=("$(node "$lib/db-name.mjs" run "${HEAD_REF#claude/}")")
+          [ "$PREVIEWS" = "branch" ] && wanted+=("$(node "$lib/db-name.mjs" preview "$HEAD_REF")")
+          present="$(node "$lib/mongo.mjs" list | jq -r '.[].name')"
+          dropped=0
+          for name in "${wanted[@]}"; do
+            if ! printf '%s\n' "$present" | grep -qxF -- "$name"; then echo "$name: not on the cluster — nothing to drop"; continue; fi
+            node "$lib/mongo.mjs" drop "$name"
+            dropped=$((dropped + 1))
+          done
+          echo "MongoDB cleanup: $dropped database(s) dropped for this PR" >> "$GITHUB_STEP_SUMMARY"

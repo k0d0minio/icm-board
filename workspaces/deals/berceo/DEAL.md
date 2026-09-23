@@ -1,6 +1,6 @@
 # Alix Hahusseau (Berceo) — client
 
-- client: alix-hahusseau
+- client: berceo
 - company: Berceo — SRL
 - contacts: Alix and Jordane (founders — decide jointly)
 - repo: k0d0minio/berceo
@@ -30,6 +30,7 @@
   unanswered and is carried as a launch blocker, not a build blocker.
 - 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
 - 2026-09-22 — `04-devis-berceo.pdf` stays where it was committed (nothing is deleted); binaries are no longer committed — rendered documents live under `out/` (gitignored) and in the client's Drive folder from now on.
+- 2026-09-23 — folder renamed from `alix-hahusseau` to `berceo`: the slug is now the repo name (Jamie's decision, 2026-09-23; decision D27).
 
 ## Notes (adopted)
 

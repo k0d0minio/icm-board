@@ -159,8 +159,8 @@ prunes; sessions only add and consume.
 
 ## Status is positional
 
-There is no Status row and no status vocabulary. Where a file sits — and what exists
-around it — is the state:
+There is no Status row and no status vocabulary. Where a file sits on the repo's ticket
+base branch (§ What the dashboard reads) — and what exists around it — is the state:
 
 | State | How it reads |
 |---|---|
@@ -185,9 +185,14 @@ around it — is the state:
 
 ## What the dashboard reads
 
-The board (`websites/admin-dashboard/lib/tickets.ts`) reads each repo's `.icm/` from
-`main` via the GitHub API and parses leniently — a malformed stub still appears rather
-than vanishing:
+The board (`websites/admin-dashboard/lib/tickets.ts`) reads each repo's `.icm/` from its
+**ticket base branch** via the GitHub API and parses leniently — a malformed stub still
+appears rather than vanishing. The ticket base branch (D37) is the UAT branch where
+`.icm/project.json` declares one, else `main` — what the template's `lib/project.sh →
+pipeline_base_branch` answers; on a UAT repo `main` carries a lagging copy only promotions
+update, and no reader uses it for tickets. (The dashboard's half is
+`jamienisbet` → `.icm/intake/ticket-base-branch/`; icm-board's board scripts follow in
+this repo's epic of the same name.)
 
 | It reads | From |
 |---|---|
@@ -224,6 +229,16 @@ a dormant repo that gets a new stub drops the marker in the same commit.
   PR that finishes the work.
 - Cutting what's left into epics or triage is part of ending any session — never a loose
   `TODO.md`.
-- The board reads `main` via the GitHub API — a stub exists once it's pushed.
+- **Ticket state reaches the ticket base branch through a PR** — a stub exists once that
+  PR merges. Inside a run it rides the run's own PR; outside one (a cut, a move, a drop, an
+  archive, Scope's front, a parked template change) it is a **ticket PR**: branch
+  `claude/tickets-<topic>-<YYYYMMDD>`, label `type:tickets`, `announce: none`, path guard
+  `.icm/intake/**` (plus `.icm/runs/<slug>/**` for Scope), merged at once by the session
+  that opened it once the guard holds. The shape and the merge rule live once, in the
+  canonical `pr-conventions` skill → The ticket PR.
+- **Hotfix and the knowledge lane merge into `main`**; on a UAT repo their moves reach the
+  ticket base branch only through `promote-uat.sh sync`, required after both.
+- **icm-board is exempt**: no UAT branch, nothing to drift — its `Plan:`/`Wrap:` commits
+  and `today.md` go straight to its `main`.
 - No write actions from the dashboard (deliberate; revisit only if the manual flow
   chafes).

@@ -149,7 +149,9 @@ written after a call, a chat thread. It records the source verbatim, interrogate
 question sheet and nothing is answered out of band — settles what can be settled into
 `01_scope/output/scope.md` (the source plus an addendum: assumptions, the **`D-n`
 decisions table**, out of scope, and what is **Open for Define**), cuts the intake epic
-from *that*, and pushes it all straight to `main`. A front opens no PR. A repo whose work
+from *that*, and lands it all on the repo's **ticket base branch** through one **ticket PR**
+it merges at once (D37; the canonical `pr-conventions` skill → The ticket PR). A front opens
+no feature PR. A repo whose work
 arrives already agreed never invokes it and has no gap; work with a stub goes to
 `/pipeline new`.
 
@@ -202,6 +204,18 @@ merges; nothing promotes on its own. The branch and address live in `project.jso
 state in `batch.json` (one home per fact, D24). [`template/icm-pipeline/uat/CONTEXT.md`](../template/icm-pipeline/uat/CONTEXT.md)
 owns the rule.
 
+**Ticket state lives on the ticket base branch (decision D37).** The same
+`pipeline_base_branch` is the one home of a repo's `.icm/intake/`: the UAT branch where one is
+declared, else `main`. Every reader — the dashboard, the board scripts, `client-status.sh`'s
+queue — reads it there; every writer reaches it through a PR — the run's own PR inside a run,
+a **ticket PR** outside one (Scope's front included), merged at once by the session that
+opened it after its path guard held (`.icm/intake/**`, plus `.icm/runs/<slug>/**` for Scope),
+`--admin` where a ruleset requires checks. It is the one PR an agent merges. Hotfix and the
+knowledge lane still merge into `main`, so on a UAT repo `promote-uat.sh sync` is required
+after both. icm-board is exempt and commits its own tickets straight to `main`. This amends
+D31, and reverses the front's old direct push to `main`: a stub is now born on the branch
+where its run's close-out retires it.
+
 **The client's status report is everywhere, and needs no UAT.** `client-status.sh` (template-
 owned) compiles `.icm/output/client-status-latest.md` from the pipeline's own records — what
 shipped to production and when (the archive on `origin/main`), what is on UAT (the batch on the
@@ -230,8 +244,8 @@ Anchored so parsing never depends on wording:
   re-asks for no manual checks.
 - Nothing self-advances across a gate: after each stage, say what's done and which
   `/pipeline <next>` comes when the human is ready.
-- **The front's gate has no checkbox** — there is no PR yet. The operator reviews
-  `scope.md` and the cut on `main` and runs `new` when happy; nothing downstream is cut
+- **The front's gate has no checkbox** — there is no feature PR yet. The operator reviews
+  `scope.md` and the cut on the ticket base branch and runs `new` when happy; nothing downstream is cut
   from a scope the operator did not settle.
 
 ## Scripts — the deterministic factory

@@ -90,7 +90,11 @@ nothing is open.>
 
 The mapping is not restated by hand: `.icm/scripts/select-model.sh <file>` reads the `complexity`
 line of a scope, a stub or a spec and prints the model, and `recommended-model` records what it
-printed — or the operator's different choice, which always wins. It is a **recommendation the
+printed — or the operator's different choice, which always wins. With `--stage <stage>` it also
+reads the **role**: Scope and Define are the *advisor* passes (tier 3 — `opus`, `fable` on
+research — the model that plans), Build, Release, the lanes and any subagent are the *executor*
+(tier 2 — `sonnet`, escalated to `opus` only by a `high`/`complex` line), and a formatting or
+lint fix is the *validator* (tier 1 — `haiku`, always). It is a **recommendation the
 operator reads when opening the session that will do the work**; the script starts nothing and no
 stage switches model by itself. The cut carries both lines onto every stub (`intake/CONTEXT.md` →
 Formats), where a stub may sharpen them: one `high` stub in a `medium` scope is normal.

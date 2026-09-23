@@ -75,9 +75,21 @@ the source, settles the scope in session and cuts the intake batch in one sittin
    fixed at the cut, so `new` never invents one. Scope takes no slug — a scope that came out
    wrong is deleted and Scope is run again from the source.
 3. For the **adopting** stages — `revise`, `build`, `release` — run the shared preamble first:
-   `.icm/_shared/stage-preamble.md` ("resolve the run or STOP"). Never recreate a missing run.
+   `.icm/_shared/stage-preamble.md` ("resolve the run or STOP", then read the run's `status.md`
+   and `handoff.md` — the canonical file pack every run carries). Never recreate a missing run.
    Lanes never run it: a lane is one invocation that ends in a mergeable PR and is not resumed
    (see "Resolving a lane argument" below).
+   **The pass and its model, in one line:** `.icm/scripts/select-model.sh <stub-or-spec>
+   --stage <NN_stage|lane>` prints the tier the pass belongs to — Scope and Define are the
+   *advisor* (frontier: `opus`, `fable` on research), Build, Release and every lane the
+   *executor* (`sonnet`, `opus` only on a `complex` spec), a lint or format fix the *validator*
+   (`haiku`). If this session is on a lower tier than it prints, say so once and carry on — the
+   operator opens sessions, nothing here switches a model. A subagent a stage dispatches runs
+   on the executor line.
+   **Capability skills** (`.icm/skills/`, `list-skills.sh --bare` — the session-start hook
+   already printed the registry) are loaded only when a trigger on one of their lines matches
+   the step in front of you; the contract says where (`security-audit`, `database-migration`,
+   `preview-deploy`).
 4. **Read the matching contract in full and follow it exactly** — Inputs / Process / Outputs /
    Verify are the instructions. Load only the files its Inputs section names.
    **CI is read one way everywhere:** `.icm/scripts/ci-status.sh <slug>` → `GREEN | RED | PENDING`
@@ -109,6 +121,11 @@ the source, settles the scope in session and cuts the intake batch in one sittin
 7. **Every stage and lane brackets itself with two usage lines** —
    `usage-snapshot.sh <slug> <stage> start` as the first act after the preamble and `… end` as
    the last before the stop. `SKIP` is a fine answer; the line is never a gate.
+8. **Every stage leaves the run resumable.** `status.md` (phase · step · ci · blocked · updated)
+   and `handoff.md` (next steps, blockers, do-nots) are rewritten at every stop, including a
+   STOP mid-way; a RED or a blocked gate that cost a turn is a retrospective in `FAILURE.md`.
+   `security-check.sh` runs before every commit in Build and before every lane push — a
+   `BLOCKED` is never committed around.
 
 ## Resolving `new` (one procedure, two selectors)
 

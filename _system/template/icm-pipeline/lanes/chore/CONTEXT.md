@@ -32,6 +32,14 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    a chore PR that also "fixes a few things on the way" is two PRs pretending to be one. Write
    `notes.md` (template below), then open the lane PR:
 
+   **Before the script — it commits and pushes — the zero-trust gate:**
+   `.icm/scripts/security-check.sh <slug> --branch` → `RESULT: OK`. `BLOCKED n` is a STOP for
+   the push: the redacted trace is in `lane/output/error.log`; follow
+   `.icm/skills/security-audit/SKILL.md` → On BLOCKED — never `--no-verify`. The script also
+   seeds the run's canonical file pack (`run-pack.sh --init`); a lane keeps `status.md` and
+   `FAILURE.md` current (a RED that cost a turn is a retrospective) and leaves `handoff.md`
+   to say "PR open — smoke, then squash-merge from GitHub".
+
    ```bash
    .icm/scripts/new-run.sh <slug> --lane chore --summary "<the invariant in one sentence>" \
      [--stub .icm/intake/triage/<name>.md]

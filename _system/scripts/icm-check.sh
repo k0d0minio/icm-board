@@ -332,7 +332,7 @@ for repo in "${repos[@]}"; do
         else
           cp "$TEMPLATE/icm-pipeline/$p" "$repo/.icm/$p"
         fi
-        case "$p" in scripts/lib/*) ;; scripts/*) chmod +x "$repo/.icm/$p" ;; esac
+        case "$p" in scripts/lib/*) ;; scripts/*|skills/*/scripts/*.sh) chmod +x "$repo/.icm/$p" ;; esac
         actions+=("created .icm/$p")
       fi
     done

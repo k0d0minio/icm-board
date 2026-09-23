@@ -19,6 +19,10 @@ order.
   or STOPs. Never recreate a missing run.
 - `.icm/runs/<slug>/02_define/output/spec.md` — the canonical spec you implement against.
 - `.icm/runs/<slug>/run.md` — branch + PR pointers.
+- `.icm/runs/<slug>/status.md` and `handoff.md` — where the last session stopped (the canonical
+  file pack, `.icm/scripts/run-pack.sh`); then `plan.md` and `tasks.md`, which this stage owns.
+- The capability-skills registry — `.icm/scripts/list-skills.sh --bare` (Level 1 only; a
+  `SKILL.md` body is loaded only when one of its triggers matches a step below).
 - The repo's code rules — the file `_shared/conventions.md` points at — plus the subtree
   `AGENTS.md` files, where the repo has them: the canonical code rules you must follow.
 - `.icm/_shared/knowledge-map.md` — routes to the docs tree (`docs_path` in `.icm/project.json`).
@@ -36,7 +40,12 @@ everything except the source files you actually edit. Record overruns on a one-l
 
 1. **Run the shared preamble** (`.icm/_shared/stage-preamble.md`) — resolve the run or STOP.
    Then the first act of every stage: `.icm/scripts/usage-snapshot.sh <slug> build start`
-   (`SKIP` is fine, never a stop).
+   (`SKIP` is fine, never a stop). Read `status.md` and `handoff.md`; set `status.md` to
+   `phase: build`. Build is the **executor** pass: `.icm/scripts/select-model.sh <slug> --stage
+   03_build` prints the model this session should be on (`sonnet` for ordinary work, `opus` when
+   the spec's complexity is `complex`) — if the session is on a lower tier than it prints, say so
+   in one line; the operator decides, nothing switches itself. A subagent this stage dispatches
+   runs on the executor line, never above it.
 2. **Gate-check.** Read the PR body (GitHub MCP, per `_shared/github.md`): the **Spec approved**
    checkbox must be ticked. **If it isn't, STOP** — do not build against an unapproved spec, and
    never tick the box yourself. Tell the user to settle the spec (`revise <slug> "…"` if it
@@ -44,8 +53,14 @@ everything except the source files you actually edit. Record overruns on a one-l
 3. **Stage label — CI handles it.** The `pipeline.yaml` labels job re-projects labels on every
    push and derives `stage:*` from which run outputs exist, so committing `notes.md` (step 8) is
    what moves the board to `stage:build`. Skip `project-labels.sh` — it's only a manual fallback.
-4. **Implement** the acceptance criteria, and only those. Follow the repo's code rules exactly.
-   Keep edits minimal and focused — no drive-by refactors. Something broken or ugly that is
+4. **Plan, then implement** the acceptance criteria, and only those. First act: write
+   `plan.md` — the change in passes, each one layer (schema, server, UI, docs) with what "done"
+   looks like — and the commit-sized queue in `tasks.md` under the definition of done the spec
+   seeded. Work the queue in order; tick a task when its commit lands. A change to the data model
+   loads the `database-migration` skill (`.icm/skills/database-migration/SKILL.md`): the run's
+   own database (`db-branch.sh <slug> up`, `SKIP` means run no migration locally), the
+   migration named by `check-migrations.sh --new`, never by hand. Follow the repo's code rules
+   exactly. Keep edits minimal and focused — no drive-by refactors. Something broken or ugly that is
    **not this ticket's** → park it as a stub in `.icm/intake/triage/` (shape in
    `.icm/intake/CONTEXT.md`) and move on; never absorb it into this diff. **Cap notice:** if the
    folder then holds more than 60 active stubs (`ls .icm/intake/triage/*.md | wc -l`;
@@ -64,13 +79,23 @@ everything except the source files you actually edit. Record overruns on a one-l
    - **Build does not gather requirements.** If the spec is ambiguous, or an `## Open questions`
      entry blocks an acceptance criterion, **do not** decide it here or invent an answer —
      **STOP** and send the user back to `revise <slug> "<what to change>"`, then re-run Build.
-5. **Use capability skills where they apply.** For repeatable work (new shared component, new
-   model, route, action, notification…) prefer the matching skill in `.claude/skills/` over
-   hand-rolling it.
+5. **Use capability skills where they apply — and only then.** The registry from Inputs lists
+   each skill's triggers; when a step's work matches one, load that `SKILL.md` body and follow
+   it (`security-audit` for a gate finding, `database-migration` for a schema change,
+   `preview-deploy` for steps 9–12). For repeatable product work (new shared component, new
+   model, route, action, notification…) prefer the matching repo skill named in
+   `_shared/project-rules.md` → Capability skills over hand-rolling it. Never load a skill on the
+   chance it helps: the Inputs are the budget.
 6. **Self-check** each acceptance criterion; if one can't be met, note it rather than dropping it.
    Tick the satisfied criteria in the PR body (tick state lives on the PR; the text stays the
    spec's — to reword, edit `spec.md` and reconcile).
-7. **Commit and push — the factory verifies, not you.** Don't run the full sweep — format, lint,
+7. **Commit and push — the factory verifies, not you.** Before each commit, the zero-trust gate:
+   `.icm/scripts/security-check.sh <slug>` → `RESULT: OK` (the staged change, seconds, no
+   network unless a lockfile moved). `BLOCKED n` is a **STOP for that commit**: the redacted
+   trace is in `03_build/output/error.log`; follow `.icm/skills/security-audit/SKILL.md` → On
+   BLOCKED (remove the secret, the operator rotates it, a retrospective in `FAILURE.md`) — never
+   `--no-verify`. Where the repo wires the same call as its git pre-commit hook it runs on its
+   own. Don't run the full sweep — format, lint,
    typecheck, test, build (see Verify below). A pre-commit hook formats on commit, where the repo
    has one; CI runs format/lint/typecheck; the Vercel preview builds the PR. Spend your turns on
    code. A pre-commit hook only exists in a fresh cloud session once the repo's dependencies are
@@ -82,8 +107,10 @@ everything except the source files you actually edit. Record overruns on a one-l
    package's own config, the repo's warning ceiling in view) when CI reports a lint failure or
    before pushing a large change. Both run in seconds, build nothing, and end in one `RESULT:`
    line; neither is the verdict — CI is.
-8. **Write build notes.** Commit the run files alongside the code and push, so the PR reflects
-   current state.
+8. **Write build notes** (`notes.md`, Outputs below) and keep the pack current: `status.md`
+   (`step`, `ci`, `blocked`), `tasks.md` ticks, `decisions.md` for any decision this stage had to
+   make (a spec gap — say so in Notes for Release). Commit the run files alongside the code and
+   push, so the PR reflects current state and a session that resumes finds where this one is.
 9. **Establish a settled cheap-tier verdict on the draft head — Build does not flip an unread run.**
 
    First, the environment this branch changed, measured: `.icm/scripts/env.sh audit --changed`
@@ -105,6 +132,8 @@ everything except the source files you actually edit. Record overruns on a one-l
      (`get_job_logs`, `failed_only: true`), fix on the branch, push, and re-run the call. Handing
      a red branch onward wastes the reviews on code that doesn't compile. If it is
      genuinely not yours to fix, say which check and why in `## Notes for Release` — never silently.
+     Every RED that cost a turn is a retrospective in `FAILURE.md` — what failed, why, the rule —
+     so the next run in this repo starts with it (`run-pack.sh --sync-rules` at close-out).
    - **PENDING** → the run didn't settle. Re-run the call. Never treat "nothing has failed yet"
      as green, and never read the verdict off a Vercel deployment event — those arrive per push
      and none of them is the verdict.
@@ -119,9 +148,13 @@ everything except the source files you actually edit. Record overruns on a one-l
     the place to meet it is here — on the cheap tier, before the full gate and the previews
     spend anything — not at Release step 7, where a conflict costs a full gate and a smoke.
     Resolve conflicts on this branch; **a conflict inside `.icm/runs/<slug>/` itself is a
-    STOP** (someone else wrote to this run — the preamble's run-folder rule). Release's step
-    7(a) stays as the final merge and is usually a no-op after this. A merge that changed
-    code takes the cheap tier again: re-run step 9's `ci-status.sh` before flipping.
+    STOP** (someone else wrote to this run — the preamble's run-folder rule). When the branch
+    carries a migration: `.icm/scripts/check-migrations.sh` → `OK` or `SKIP` here, where a
+    `STALE`/`MISNAMED` costs a cheap-tier push instead of a full gate (`--apply` renames; commit
+    the renames; reset the run's database — the `database-migration` skill). Then the branch
+    as a whole through the gate once: `.icm/scripts/security-check.sh <slug> --branch` → `OK`.
+    Release's step 7(a) stays as the final merge and is usually a no-op after this. A merge
+    that changed code takes the cheap tier again: re-run step 9's `ci-status.sh` before flipping.
 
 11. **Flip ready, then push.** `update_pull_request`, `draft: false` (per `_shared/github.md`),
     **then push** — an empty commit (`git commit --allow-empty -m "chore: <slug> — ready"`) when
@@ -133,11 +166,14 @@ everything except the source files you actually edit. Record overruns on a one-l
     now reports the **full gate**: the checks the repo adds on a ready head
     (`_shared/project-rules.md` → The factory) and the affected product-app previews with their
     URLs. RED here is still yours to fix.
-13. **Stop.** Last act: `.icm/scripts/usage-snapshot.sh <slug> build end`. Tell the user Build
-    is done, the PR is open **with the full gate green**, and pass on the preview URLs the
+13. **Stop.** Rewrite `handoff.md` (next: smoke the previews, tick Ready to merge, release;
+    blockers, if any) and set `status.md` to `step: done · ci: GREEN`; commit and push them with
+    the last change. Last act: `.icm/scripts/usage-snapshot.sh <slug> build end`. Tell the user
+    Build is done, the PR is open **with the full gate green**, and pass on the preview URLs the
     script listed. The path onward is: smoke-test those previews, tick **Ready to merge**, then
     `/pipeline release <slug>` — the tick attests the manual testing, so nothing after it
-    re-asks.
+    re-asks. A Build that STOPs mid-way (an unapproved spec, an unanswerable criterion, a
+    blocked gate) writes `handoff.md` and `status.md` (`blocked: yes — why`) before it stops.
 
 ## Outputs
 
@@ -146,7 +182,11 @@ lists, intermediate results — lands under `.icm/runs/<slug>/03_build/`, on the
 `claude/<slug>` and in a working tree no other live run is using.
 
 - Code on the run's branch, small conventional commits (`feat: <slug> — <what>`).
-- A settled `GREEN` from `ci-status.sh` on the pushed head; `env.sh audit --changed` → `OK`.
+- A settled `GREEN` from `ci-status.sh` on the pushed head; `env.sh audit --changed` → `OK`;
+  `security-check.sh <slug> --branch` → `OK`.
+- The canonical file pack, current: `plan.md` (the passes), `tasks.md` (ticked as landed),
+  `status.md` (`phase: build`, the step, the CI verdict), `handoff.md` (rewritten at the stop),
+  `decisions.md` (anything decided here), `FAILURE.md` (every RED or STOP that cost a turn).
 - `.icm/runs/<slug>/usage.md` with the `build start` and `build end` lines.
 - The PR flipped from draft to open, satisfied acceptance criteria ticked.
 - `.icm/runs/<slug>/03_build/output/notes.md`:
@@ -197,3 +237,8 @@ full sweep — format, lint, typecheck, test, build** — the `.claude/hooks/blo
 Build, Release and every lane gate on the settled verdict from `ci-status.sh`. The only local
 exception: if you _already know_ an edit introduced a type error, fix it before pushing rather than
 burning a CI round-trip — but don't kick off a full-repo sweep to go looking.
+
+- **Security** — `security-check.sh` is the one local check that is a gate, not feedback: it
+  reads the staged change (or the branch) for secrets and known-high dependencies, seconds, and
+  a `BLOCKED` aborts the commit. It is local because a secret must never reach the remote at all
+  — CI is too late for that one class.

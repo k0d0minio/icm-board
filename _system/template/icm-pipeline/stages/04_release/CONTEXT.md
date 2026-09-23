@@ -34,6 +34,8 @@ hold it.
 
 - `.icm/_shared/stage-preamble.md` — run it **first**: resolve the run or STOP.
 - `.icm/runs/<slug>/run.md` — branch + PR pointers.
+- `.icm/runs/<slug>/status.md` and `handoff.md` — where Build stopped (the canonical file pack);
+  `FAILURE.md` for what it learned, which the close-out copies into the repo's rules.
 - `.icm/runs/<slug>/02_define/output/spec.md` — acceptance criteria + `complexity:` (review
   effort) + `touches:` (conditional-pass triggers) + personas.
 - `.icm/runs/<slug>/03_build/output/notes.md` — what changed, known gaps; the `## Release`
@@ -55,7 +57,8 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
 
 1. **Run the shared preamble**, then the first act of every stage:
    `.icm/scripts/usage-snapshot.sh <slug> release start` (one `- usage:` line in the run's
-   `usage.md`; `SKIP` is fine, never a stop). Confirm Build finished: `notes.md` exists and the
+   `usage.md`; `SKIP` is fine, never a stop). Read `status.md` and `handoff.md`; set `status.md`
+   to `phase: release`. Confirm Build finished: `notes.md` exists and the
    PR is open (not draft). An acceptance criterion Build already flagged as unmet → send back to
    `/pipeline build <slug>`; don't release known-broken work. Then **project the stage label**:
 
@@ -96,6 +99,11 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
      is stop class 3 with the rows naming the fix (declare the key, add it where it is scoped —
      the value is the operator's). A `support.tier` of `basic`/`retainer` with no fail-safe page
      or Sentry key (`setup.sh` section 11) is the same class.
+   - **The gate, over the whole branch:** `.icm/scripts/security-check.sh <slug> --branch --audit`
+     → `RESULT: OK` — the deterministic input to stop class 2 (a leaked secret, a known-high
+     dependency this branch introduced), read before the diff is. `BLOCKED n` is stop class 2 with
+     the redacted trace in `error.log`: follow `.icm/skills/security-audit/SKILL.md` → On BLOCKED
+     and send back to Build. A `[WARN]` that gitleaks is absent goes in the record, not under it.
    - **Code review — always, in-session.** Run **`/code-review`** at the spec's complexity
      (`trivial → low`, `standard → medium`, `complex → high`). There is no CI review job; this
      pass is the review.
@@ -147,18 +155,22 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    .icm/scripts/check-migrations.sh
    ```
 
-   `RESULT: OK` or `SKIP` → carry on. `RESULT: STALE <n>` → this is the deploy-breaking class
+   `RESULT: OK` or `SKIP` → carry on. `RESULT: STALE <n>` (or `MISNAMED <n>` — a migration not in
+   the repo's declared stamp form, `migrations.stamp`) → this is the deploy-breaking class
    (stop class 3) with a mechanical, in-ticket fix, so fix it here: re-run with `--apply`, read
    the renames it lists (and anything it says "also mentions" an old stamp — that file is yours
    to correct), and commit them on the branch as their own commit
    (`fix: <slug> — re-stamp migrations after main`). A rename is code — that push takes the full
    CI path. If the repo keeps a persistent preview database that already applied the old stamps,
    reset it the way the repo says (`_shared/project-rules.md` → The factory) before trusting a
-   preview again. The script renames and never commits; it never touches a migration `main`
-   already has.
+   preview again — and the run's own database, where `db-branch.sh` bound one, is dropped and
+   re-made (`down`, then `up`; the `database-migration` skill). The script renames and never
+   commits; it never touches a migration `main` already has.
 
-   **(b) Append the `## Release` record to `notes.md`** (template below), commit it **with the
-   docs edits and the changelog page**, and push. This push is the one the Pipeline workflow's
+   **(b) Append the `## Release` record to `notes.md`** (template below); bring the pack to its
+   final state — `status.md` (`phase: release · step: done · ci: GREEN`), `handoff.md` ("merged
+   and archived; nothing to pick up"), `FAILURE.md` with any retrospective this stage added —
+   then commit it all **with the docs edits and the changelog page**, and push. This push is the one the Pipeline workflow's
    release-completeness step reads — it sees `notes.md` at its `.icm/runs/` path, with the
    record in it, next to the docs and changelog files it checks for.
 
@@ -168,7 +180,9 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    .icm/scripts/close-out.sh <slug>
    ```
 
-   It `git mv`s `.icm/runs/<slug>/` into the runs archive (`runs_archive` in `.icm/project.json`;
+   It first copies the run's `FAILURE.md` → `## Learned rules` into `_shared/project-rules.md`
+   (`run-pack.sh --sync-rules`, appends only — the next run in this repo starts with them), then
+   `git mv`s `.icm/runs/<slug>/` into the runs archive (`runs_archive` in `.icm/project.json`;
    `.icm/runs/_done/` by default) — and the intake epic with it, if this stub was the last one it
    had left unshipped — and commits that on the branch.
    `RESULT: CLOSED` → push. `RESULT: STOP` → read the reason and fix it; do not merge a run you
@@ -224,7 +238,7 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 
 - gate: Ready to merge ticked — merge authorised
 - ci: GREEN on <sha> (ci-status.sh, after the last push)
-- reviews: code <effort> · security <run — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
+- reviews: code <effort> · security <security-check.sh --branch: OK | BLOCKED → sent back> <+ /security-review — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
 - parked: <triage stub filename(s) | none>
 - migrations: <ok | skip — none of this run's own | re-stamped <n> after main (check-migrations.sh --apply)>
 - docs: <pages updated | no docs impact> · announce: <public | internal | none | deferred to CI>
@@ -244,6 +258,8 @@ all in the one PR.
 - The merge rested on a **settled `GREEN` from `ci-status.sh` on the exact head that merged** —
   established after your last push, never inherited, never read off a Vercel event or the
   `Vercel Preview Comments` check. Merged once; never on RED, never on PENDING.
+- `security-check.sh <slug> --branch --audit` read `OK` on the branch that merged; a `BLOCKED`
+  was never merged around.
 - `check-migrations.sh` read `OK` or `SKIP` on the head that merged — after the merge of `main`,
   and after any re-stamp it asked for. A `STALE` was fixed on the branch, never merged past.
 - The only holds you applied were the three stop classes. Every other finding is a triage stub

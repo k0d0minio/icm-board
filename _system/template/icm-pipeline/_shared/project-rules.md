@@ -39,6 +39,16 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   cloud environment panel. <Anything unusual about where a key must exist.>
 - **Local feedback scripts** — `scripts/format.sh` and `scripts/lint.sh` run <formatter / linter>
   over changed files only; CI stays the verdict. <Or: not wired — the stubs report SKIP.>
+- **The security gate** — `scripts/security-check.sh` runs before every commit in Build and
+  before every lane's push (template-owned; the one local check that is a gate). Wired as this
+  repo's git pre-commit hook: <`.husky/pre-commit` → `.icm/scripts/security-check.sh` | not
+  wired — the stages call it>. gitleaks: <installed on every machine that commits | absent —
+  the built-in patterns are the floor>. `security.audit_command` in `.icm/project.json` for a
+  non-npm ecosystem: <…>.
+- **The run's database** — `database` in `.icm/project.json`: <`schema` — one Postgres schema
+  per run on `$DATABASE_URL` | `container` — one local Postgres per run | `none` — no database,
+  or migrations are applied by the preview and CI only>. Migrations: <the declared stamp form
+  (`millis` default), the tool, and whether out-of-order is configured in the tool's own file>.
 - **Archive** — `runs_archive` / `intake_archive` in `.icm/project.json`. <Where they are served
   from, if anywhere; the default `_done/` folders need no note.>
 
@@ -63,6 +73,15 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 
 ## Capability skills the stages may call
 
-<The one-job skills under `.claude/skills/` a stage names — e.g. a docs skill for the
-knowledge lane, a smoke-test skill for Release. "None" is a fine answer; the contracts say what to
-do when a named skill is absent.>
+- **Pipeline capability skills** — `.icm/skills/<name>/SKILL.md` (three-tier, loaded on a
+  trigger; `.icm/skills/README.md`). Seeded and template-owned: `security-audit`,
+  `database-migration`, `preview-deploy`. This repo's own additions: <name · what for | none>.
+- **Repo skills** — <the one-job skills under `.claude/skills/` a stage names — e.g. a docs
+  skill for the knowledge lane, a smoke-test skill for Release. "None" is a fine answer; the
+  contracts say what to do when a named skill is absent.>
+
+## Learned rules
+
+One line per rule a run learned the hard way, copied from its `FAILURE.md` at close-out
+(`run-pack.sh --sync-rules`, appends only). Prune by hand when a rule is absorbed into the
+sections above; never edit a rule's text — retire it.

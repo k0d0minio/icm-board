@@ -6,8 +6,9 @@
 #     Define writes spec.md and hands the one-line PR Summary in via --summary; this script commits
 #     the run + pushes, opens the DRAFT PR with a body projected from spec.md (project-body.sh —
 #     template headings + both gate anchors + acceptance criteria mirrored unticked; `revise <slug>`
-#     re-projects it with the same script), writes/extends run.md, projects the labels
-#     (project-labels.sh), and — if --stub was passed — git mv's the stub into _done/.
+#     re-projects it with the same script), writes/extends run.md, seeds the run's canonical file
+#     pack (run-pack.sh --init: project/plan/tasks/decisions/status/handoff/FAILURE.md), projects
+#     the labels (project-labels.sh), and — if --stub was passed — git mv's the stub into _done/.
 #   • Lane (--lane bug|tweak|chore|hotfix|handover — the vocabulary is lib/project.sh's
 #     `pipeline_lanes`) — the fast-lane scaffold (.icm/lanes/*/CONTEXT.md). No spec required:
 #     opens a PR whose body carries Summary (with a `- slug:` line, so resolve-run.sh finds lane
@@ -307,8 +308,16 @@ if [ ! -f "$run_md" ]; then
 fi
 grep -Eq '^- branch:' "$run_md" || echo "- branch: $branch" >> "$run_md"
 grep -Eq '^- pr:'     "$run_md" || echo "- pr: #$pr_number" >> "$run_md"
+# The canonical file pack (run-pack.sh header): seeded once, here, so every run has project.md,
+# plan.md, tasks.md, decisions.md, status.md, handoff.md and FAILURE.md from birth. Never
+# overwrites; a failure to seed is a warning, never a failed run.
+"$here/run-pack.sh" "$slug" --init >/dev/null 2>&1 \
+  || echo "WARNING: run-pack.sh could not seed the run's canonical files — run: .icm/scripts/run-pack.sh $slug --init" >&2
 git_c add ".icm/runs/$slug/run.md"
-git_c diff --cached --quiet || git_c commit -m "chore: $slug — run pointers (branch + PR)" >/dev/null
+for f in project.md plan.md tasks.md decisions.md status.md handoff.md FAILURE.md; do
+  [ -f "$run_dir/$f" ] && git_c add ".icm/runs/$slug/$f"
+done
+git_c diff --cached --quiet || git_c commit -m "chore: $slug — run pointers (branch + PR) and the canonical file pack" >/dev/null
 git_push "$branch"
 
 # --- labels ----------------------------------------------------------------------------------------

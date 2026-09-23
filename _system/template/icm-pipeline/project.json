@@ -27,7 +27,11 @@
     }
   },
 
-  "migrations": { "path": "", "reversible": false },
+  "migrations": { "path": "", "reversible": false, "stamp": "millis", "tool": "sql", "out_of_order": true },
+
+  "database": { "url_env": "DATABASE_URL", "isolation": "none", "image": "postgres:16", "name": "app" },
+
+  "security": { "audit_command": "" },
 
   "support": {
     "tier": "none",

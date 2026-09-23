@@ -21,7 +21,8 @@ here is the self-contained micro-copy.*
 ```
 
 In an adopted repo this folder also carries `stages/`, `lanes/`, `runs/`, `_shared/`,
-`scripts/` and the `MANIFEST` — each seeded file documents itself, and
+`scripts/`, `output/` (the client status report), `uat/` where a client UAT environment is
+declared, and the `MANIFEST` — each seeded file documents itself, and
 `.claude/skills/pipeline/SKILL.md` routes between them. Not here: icm-board ships no
 product and runs no pipeline of its own.
 

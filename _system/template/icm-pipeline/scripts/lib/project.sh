@@ -49,6 +49,16 @@
 #                   — the after-handover line the deal agreed. setup.sh's Support section checks
 #                   the fail-safe page and the Sentry key exist when tier is basic or retainer;
 #                   Release step 4 stops (class 3) when they do not.
+#   uat             object {branch, url} — OPTIONAL: the persistent client UAT environment
+#                   (decision D27; `.icm/uat/CONTEXT.md`). Declared only by `/setup`, never
+#                   seeded filled. `branch` is the long-lived integration branch every run's PR
+#                   targets instead of main once declared (`uat` by convention); `url` is the one
+#                   fixed address the client opens — a domain assigned to that branch in Vercel,
+#                   or the branch alias — the same every day, never a per-batch preview. Absent,
+#                   or an empty `branch`, reads as "not declared": every run merges into main and
+#                   ships on the merge, exactly as before. `promote-uat.sh` and `client-status.sh`
+#                   read it; `new-run.sh`, `close-out.sh`, `deploy-status.sh --uat` and
+#                   `check-migrations.sh` change their base branch on it.
 #
 # Contract for callers (source after die() is defined; needs jq):
 #   source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"
@@ -72,11 +82,21 @@
 #   migrations_reversible                 prints true|false (default false).
 #   support_tier · support_failsafe · support_sentry_env
 #                                         the support block's scalars with their defaults.
+#   uat_declared                          returns 0 when uat.branch is set — the repo has a
+#                                         persistent client UAT environment.
+#   uat_branch · uat_url                  the uat block's scalars ('' when not declared).
+#   pipeline_base_branch                  the branch a run's PR targets and a run branch is cut
+#                                         from: uat.branch when declared, else main. A hotfix
+#                                         ignores it (production is wrong now — lanes/hotfix).
 #   pipeline_lanes                        the lane vocabulary, space-separated — the one list
 #                                         new-run.sh, resolve-run.sh, project-labels.sh,
 #                                         close-out.sh, validate-intake.sh and triage-report.sh
-#                                         read (bug tweak chore hotfix handover). Not a manifest
-#                                         key: the lanes are the template's, not the repo's.
+#                                         read (bug tweak chore hotfix handover promote). Not a
+#                                         manifest key: the lanes are the template's, not the
+#                                         repo's. `promote` is the one lane with no contract
+#                                         folder: promote-uat.sh runs it end to end (a UAT
+#                                         batch's promotion PR into main), .icm/uat/CONTEXT.md
+#                                         is its contract, and it never starts from a stub.
 #   is_lane <word>                        returns 0 when <word> is one of pipeline_lanes.
 
 declare -F die >/dev/null 2>&1 || die() { echo "error: $*" >&2; exit 1; }
@@ -155,10 +175,23 @@ support_tier()       { project_field '.support.tier' 'none'; }
 support_failsafe()   { project_field '.support.failsafe_page' ''; }
 support_sentry_env() { project_field '.support.monitoring.sentry_dsn_env' 'SENTRY_DSN'; }
 
+# --- uat ---------------------------------------------------------------------------------------------
+# The persistent client UAT environment, where the repo declares one (D27). Not declared → every
+# helper answers as the pipeline always did: base branch main, no batch, no promotion.
+
+uat_declared() { project_has '.uat.branch'; }
+uat_branch()   { project_field '.uat.branch' ''; }
+uat_url()      { project_field '.uat.url' ''; }
+pipeline_base_branch() {
+  if uat_declared; then uat_branch; else printf '%s' "main"; fi
+}
+
 # --- lanes -------------------------------------------------------------------------------------------
 # The one vocabulary list. bug/tweak/chore open draft; hotfix opens READY (an incident wants the
-# full gate and the previews at once); handover is the deal's last lane (lanes/handover/CONTEXT.md).
-pipeline_lanes() { printf '%s' "bug tweak chore hotfix handover"; }
+# full gate and the previews at once); handover is the deal's last lane (lanes/handover/CONTEXT.md);
+# promote is script-run — promote-uat.sh opens a UAT batch's promotion PR into main, READY
+# (.icm/uat/CONTEXT.md) — and is never picked by hand or from a stub.
+pipeline_lanes() { printf '%s' "bug tweak chore hotfix handover promote"; }
 is_lane() {
   local w
   for w in $(pipeline_lanes); do [ "$w" = "$1" ] && return 0; done

@@ -60,6 +60,10 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
   lanes/{bug,tweak,chore,knowledge}/  lanes/hotfix/ (human-invoked, opens READY)
   lanes/handover/ (the deal's last lane)                                              (T)
   intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
+  uat/CONTEXT.md                 ← OPTIONAL in effect, always seeded: the persistent client
+                                    UAT environment — one branch, one address, the batch the
+                                    client signs off, the promotion (D27). Inert until /setup
+                                    declares `uat` in project.json                     (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
   _shared/{project-rules,knowledge-map}.md   ← this repo's rules and doc pages         (P)
   project.json                   ← the project manifest (name, complexity, docs_path,
@@ -72,11 +76,14 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
                                     and where process-raw.sh writes the extracted text —
                                     recordings transcribed locally (ffmpeg + whisper.cpp),
                                     never committed                                    (T)
+  output/.gitkeep                ← where client-status.sh writes client-status-latest.md
+                                    (the client's view; committing it is the repo's call)  (T)
   scripts/lib/{gh,changed-files,project,vercel}.sh  scripts/lib/model-prices.json     (T)
   scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
            project-body,project-labels,ci-status,close-out,triage-report,env-check,
            select-model,check-migrations,process-raw,
-           deploy-status,rollback,usage-snapshot,env,setup}.sh                        (T)
+           deploy-status,rollback,usage-snapshot,env,setup,
+           client-status,promote-uat}.sh                                              (T)
   scripts/{format,lint,validate-knowledge-map,report}.sh   ← the repo's own hooks      (P)
                                     report.sh is the reporting hook: complete as seeded,
                                     steered by project.json → reporting, never edited.

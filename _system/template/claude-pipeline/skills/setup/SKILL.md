@@ -57,6 +57,10 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
    - "`migrations`: where do they live, and are they reversible?"
    - "`support`: `none`, `basic` or `retainer`? Where is the fail-safe page? Which variable
      carries the Sentry DSN?"
+   - "`uat`: does this project need a **persistent UAT environment** the client signs batches
+     off on before anything reaches production? If yes: the branch name (`uat` by convention)
+     and the one fixed address they will open (a domain you assign to that branch in Vercel) —
+     never a per-batch preview. If no, leave it undeclared: runs ship on the merge, as before."
    - "`alert` maps to no channel — the red CI job is the alert. Keep that, and record it?"
    Every question has an escape hatch: "don't know" leaves the stub value and the report line.
 
@@ -64,7 +68,13 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
    `jq -e .` before saving), `_shared/project-rules.md` (every section a sentence or "none"),
    `_shared/knowledge-map.md` where the repo has a docs tree, `scripts/format.sh` / `lint.sh` on
    the repo's own tools or left as `SKIP` stubs, `runs/README.md`. Nothing else: `T` files are
-   the template's, code is the pipeline's.
+   the template's, code is the pipeline's. **When a UAT environment was declared**, also run
+   `.icm/scripts/promote-uat.sh init`: it writes the empty `.icm/uat/batch.json` and prints the
+   acts only the operator can perform — push the branch once, protect it like `main`, assign the
+   domain to it in Vercel, choose its environment's variables, add `type:promote` to the labels
+   file. Record who signs off and how under `_shared/project-rules.md` → People and gates, and
+   the acts still owed there. Never create the branch or touch Vercel from here
+   (`.icm/uat/CONTEXT.md`).
 
 5. **Re-run `setup.sh` until `RESULT: OK`** or until every remaining line is a named decision
    the operator took (recorded in `project-rules.md`). `setup.sh --report` must print the same

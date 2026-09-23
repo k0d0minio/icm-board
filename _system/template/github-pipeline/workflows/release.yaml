@@ -24,6 +24,10 @@ name: Release
 # per-repo addition, not this file's.
 #
 # `session` repos (the default) do not carry this file: Release step 9 calls report.sh itself.
+#
+# Merges into the DEFAULT BRANCH only. On a repo with a UAT environment (.icm/uat/CONTEXT.md) every
+# run merges into the UAT branch first and is not a release; the client is told once, when the
+# batch's promotion PR merges into main — which this job announces like any other merge.
 
 on:
   pull_request:
@@ -52,7 +56,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.pull_request.merged == true &&
-       github.event.pull_request.head.repo.full_name == github.repository)
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.base.ref == github.event.repository.default_branch)
     runs-on: ubuntu-latest
     name: Announce the merge
     timeout-minutes: 10

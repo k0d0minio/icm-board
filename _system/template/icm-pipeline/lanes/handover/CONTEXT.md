@@ -43,7 +43,9 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    .icm/scripts/new-run.sh <slug> --lane handover --summary "Handover: <what the client now owns and runs>"
    ```
 
-   Draft, `type:handover`, Summary with a `- slug:` line, Steps to test — no checklist.
+   Draft, `type:handover`, Summary with a `- slug:` line, Steps to test — no checklist. (On a UAT
+   repo the PR targets the UAT branch like every lane and reaches `main` with the batch's
+   promotion — `.icm/uat/CONTEXT.md`; a handover normally follows the last promotion.)
 7. **Settle the cheap tier**, `close-out.sh <slug>` → `CLOSED`, push, `ci-status.sh` → `GREEN`.
 8. **The record step — local only.** Where the operator's checkout has the deal folder on
    disk, write `08-handover.md` into the engagement folder there (icm-board,

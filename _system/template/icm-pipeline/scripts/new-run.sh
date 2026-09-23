@@ -30,6 +30,13 @@
 # prints `[WARN] overlaps <slug> on <path>` per shared surface (decision D26) — a warning for the
 # operator, never a refusal; the cut is where overlap is avoided, and Build merges main early.
 #
+# THE BASE BRANCH is the pipeline's, not the caller's: `main`, or the UAT branch where the repo
+# declares a persistent client UAT environment (`.icm/project.json` → uat.branch; lib/project.sh
+# → pipeline_base_branch; .icm/uat/CONTEXT.md). A hotfix targets `main` regardless — production
+# is wrong now. `--base` overrides either. When the base is the UAT branch this script also brings
+# origin/main into the run branch before anything is committed (the intake cut and any hotfix
+# land on main first), and warns when the branch was not cut from the UAT branch.
+#
 # --dry-run prints the PR body this call would open (the spine body straight from
 # project-body.sh, or the lane body) and creates NOTHING: no branch, no commit, no push, no PR,
 # no run.md, no labels, no stub move. It needs no GitHub credential. Use it to check the layout.
@@ -51,7 +58,7 @@
 #
 # Usage:
 #   .icm/scripts/new-run.sh <slug> --summary "<one plain sentence>" \
-#       [--stub .icm/intake/<scope>/<feature>.md] [--steps "<steps to test>"] [--base main] \
+#       [--stub .icm/intake/<scope>/<feature>.md] [--steps "<steps to test>"] [--base <branch>] \
 #       [--lane bug|tweak|chore|hotfix|handover] [--ready] [--title "<PR title — lane mode>"] [--dry-run]
 #
 #   With --lane, --stub may name a TRIAGE stub only (.icm/intake/triage/<name>.md — the parked
@@ -74,7 +81,7 @@ die() { echo "error: $*" >&2; exit 1; }
 
 # --- args ------------------------------------------------------------------------------------------
 
-slug=""; summary=""; stub=""; steps=""; base="main"; lane=""; title_flag=""; dry_run=0; ready_flag=0
+slug=""; summary=""; stub=""; steps=""; base=""; lane=""; title_flag=""; dry_run=0; ready_flag=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run) dry_run=1; shift ;;
@@ -97,6 +104,12 @@ source "$here/lib/project.sh"
 if [ -n "$lane" ] && ! is_lane "$lane"; then die "--lane must be one of: $(pipeline_lanes | tr ' ' '|'), got: $lane"; fi
 # A hotfix opens ready — the whole point of the lane is one full gate now (lib/project.sh → lanes).
 [ "$lane" = "hotfix" ] && ready_flag=1
+# The base branch: --base wins; else the pipeline's (main, or the UAT branch where one is
+# declared); a hotfix goes to main regardless — production is wrong now (lanes/hotfix/CONTEXT.md).
+if [ -z "$base" ]; then
+  base="$(pipeline_base_branch)"
+  [ "$lane" = "hotfix" ] && base="main"
+fi
 # A lane may consume a triage stub (the parking lane it exists to drain) — but never a scope-epic
 # stub, which must go through Define so the spec and the Spec-approved gate exist.
 if [ -n "$lane" ] && [ -n "$stub" ]; then
@@ -150,16 +163,45 @@ git_push() {
 # place in the pipeline that names or creates a run branch (see the header).
 
 branch="$(git_c rev-parse --abbrev-ref HEAD)"
-if [ "$branch" = "main" ] || [ "$branch" = "master" ] || [ "$branch" = "HEAD" ]; then
+if [ "$branch" = "main" ] || [ "$branch" = "master" ] || [ "$branch" = "HEAD" ] || [ "$branch" = "$base" ]; then
   branch="claude/$slug"
   if [ "$dry_run" -eq 1 ]; then
-    echo "on $base/detached — a real run would create run branch $branch (dry run: not created)" >&2
+    echo "on $(git_c rev-parse --abbrev-ref HEAD) — a real run would create run branch $branch from it, targeting $base (dry run: not created)" >&2
   else
-    echo "on $base/detached — creating run branch $branch" >&2
+    echo "on $(git_c rev-parse --abbrev-ref HEAD) — creating run branch $branch from it, targeting $base" >&2
     git_c checkout -b "$branch"
   fi
 else
   echo "on $branch — using it as the run branch (harness-named branches are accepted and recorded in run.md)" >&2
+fi
+
+# --- UAT repos: the run branch carries main (.icm/uat/CONTEXT.md) ----------------------------------------
+# Where the PR targets the UAT branch, the intake cut (Scope pushes to main) and any hotfix (its
+# lane merges into main) are on main and not yet on the UAT branch. Bring origin/main into this
+# run branch before anything is committed, so the stub the run consumes is here and the run's PR
+# carries main's newer commits into UAT. A conflict is the operator's — aborted and named, never
+# resolved by guesswork. Skipped on a dry run and when the base is main (nothing to bring in).
+if [ "$dry_run" -eq 0 ] && uat_declared && [ "$base" = "$(uat_branch)" ]; then
+  if GIT_TERMINAL_PROMPT=0 git_c fetch origin --quiet >/dev/null 2>&1; then
+    if git_c rev-parse --verify -q "origin/$base" >/dev/null 2>&1 && ! git_c merge-base --is-ancestor "origin/$base" HEAD 2>/dev/null; then
+      echo "[WARN] $branch does not contain origin/$base's tip — this run is not built on the current UAT batch; cut run branches from origin/$base (.icm/uat/CONTEXT.md)" >&2
+    fi
+    if git_c rev-parse --verify -q origin/main >/dev/null 2>&1 && ! git_c merge-base --is-ancestor origin/main HEAD 2>/dev/null; then
+      if git_c merge --no-edit origin/main >/dev/null 2>&1; then
+        echo "brought origin/main into $branch — the UAT branch was behind main (an intake cut or a hotfix travels with this run)" >&2
+      elif [ "$(git_c diff --name-only --diff-filter=U 2>/dev/null)" = ".icm/uat/batch.json" ] \
+           && git_c checkout --ours -- .icm/uat/batch.json >/dev/null 2>&1 && git_c add .icm/uat/batch.json && git_c commit -q --no-edit >/dev/null 2>&1; then
+        # The one file main and the UAT branch both write: main's copy is a promotion's snapshot,
+        # the UAT branch's is the live batch — keep the UAT branch's (promote-uat.sh does the same).
+        echo "brought origin/main into $branch — .icm/uat/batch.json kept from the UAT branch (main's copy is a promotion's snapshot)" >&2
+      else
+        git_c merge --abort >/dev/null 2>&1 || true
+        die "origin/main does not merge cleanly into $branch — bring main into the UAT branch first (.icm/scripts/promote-uat.sh sync; a conflict there is the operator's to resolve), then re-run"
+      fi
+    fi
+  else
+    echo "[WARN] git fetch origin failed — could not check whether main has moved past the UAT branch" >&2
+  fi
 fi
 
 # --- PR title + body -------------------------------------------------------------------------------

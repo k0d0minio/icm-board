@@ -21,8 +21,11 @@ icm-board estate; `intake/README.md` here is the self-contained micro-copy.*
 ```
 
 This folder also carries the pipeline — `project.json`, `stages/`, `lanes/`, `runs/`,
-`_shared/`, `scripts/`, and `raw/` + `processed/` for material a client sends — each
-seeded file documents itself, and `.claude/skills/pipeline/SKILL.md` routes between them.
+`_shared/`, `scripts/`, `raw/` + `processed/` for material a client sends, `output/` for
+the reports the scripts compile (`client-status.sh` → `client-status-latest.md`, the
+client's view), and `uat/` where `/setup` declared a persistent client UAT environment
+(the contract and the batch) — each seeded file documents itself, and
+`.claude/skills/pipeline/SKILL.md` routes between them.
 
 ## The rules that travel with this folder
 

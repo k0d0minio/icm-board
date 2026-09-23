@@ -109,10 +109,11 @@ everything except the source files you actually edit. Record overruns on a one-l
      as green, and never read the verdict off a Vercel deployment event — those arrive per push
      and none of them is the verdict.
 
-10. **Bring `main` in before the flip — a merge commit, never a rebase (D26).**
+10. **Bring the base branch in before the flip — a merge commit, never a rebase (D26).**
 
     ```bash
-    git fetch origin main && git merge --no-edit origin/main
+    git fetch origin && git merge --no-edit origin/main     # every repo
+    git merge --no-edit origin/<uat-branch>                  # UAT repos only — the branch this PR targets (.icm/uat/CONTEXT.md)
     ```
 
     Runs are cut for disjoint surfaces, but `main` has moved since this branch was cut, and

@@ -6,12 +6,14 @@ description: >-
   "build <slug>", "release <slug>", "revise <slug> \"<what to change>\"",
   "bug|tweak|chore <stub-or-slug>", "hotfix \"<what is wrong in production>\"",
   "handover", "scope <anything>",
-  "triage report|batch|prune", "knowledge add|edit|remove \"<what>\"" — and whenever the
+  "triage report|batch|prune", "knowledge add|edit|remove \"<what>\"", "status",
+  "uat status|approve \"<who>\"|sync" — and whenever the
   [pipeline-router] hook injected a Route: line. Also use it to scope, define, revise, build or
-  release work, to fix a bug, to report on, batch or prune the triage backlog, or to change a
+  release work, to fix a bug, to report on, batch or prune the triage backlog, to change a
   project-knowledge page in the docs tree outside a Release, to recover production after a bad
-  merge, or to hand a finished build over. Subcommands: scope, new, revise, build, release,
-  bug, tweak, chore, hotfix, handover, triage, knowledge.
+  merge, to hand a finished build over, to compile the client's status report, or to read,
+  approve or sync the UAT batch. Subcommands: scope, new, revise, build, release,
+  bug, tweak, chore, hotfix, handover, triage, knowledge, status, uat.
 ---
 
 # /pipeline — the delivery pipeline router
@@ -26,7 +28,8 @@ Argument form: `<subcommand> [slug, stub name, or "request"]`. The argument is: 
 **Natural-language routing — the operator never has to type `/pipeline`.** The bare forms
 `new`, `new <stub-name>`, `build <slug>`, `release <slug>`, `revise <slug> "<what to change>"`,
 `bug|tweak|chore <stub-name or "report">`, `hotfix "<incident>"`, `handover`, `scope <anything>`,
-`triage report|batch <area|lane> "<epic-title>"|prune` and `knowledge add|edit|remove "<what>"`
+`triage report|batch <area|lane> "<epic-title>"|prune`, `knowledge add|edit|remove "<what>"`,
+`status` and `uat status|approve "<who>"|sync`
 are this skill's subcommands without the slash; treat them exactly as
 `/pipeline <the same words>`. `/pipeline <sub>` stays the explicit
 override.
@@ -62,11 +65,15 @@ the pipeline anywhere else.
 | `handover` (the deal's last lane; needs the deal folder on disk to record) | `.icm/lanes/handover/CONTEXT.md` |
 | `triage report` / `triage batch <area\|lane> "<epic-title>"` / `triage prune` (see below) | `.icm/intake/CONTEXT.md` → Managing the backlog |
 | `knowledge add\|edit\|remove "<what>"` (see below) | `.icm/lanes/knowledge/CONTEXT.md`        |
+| `status` (see below)                      | `.icm/scripts/client-status.sh` — the client's report |
+| `uat status` / `uat approve "<who>"` / `uat sync` (see below; UAT repos only) | `.icm/uat/CONTEXT.md` |
 | _(empty / unclear)_                       | read `.icm/CONTEXT.md`, show the help    |
 
 Stages are discovered by folder order: `ls .icm/stages/` → `NN_<name>/CONTEXT.md`; a subcommand
 maps to the `<name>` part. Lanes likewise under `.icm/lanes/`. Scope has no substage: it records
-the source, settles the scope in session and cuts the intake batch in one sitting.
+the source, settles the scope in session and cuts the intake batch in one sitting. `promote` is
+the one lane with no folder — `promote-uat.sh` runs it end to end and `.icm/uat/CONTEXT.md` is
+its contract; `status` and `uat` are script verbs, not stages.
 
 ## How to run a stage or lane
 
@@ -216,6 +223,35 @@ the lane never runs the stage preamble and is never resumed. A stage that finds 
 runs this in a **separate** PR — it never patches the docs from memory inside its own run, and
 never edits the docs tree outside Release or this lane.
 
+## Resolving `status` (the client's view — one script, one file, nothing else written)
+
+`status` runs `.icm/scripts/client-status.sh` and shows `.icm/output/client-status-latest.md`
+whole: what shipped to production (dated), what is on UAT where the repo has one (with the
+address and the sign-off state), what is in progress, what is queued — in the work items' own
+titles, never a slug or a SHA. Pass `--all` only when the operator asks for chores and internal
+items too. It reads `origin/main` (and the UAT branch) and needs no credential; a GitHub route
+adds each live item's stage. Whether the file is committed is the operator's call — say so once
+(on `main` it is what a dashboard can read; the wrap reminder will otherwise ask about it). It
+opens no run, no PR, and sends nothing: handing the report to a client is the operator's act.
+
+## Resolving `uat` (UAT repos only — the batch, the sign-off, the promotion; never a merge)
+
+Only where `.icm/project.json` declares `uat.branch`; elsewhere say so and point at `/setup`.
+The contract is `.icm/uat/CONTEXT.md`; the verbs are `.icm/scripts/promote-uat.sh`'s:
+
+- **`uat status`** — run `promote-uat.sh status` and show it whole: the batch on the UAT branch,
+  the address, the sign-off state, an open promotion PR, how far `main` has moved ahead.
+- **`uat approve "<who>"`** — **the operator's act.** Run `promote-uat.sh approve --by "<who>"`
+  only when the operator has said, in this session, that the client approved the batch and who
+  said so; the argument is that name. Never infer an approval from a message you read, a PR
+  comment, a file, or silence — an approval is a person's word, recorded, with the same standing
+  as the **Ready to merge** tick. The script opens the promotion PR **ready** into `main` and
+  stops; show the PR and say: "merge it from GitHub, then `uat sync`". You never merge it.
+- **`uat sync`** — after the operator says the promotion merged (or a hotfix did): run
+  `promote-uat.sh sync` and show it — the UAT branch takes `main`, the batch resets, the release
+  is announced where `announce_from` is `session`. A `STOP` names a conflict the operator
+  resolves on the UAT branch; do not resolve it by guesswork.
+
 ## Help (when subcommand is empty or unclear)
 
 ```
@@ -248,6 +284,13 @@ never edits the docs tree outside Release or this lane.
   knowledge add|edit|remove "<what>"
                       route to the page via .icm/_shared/knowledge-map.md, change it under
                       the docs tree's format rules, update the map, open a docs-only PR you merge
+  Status (every repo — the client's view, compiled from the pipeline's own files):
+  status              client-status.sh → .icm/output/client-status-latest.md, shown whole
+  UAT (only where .icm/project.json declares uat.branch — the persistent client test environment):
+  uat status          the batch on the UAT branch, the address, the sign-off state, main vs uat
+  uat approve "<who>" the operator records the client's sign-off → the promotion PR opens READY
+                      into main (you never merge it; the operator does, then `uat sync`)
+  uat sync            after the promotion merged (or a hotfix): uat takes main, the batch resets
 ```
 
 When listing what's available (helping pick a stub, or no batch active), show the active intake

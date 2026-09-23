@@ -53,7 +53,7 @@ because each answers a question the ladder can't:
 | `github_repo` | Where does their work live? Null means invisible on the tickets board. | **Connect / create repo** (`setClientRepo`) |
 | `value_minor` + `billing_type` + `deal_type` | What is this worth, and is it money? Feeds the header totals: *in play* (open rows), */ month* (clients on a retainer), *in kind* (barter, never counted as income). | The deal card, or ConvertFlow — prefilled from the deal folder's `05-agreement.md` when the row still reads 0 (a *Use these* button; nothing writes on its own) |
 | `support_minor` | Is there a monthly support line beside the one-off? `0` = none (a landing page, a client-owned build); a euro figure = *one-off + support* ([`pricing.md`](../knowledge/pricing.md) § Support). Counts into */ month* for active rows. | The deal card |
-| `deal_slug` | Which folder under icm-board's `workspaces/deals/` is this relationship? Null = no deal folder (a relationship that predates the system, or one that never opened one). Unique when set. | The deal card — proposed from the client's slug, confirmed by Jamie |
+| `deal_slug` | **Retired (D28, 2026-09-23).** The deal folder is `workspaces/deals/<repo name>/`, found from `github_repo` — one string in two homes was a mirror. The column goes with a migration in `jamienisbet`; until it lands, a set value equals the repo name. | — |
 
 Reading `status` for any of these is the mistake this contract exists to prevent. "Has it
 started" is `work_started_at`, not `client`. "Have they paid" is Stripe, not a rung.
@@ -61,9 +61,9 @@ started" is `work_started_at`, not `client`. "Have they paid" is Stripe, not a r
 ## The deal folder, and the badge
 
 The words and documents of a relationship live in icm-board at
-`workspaces/deals/<deal_slug>/` ([WORKSPACES.md](WORKSPACES.md) § The deal folder,
-decision D24). **Nothing there mirrors a rung, a value or a flag**, and nothing here is
-written from the folder. The dashboard reads the folder live over the GitHub API
+`workspaces/deals/<repo name>/`, named after `github_repo` (D28;
+[WORKSPACES.md](WORKSPACES.md) § The deal folder, decision D24). **Nothing there mirrors
+a rung, a value or a flag**, and nothing here is written from the folder. The dashboard reads the folder live over the GitHub API
 (read-only, D13) and shows two things beside each other: the row's rung, and the folder's
 *stage* — the highest `NN-` artefact in the live engagement (01 intake · 02 look · 03 quote
 · 04 proposal · 05 agreement · 06 onboarding · 07 kickoff · 08 handover).

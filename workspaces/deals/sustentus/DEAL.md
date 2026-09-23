@@ -2,16 +2,17 @@
 
 - client: sustentus
 - company: Sustentus
-- contacts: to fill (Jamie)
+- contacts: the founders
 - repo: sustentus/sustentus
 - language: en
-- engagement: none
+- engagement: sustentus-platform
 - source: adopted
 
 ## Engagements
 | slug | shape | started | ended | outcome |
 |---|---|---|---|---|
-| — | — | — | | in delivery; its repo is the pipeline's reference implementation and exempt from the estate baseline (its `.icm/` is authoritative) — the deal folder exists so the relationship has one home for its documents and the economics roll-up |
+| sustentus-platform | retainer (monthly; ongoing solo development) | — | | in delivery; its repo is the pipeline's reference implementation and exempt from the estate baseline (its `.icm/` is authoritative) — the deal folder exists so the relationship has one home for its documents and the economics roll-up |
 
 ## Log
 - 2026-09-22 — folder created by the rework (D24). No deal documents predate it here; the relationship's history is in the repo and in Neon.
+- 2026-09-23 — engagement `sustentus-platform` opened for the live retainer (Jamie, 2026-09-23): adopted into the pipeline **in delivery** — stages 01–07 predate the system and stay honest gaps; `08-handover.md` is the handover lane's to write. `private/terms-sheet.md` skeleton created, every value Jamie's to fill; the retainer figure lives in Neon and Stripe, never here. Start date not recorded (Jamie: leave blank).

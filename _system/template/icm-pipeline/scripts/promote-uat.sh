@@ -2,7 +2,7 @@
 # promote-uat.sh — the UAT batch: what is on it, the client's sign-off, the promotion to production (TEMPLATE-OWNED).
 #
 # Only where the repo declares a UAT environment (.icm/project.json → uat: {branch, url} — /setup
-# asks; decision D27; the contract is .icm/uat/CONTEXT.md). Without one every verb prints one line
+# asks; decision D30; the contract is .icm/uat/CONTEXT.md). Without one every verb prints one line
 # and `RESULT: SKIP`, exit 0: the run's PR targets main and Release ships to production directly,
 # as it always did.
 #

@@ -41,16 +41,33 @@
 #                   is announce ["github-release"], the rest empty — an empty `alert` means a red
 #                   CI job is the alert); `channels`: per-channel config carrying only the NAMES
 #                   of environment variables, never a value.
-#   migrations      object {path, reversible}. `path` is where timestamped migrations live
-#                   (check-migrations.sh; a string or an array — the old top-level
-#                   `migrations_path` is still read); `reversible` false (the default) scopes
-#                   Release stop class 3 and makes rollback.sh warn that the schema moved forward.
+#   migrations      object {path, reversible, stamp, tool, out_of_order}. `path` is where
+#                   timestamped migrations live (check-migrations.sh; a string or an array — the
+#                   old top-level `migrations_path` is still read); `reversible` false (the
+#                   default) scopes Release stop class 3 and makes rollback.sh warn that the
+#                   schema moved forward; `stamp` "millis" (the default — this branch's own
+#                   migrations must carry a UTC millisecond stamp, `V<17 digits>__<name>.sql`) or
+#                   "seconds" (the legacy `<14 digits>_<name>.sql`; both forms are always READ);
+#                   `tool` flyway|prisma|drizzle|sql (default sql — what the out-of-order note is
+#                   phrased for); `out_of_order` true (the default — parallel runs merge in any
+#                   order; check-migrations.sh prints the tool's setting, `flyway.outOfOrder=true`).
+#   database        object {url_env, isolation, image, name} — the run-scoped database
+#                   db-branch.sh binds a run to. `url_env` is the NAME of the variable holding the
+#                   connection string (default DATABASE_URL; the value is never in this file);
+#                   `isolation` "none" (the default — no isolated database, the script says SKIP),
+#                   "schema" (one Postgres schema per run, `run_<slug>`, on the database the
+#                   variable names) or "container" (one local Postgres container per run,
+#                   `icm-db-<slug>`, from `image`, default postgres:16, database `name`, default app).
+#   security        object {audit_command} — security-check.sh's dependency audit for an
+#                   ecosystem it does not detect itself (npm/pnpm/yarn lockfiles are detected):
+#                   a shell command that exits non-zero on a high/critical finding, e.g.
+#                   "pip-audit" or "cargo audit". Empty (the default) means: detect, else skip.
 #   support         object {tier: none|basic|retainer, failsafe_page, monitoring.sentry_dsn_env}
 #                   — the after-handover line the deal agreed. setup.sh's Support section checks
 #                   the fail-safe page and the Sentry key exist when tier is basic or retainer;
 #                   Release step 4 stops (class 3) when they do not.
 #   uat             object {branch, url} — OPTIONAL: the persistent client UAT environment
-#                   (decision D27; `.icm/uat/CONTEXT.md`). Declared only by `/setup`, never
+#                   (decision D30; `.icm/uat/CONTEXT.md`). Declared only by `/setup`, never
 #                   seeded filled. `branch` is the long-lived integration branch every run's PR
 #                   targets instead of main once declared (`uat` by convention); `url` is the one
 #                   fixed address the client opens — a domain assigned to that branch in Vercel,
@@ -80,6 +97,13 @@
 #   migrations_paths                      one path per line: migrations.path (string or array),
 #                                         else the legacy migrations_path, else nothing.
 #   migrations_reversible                 prints true|false (default false).
+#   migrations_stamp · migrations_tool · migrations_out_of_order
+#                                         the naming form (millis|seconds), the tool word, and
+#                                         true|false (default true) — read as booleans, so an
+#                                         explicit `false` is false (jq's `//` would read it as absent).
+#   database_url_env · database_isolation · database_image · database_name
+#                                         the database block's scalars with their defaults.
+#   security_audit_command                the audit override, or nothing.
 #   support_tier · support_failsafe · support_sentry_env
 #                                         the support block's scalars with their defaults.
 #   uat_declared                          returns 0 when uat.branch is set — the repo has a
@@ -168,6 +192,37 @@ migrations_reversible() {
   local v; v="$(project_field '.migrations.reversible' 'false')"
   case "$v" in true) echo true ;; *) echo false ;; esac
 }
+migrations_stamp() {
+  local v; v="$(project_field '.migrations.stamp' 'millis')"
+  case "$v" in seconds) echo seconds ;; *) echo millis ;; esac
+}
+migrations_tool() {
+  local v; v="$(project_field '.migrations.tool' 'sql' | tr '[:upper:]' '[:lower:]')"
+  case "$v" in flyway|prisma|drizzle|sql) echo "$v" ;; *) echo sql ;; esac
+}
+migrations_out_of_order() {
+  # A boolean read as a boolean: `false // empty` is empty in jq, so project_field cannot tell an
+  # explicit false from an absent key. Default true — parallel runs merge in any order.
+  local v="true"
+  if [ -f "$project_json" ]; then
+    v="$(jq -r 'if (.migrations.out_of_order | type) == "boolean" then .migrations.out_of_order else "true" end' "$project_json" 2>/dev/null || echo true)"
+  fi
+  case "$v" in false) echo false ;; *) echo true ;; esac
+}
+
+# --- database ----------------------------------------------------------------------------------------
+
+database_url_env()   { project_field '.database.url_env' 'DATABASE_URL'; }
+database_isolation() {
+  local v; v="$(project_field '.database.isolation' 'none')"
+  case "$v" in schema|container) echo "$v" ;; *) echo none ;; esac
+}
+database_image()     { project_field '.database.image' 'postgres:16'; }
+database_name()      { project_field '.database.name' 'app'; }
+
+# --- security ----------------------------------------------------------------------------------------
+
+security_audit_command() { project_field '.security.audit_command' ''; }
 
 # --- support -----------------------------------------------------------------------------------------
 
@@ -176,7 +231,7 @@ support_failsafe()   { project_field '.support.failsafe_page' ''; }
 support_sentry_env() { project_field '.support.monitoring.sentry_dsn_env' 'SENTRY_DSN'; }
 
 # --- uat ---------------------------------------------------------------------------------------------
-# The persistent client UAT environment, where the repo declares one (D27). Not declared → every
+# The persistent client UAT environment, where the repo declares one (D30). Not declared → every
 # helper answers as the pipeline always did: base branch main, no batch, no promotion.
 
 uat_declared() { project_has '.uat.branch'; }

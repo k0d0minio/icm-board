@@ -62,10 +62,18 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
   intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
   uat/CONTEXT.md                 ← OPTIONAL in effect, always seeded: the persistent client
                                     UAT environment — one branch, one address, the batch the
-                                    client signs off, the promotion (D27). Inert until /setup
+                                    client signs off, the promotion (D30). Inert until /setup
                                     declares `uat` in project.json                     (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
+  _shared/run-pack/{project,plan,tasks,decisions,status,handoff,FAILURE}.md
+                                 ← the canonical file pack run-pack.sh seeds into every
+                                    run: context card, passes, DoD queue, D-n ledger,
+                                    five-line status, handoff, retrospectives            (T)
   _shared/{project-rules,knowledge-map}.md   ← this repo's rules and doc pages         (P)
+  skills/README.md  skills/{security-audit,database-migration,preview-deploy}/
+                                 ← three-tier capability skills: SKILL.md front matter
+                                    (Level 1, list-skills.sh prints it), body (Level 2,
+                                    loaded on a trigger), references/ + scripts/ (Level 3) (T)
   project.json                   ← the project manifest (name, complexity, docs_path,
                                     archives, required checks/env, smoke check, and the
                                     deploy · reporting · migrations · support blocks) —
@@ -82,8 +90,19 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
   scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
            project-body,project-labels,ci-status,close-out,triage-report,env-check,
            select-model,check-migrations,process-raw,
-           deploy-status,rollback,usage-snapshot,env,setup,
+           deploy-status,rollback,usage-snapshot,env,setup,retrospective,
+           list-skills,db-branch,security-check,run-pack,
            client-status,promote-uat}.sh                                              (T)
+                                    select-model.sh routes complexity × stage → tier
+                                    (haiku · sonnet · opus/fable; advisor for Scope and
+                                    Define, executor for Build and the lanes, validator
+                                    for a lint fix); check-migrations.sh enforces the UTC
+                                    millisecond stamp (V<17>__name.sql) and names new
+                                    files (--new); db-branch.sh binds a run to its own
+                                    schema or container; security-check.sh is the
+                                    pre-commit zero-trust gate (gitleaks + npm audit, a
+                                    built-in fallback, a redacted trace in the run's
+                                    error.log); run-pack.sh seeds and checks the pack
   scripts/{format,lint,validate-knowledge-map,report}.sh   ← the repo's own hooks      (P)
                                     report.sh is the reporting hook: complete as seeded,
                                     steered by project.json → reporting, never edited.

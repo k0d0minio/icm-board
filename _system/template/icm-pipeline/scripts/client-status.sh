@@ -24,7 +24,7 @@
 # Deterministic for a given repo state and --today. Reads only; nothing is sent, nothing is
 # committed. Whether the report is committed is the repo's call — on main it is what a dashboard
 # can read; regenerated on demand it is a working file. NOT a repo check: the block-local-checks
-# hook does not match it, and it runs in seconds. Every repo carries it (decision D27) — a UAT
+# hook does not match it, and it runs in seconds. Every repo carries it (decision D30) — a UAT
 # environment is not needed for the report, only for its second section.
 #
 # Usage:

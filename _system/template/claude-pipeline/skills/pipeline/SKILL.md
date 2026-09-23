@@ -82,9 +82,21 @@ its contract; `status` and `uat` are script verbs, not stages.
    fixed at the cut, so `new` never invents one. Scope takes no slug — a scope that came out
    wrong is deleted and Scope is run again from the source.
 3. For the **adopting** stages — `revise`, `build`, `release` — run the shared preamble first:
-   `.icm/_shared/stage-preamble.md` ("resolve the run or STOP"). Never recreate a missing run.
+   `.icm/_shared/stage-preamble.md` ("resolve the run or STOP", then read the run's `status.md`
+   and `handoff.md` — the canonical file pack every run carries). Never recreate a missing run.
    Lanes never run it: a lane is one invocation that ends in a mergeable PR and is not resumed
    (see "Resolving a lane argument" below).
+   **The pass and its model, in one line:** `.icm/scripts/select-model.sh <stub-or-spec>
+   --stage <NN_stage|lane>` prints the tier the pass belongs to — Scope and Define are the
+   *advisor* (frontier: `opus`, `fable` on research), Build, Release and every lane the
+   *executor* (`sonnet`, `opus` only on a `complex` spec), a lint or format fix the *validator*
+   (`haiku`). If this session is on a lower tier than it prints, say so once and carry on — the
+   operator opens sessions, nothing here switches a model. A subagent a stage dispatches runs
+   on the executor line.
+   **Capability skills** (`.icm/skills/`, `list-skills.sh --bare` — the session-start hook
+   already printed the registry) are loaded only when a trigger on one of their lines matches
+   the step in front of you; the contract says where (`security-audit`, `database-migration`,
+   `preview-deploy`).
 4. **Read the matching contract in full and follow it exactly** — Inputs / Process / Outputs /
    Verify are the instructions. Load only the files its Inputs section names.
    **CI is read one way everywhere:** `.icm/scripts/ci-status.sh <slug>` → `GREEN | RED | PENDING`
@@ -106,8 +118,10 @@ its contract; `status` and `uat` are script verbs, not stages.
    After each stage, say what's done, where the output is, and which `/pipeline <next>` comes
    when the human is ready.
 6. **A run ends at the merge, and the merge is what closes it out.** Release (and every lane)
-   runs `close-out.sh` on the branch as its last commit — the archive move rides in the run's own
-   PR, so the squash publishes it. Release then merges, reads production once
+   runs `retrospective.sh` — what the run fixed on the way, promoted into
+   `_shared/project-rules.md` → Learned rules for the next run — and then `close-out.sh` on the
+   branch as its last commit — the archive move rides in the run's own PR, so the squash
+   publishes it. Release then merges, reads production once
    (`deploy-status.sh`) and announces through the repo's reporting hook (`report.sh announce`,
    or `deferred to CI` — `_shared/project-rules.md` → Reporting); a lane **stops** after its
    last push and hands the PR to the operator to merge from GitHub. Nothing watches production
@@ -116,6 +130,12 @@ its contract; `status` and `uat` are script verbs, not stages.
 7. **Every stage and lane brackets itself with two usage lines** —
    `usage-snapshot.sh <slug> <stage> start` as the first act after the preamble and `… end` as
    the last before the stop. `SKIP` is a fine answer; the line is never a gate.
+8. **Every stage leaves the run resumable.** `status.md` (phase · step · ci · blocked · updated)
+   and `handoff.md` (next steps, blockers, do-nots) are rewritten at every stop, including a
+   STOP mid-way; a RED or a blocked gate is an `error.log` entry (`retrospective.sh` reads it),
+   and what no tool logged — a wrong assumption, a STOP — is a retrospective in `FAILURE.md`.
+   `security-check.sh` runs before every commit in Build and before every lane push — a
+   `BLOCKED` is never committed around.
 
 ## Resolving `new` (one procedure, two selectors)
 

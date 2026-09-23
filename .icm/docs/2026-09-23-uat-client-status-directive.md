@@ -2,7 +2,7 @@
 
 *Saved verbatim from the session that implemented it (icm-board, branch
 `claude/icm-uat-client-status-e6599f`), with Jamie's framing above the directive as he gave it.
-Decision of record: D27 in [`../project.md`](../project.md). The implementation is the template's
+Decision of record: D30 in [`../project.md`](../project.md). The implementation is the template's
 [`uat/CONTEXT.md`](../../_system/template/icm-pipeline/uat/CONTEXT.md),
 [`scripts/client-status.sh`](../../_system/template/icm-pipeline/scripts/client-status.sh) and
 [`scripts/promote-uat.sh`](../../_system/template/icm-pipeline/scripts/promote-uat.sh); the

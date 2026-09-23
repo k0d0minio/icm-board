@@ -54,7 +54,12 @@ Two rows survive from the first, tiered design because they still describe real 
                                 one branch, one address, the batch, the sign-off, the promotion (T)
   uat/batch.json             ← the batch on the UAT branch: stubs, the sign-off, the promotions log
                                 (state — written by close-out.sh and promote-uat.sh, never seeded)
-  runs/<slug>/               ← one folder per run: run.md + usage.md + stage outputs       (Layer 4)
+  runs/<slug>/               ← one folder per run: run.md + usage.md + the canonical file
+                                pack (project, plan, tasks, decisions, status, handoff,
+                                FAILURE) + stage outputs                                    (Layer 4)
+  skills/<name>/             ← three-tier capability skills (security-audit,
+                                database-migration, preview-deploy): front matter always
+                                in view, body on a trigger, references/ + scripts/ on demand (T)
   runs/README.md             ← the repo's own note on its runs and their archive           (P)
   raw/                       ← what a client sent, as it arrived: README.md + _processed/   (T)
   processed/                 ← text `process-raw.sh` extracted, + manifest.json             (T keeper)
@@ -65,14 +70,18 @@ Two rows survive from the first, tiered design because they still describe real 
     stage-preamble.md        ← resolve the run or STOP; run-scoped isolation               (T)
     scope-template.md        ← the shape of a settled scope; the D-n table                 (T)
     conventions.md           ← redirect to the repo's code rules                           (T)
-    project-rules.md         ← what is true of THIS repo: people, factory, reporting, support (P)
+    run-pack/*.md            ← the seven canonical run files run-pack.sh seeds              (T)
+    project-rules.md         ← what is true of THIS repo: people, factory, reporting, support,
+                                and the Learned rules retrospective.sh (error.log) and
+                                close-out (FAILURE.md) append                              (P)
     knowledge-map.md         ← which docs page each stage reads                            (P)
   scripts/
     lib/{gh,changed-files,project,vercel}.sh  lib/model-prices.json                       (T)
     resolve-run.sh validate-spec.sh validate-intake.sh validate-decisions.sh new-run.sh
     project-body.sh project-labels.sh ci-status.sh close-out.sh triage-report.sh
     env-check.sh select-model.sh check-migrations.sh process-raw.sh
-    deploy-status.sh rollback.sh usage-snapshot.sh env.sh setup.sh
+    deploy-status.sh rollback.sh usage-snapshot.sh env.sh setup.sh retrospective.sh
+    list-skills.sh db-branch.sh security-check.sh run-pack.sh
     client-status.sh promote-uat.sh                                                        (T)
     format.sh lint.sh validate-knowledge-map.sh report.sh                                 (P)
 .claude/skills/pipeline/SKILL.md   ← the /pipeline router (one skill, many stages)
@@ -136,7 +145,9 @@ the cheap tier and flips the PR draft → open, which is what builds the preview
 operator smoke-tests and ticks **Ready to merge** → **Release** establishes
 `ci-status.sh` GREEN on the full gate, runs the review pass, parks off-ticket findings in
 `triage/`, syncs the docs the change made stale, writes the changelog page where the repo
-has one, runs `close-out.sh` **on the branch**, and squash-merges once. The squash is
+has one, runs `retrospective.sh` (what Build fixed on the way, promoted into
+`project-rules.md` → Learned rules for the next run), runs `close-out.sh` **on the branch**,
+and squash-merges once. The squash is
 what publishes the archive move — and the epic's move, plus the front run that cut it,
 when this stub was the last one it had left unshipped ([TICKETS.md](TICKETS.md)).
 `revise <slug> "<change>"` is the only way a spec changes after that: it re-projects the
@@ -155,7 +166,7 @@ first in the build order), Build merges `origin/main` before its ready flip, and
 `new-run.sh` warns on an overlap with a live run. The migration check in Release is the one
 place parallel runs can still collide without git noticing.
 
-**A client UAT environment is optional and persistent (decision D27).** Nothing is seeded on:
+**A client UAT environment is optional and persistent (decision D30).** Nothing is seeded on:
 `/setup` alone declares `uat: {branch, url}` in a repo's `project.json`, and until it does every
 run merges into `main` and ships on the merge. Once declared, every run's PR — spine and lane —
 targets the long-lived UAT branch instead (`lib/project.sh → pipeline_base_branch`; a hotfix still
@@ -220,15 +231,20 @@ for every key.
 | `validate-spec.sh <slug\|path>` | spec structure: header fields, five sections, criteria-are-checkboxes | `OK` 0 · `INVALID` 2 |
 | `validate-intake.sh <epic\|path>` | the cut's bookkeeping: sequences contiguous, depends-on ordered, build order agrees; triage stubs lane-tagged | `OK` 0 · `SKIP` 0 · `INVALID` 2 |
 | `validate-decisions.sh <slug\|path>` | every `\| D-n \|` row of the scope's Decisions table appears in `spec.md` and `notes.md` (the front's own, or the front of the epic behind the stub); a file not yet written is "not yet", never a failure | `OK` 0 · `SKIP` 0 · `MISSING n` 2 |
-| `new-run.sh <slug> --summary "…" [--stub …] [--lane …] [--ready] [--base <branch>]` | commit run → consume stub → push → open the one PR (draft on the spine and in bug/tweak/chore/handover; **ready** for a hotfix, a promotion, or with `--ready`) into the pipeline's base branch — `main`, or the UAT branch where one is declared (a hotfix stays on `main`; on a UAT repo it brings `origin/main` into the run branch first) — body from `project-body.sh`; labels `type:<lane>`; **warns** `[WARN] overlaps <slug> on <path>` when this run's `touches:` shares a surface with a live run (D26) — never refuses | `CREATED` 0 |
+| `new-run.sh <slug> --summary "…" [--stub …] [--lane …] [--ready] [--base <branch>]` | commit run (+ the canonical file pack, `run-pack.sh --init`) → consume stub → push → open the one PR (draft on the spine and in bug/tweak/chore/handover; **ready** for a hotfix, a promotion, or with `--ready`) into the pipeline's base branch — `main`, or the UAT branch where one is declared (a hotfix stays on `main`; on a UAT repo it brings `origin/main` into the run branch first) —, body from `project-body.sh`; labels `type:<lane>`; **warns** `[WARN] overlaps <slug> on <path>` when this run's `touches:` shares a surface with a live run (D26) — never refuses | `CREATED` 0 |
 | `project-body.sh <slug> [--apply]` | the one implementation of the spine PR body, projected from `spec.md`; `--apply` PATCHes it in place and resets both gate anchors | `APPLIED` 0 |
 | `project-labels.sh <slug> --stage <…\|auto>` | project `type`/`stage`/`complexity` from the spec header onto the run's PR (PUT replaces the whole set) — spine runs only | `APPLIED` 0 |
 | `ci-status.sh <slug> \| --pr <n>` | block until CI settles; reads check runs **and** commit statuses, dedupes by newest attempt, re-reads the head each pass; required names from `required_checks`, a conditional smoke from `smoke_check` | `GREEN` 0 · `RED` 3 · `PENDING` 4 |
-| `close-out.sh <slug>` | archive the run (and the finished epic, and the front behind it) into `runs_archive` / `intake_archive`, committed **on the run's branch** — refuses `main`, refuses a PR closed unmerged; a dropped stub counts as settled; on a UAT repo, appends the slug to `.icm/uat/batch.json` in the same commit when the PR targets the UAT branch | `CLOSED` 0 · `STOP` 3 |
+| `close-out.sh <slug>` | copy the run's learned rules into `_shared/project-rules.md` (`run-pack.sh --sync-rules`), then archive the run (and the finished epic, and the front behind it) into `runs_archive` / `intake_archive`, committed **on the run's branch** — refuses `main`, refuses a PR closed unmerged; a dropped stub counts as settled; on a UAT repo, appends the slug to `.icm/uat/batch.json` in the same commit when the PR targets the UAT branch | `CLOSED` 0 · `STOP` 3 |
 | `triage-report.sh` | the parking lane's counts by lane / source / area / age, near-duplicates, against the cap | `OK` 0 |
-| `env-check.sh [--fix]` | pre-flight: binaries, a GitHub route, `required_env`, `complexity`, the folder shape, executable bits (repaired only with `--fix`), a UTF-8 locale | `PASS` 0 · `FAIL` 1 |
-| `select-model.sh <epic/slug \| stub \| path>` | a stub's, scope's or spec's `complexity` → the model to open the session on (`low`/`medium` → `sonnet`, `high` → `opus`, `research` → `fable`; an explicit `recommended-model` wins). **Prints a recommendation; launches nothing** | `MODEL <alias>` 0 · `INVALID` 2 |
-| `check-migrations.sh [--apply]` | Release step 7, after `main` is merged in: are this run's `YYYYMMDDHHMMSS_*.sql` migrations still newer than `main`'s? Reports; `--apply` re-stamps every local one in order (renames, never commits, never touches a migration `main` has) | `OK` 0 · `SKIP` 0 · `STALE n` 2 · `RESTAMPED n` 0 |
+| `env-check.sh [--fix]` | pre-flight: binaries (gitleaks recommended), a GitHub route, `required_env`, `complexity`, `migrations.stamp`, `database.isolation` and its engine, the folder shape (skills parse, run-pack templates present), executable bits (repaired only with `--fix`), a UTF-8 locale | `PASS` 0 · `FAIL` 1 |
+| `select-model.sh <epic/slug \| stub \| path \| --complexity <w>> [--stage <s>]` | complexity × stage → tier → alias: three tiers (`haiku` fast · `sonnet` balanced · `opus`/`fable` frontier) and three roles — Scope/Define the **advisor** (tier 3), Build/Release/lanes/subagents the **executor** (tier 2, `opus` on `high`), a lint or format fix the **validator** (`haiku`); without `--stage` the complexity mapping alone; an explicit `recommended-model` wins for the work, never for a validator. Prints the alias, the tier, the role and `flags: --model <alias>`. **A recommendation; launches nothing** | `MODEL <alias>` 0 · `INVALID` 2 |
+| `check-migrations.sh [--apply]` · `--new <name> [--apply]` | Build step 10 and Release step 7, after `main` is merged in: are this run's migrations still newer than `main`'s, and in the declared form? Both forms read (`V<17 digits>__name.sql`, the UTC millisecond default; `<14 digits>_name.sql`, legacy `migrations.stamp: seconds`); only this branch's own are judged. `--apply` re-stamps every local one in order (STALE) or renames into the form (MISNAMED) — renames, never commits, never touches a migration `main` has. `--new` names the next migration after everything that exists; prints the tool's out-of-order setting (`migrations.tool`, `migrations.out_of_order`) | `OK` 0 · `SKIP` 0 · `STALE n` 2 · `MISNAMED n` 2 · `RESTAMPED n` 0 · `RENAMED n` 0 · `NAMED <f>` 0 · `CREATED <f>` 0 |
+| `list-skills.sh [--json \| --bare] [--check]` | the Level-1 registry of `.icm/skills/*/SKILL.md` — one line per skill from its front matter (`name`, `description`, `triggers`), for the session-start hook and a stage's Inputs; `--check` validates the three keys, a body, the folder name, a ≤80-token Level 1. Loads nothing | `OK n` 0 · `INVALID n` 2 |
+| `db-branch.sh <slug> [status\|up\|env\|down]` | one database per run, named after the slug: a Postgres schema `run_<slug>` on the variable `database.url_env` names, or a local container `icm-db-<slug>`; `up` records a `- db:` pointer (the variable's NAME) in `run.md`, `env` prints the exports to eval (stdout is only the exports), `down` drops only what `up` made. Adopts a live run, never creates one; runs no migration; `none` isolation → SKIP | `BOUND` 0 · `ABSENT` 0 · `ENV` 0 · `RELEASED` 0 · `SKIP` 0 |
+| `security-check.sh [<slug>] [--staged\|--branch\|--all] [--audit\|--no-audit] [--strict]` | the zero-trust gate before a commit (Build) or a push (every lane): `gitleaks` over the staged change / the branch / the tree (`gitleaks protect --staged --redact`; a built-in pattern scan as the fallback, said aloud), a real `.env*` in the change set, and `npm\|pnpm\|yarn audit --audit-level=high` (or `security.audit_command`) when a manifest moved or the scope is wider; every finding redacted, the trace appended to the run's `03_build/output/error.log` (a lane: `lane/output/`), exit 1 aborts the commit. Never edits, never rotates, never `--no-verify` | `OK` 0 · `SKIP` 0 · `BLOCKED n` 1 · `FAIL` 1 |
+| `run-pack.sh <slug> [--check\|--init\|--sync-rules]` | the canonical file pack for session continuity — `project.md`, `plan.md`, `tasks.md` (DoD from the spec's criteria), `decisions.md` (the scope's `D-n` rows), `status.md`, `handoff.md`, `FAILURE.md` — seeded from `_shared/run-pack/` by `new-run.sh` (never overwritten); `--sync-rules` copies `FAILURE.md` → Learned rules into `_shared/project-rules.md` (append-only, deduplicated, in `retrospective.sh`'s shape — the two writers split one section: error.log's errors there, what no tool logged here), called by `close-out.sh` | `OK` 0 · `MISSING n` 2 · `SEEDED n` 0 · `SYNCED n` 0 |
+| `retrospective.sh <slug\|path> [--apply] [--min n]` | Release step 7 and every lane's last act before the close-out: the run's `error.log` (what a stage fixed, entry by entry, with its `- resolved:` / `- rule:` lines) → a signature per entry (`TS2532`, an ESLint rule id, an errno, an exception class — the class, never the instance), counted across the archive's `error.log`s; an entry flagged `- rule:`, or one whose signature recurs (`--min`, default 2) and carries a resolution, is a candidate; a signature already in `project-rules.md` is skipped. Reports; `--apply` appends each candidate under `## Learned rules` in the project-owned `_shared/project-rules.md` with its provenance — **never commits, never judges** (the rule is the session's words at the moment of the fix; a slip is deleted by hand before the commit) | `SKIP` 0 · `NONE` 0 · `CANDIDATES n` 0 · `APPENDED n` 0 |
 | `process-raw.sh [--dry-run]` | `.icm/raw/` → `.icm/processed/`: extract text with **local** tools only (email, chat export, PDF, deck, image; **audio and video** through ffmpeg + whisper.cpp — `SKIP` with the install hints when either is absent, the recording never uploaded and never committed), log `manifest.json` (extractor, model, language for a transcription), archive the original to `raw/_processed/`, park one triage **pointer** stub per asset — it never scopes, cuts or sequences | `PROCESSED n` 0 · `DRY-RUN n` 0 · `EMPTY` 0 |
 | `deploy-status.sh <slug> \| --sha <sha> [--uat]` | Release step 9, **once**: the merge commit's production deployment per `deploy.projects[]`, waited for (bounded), with the previous READY id — the `- production:` line; `--uat` reads the UAT branch's deployment instead (product projects only) — the `- uat:` line with the fixed address | `READY` 0 · `ERROR <p>` 3 · `PENDING` 4 · `SKIP` 0 (no deploy block) |
 | `rollback.sh <slug> \| --sha <sha> [--revert] [--vercel]` | **prepares** a recovery: a `claude/hotfix-revert-<slug>` branch + the hotfix PR (through `new-run.sh`), and/or the previous READY deployment with the exact CLI/REST rollback call — printed, never called; warns when the merge carried a migration and `migrations.reversible` is false | `PREPARED …` 0 · `DRY-RUN` 0 · `SKIP` 0 |

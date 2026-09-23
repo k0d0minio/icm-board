@@ -100,7 +100,7 @@ Every estate repo looks like this:
     _done/             completed epics + the legacy archive; nothing is deleted
   runs/ stages/ lanes/ _shared/ scripts/ raw/ processed/ output/
                      ← the one pipeline, every repo     → contracts/PIPELINE.md
-  uat/               ← the client UAT environment, only where /setup declared one (D27)
+  uat/               ← the client UAT environment, only where /setup declared one (D30)
   docs/              ← ad hoc reports, client words, runbooks, the kickoff snapshots
 .claude/
   settings.json      ← clean policy + hook wiring     → template/README.md

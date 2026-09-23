@@ -46,7 +46,9 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    Draft, `type:handover`, Summary with a `- slug:` line, Steps to test — no checklist. (On a UAT
    repo the PR targets the UAT branch like every lane and reaches `main` with the batch's
    promotion — `.icm/uat/CONTEXT.md`; a handover normally follows the last promotion.)
-7. **Settle the cheap tier**, `close-out.sh <slug>` → `CLOSED`, push, `ci-status.sh` → `GREEN`.
+7. **The gate, then settle**: `.icm/scripts/security-check.sh <slug> --branch --audit` →
+   `OK` (a handover that ships a known-high dependency or a pasted key is not a handover), the
+   cheap tier, `close-out.sh <slug>` → `CLOSED`, push, `ci-status.sh` → `GREEN`.
 8. **The record step — local only.** Where the operator's checkout has the deal folder on
    disk, write `08-handover.md` into the engagement folder there (icm-board,
    `workspaces/deals/<client>/<engagement>/`): the date, the support tier, the accounts table,

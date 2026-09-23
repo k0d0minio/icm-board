@@ -34,7 +34,10 @@
 #        - no `- pr:` line at all    → a FRONT (Scope, which opens no PR). Its epic stands in for a
 #                                      merge: it archives once `.icm/intake/<slug>/` has moved to
 #                                      the intake archive, and is refused while that epic is live.
-#   3. Moves .icm/runs/<slug>/ -> <runs_archive>/<slug>/ — the whole folder, so `usage.md` (the
+#   3. Copies the run's learned rules (FAILURE.md → `## Learned rules`) into
+#      .icm/_shared/project-rules.md through `run-pack.sh --sync-rules` (appends only, skips what
+#      is already there), staged into the same commit — then
+#      moves .icm/runs/<slug>/ -> <runs_archive>/<slug>/ — the whole folder, so `usage.md` (the
 #      per-stage usage lines usage-snapshot.sh appended) travels with the run into the archive,
 #      where run-economics.sh (icm-board) reads it. A hotfix or handover lane run archives the
 #      same way as any lane (lib/project.sh → pipeline_lanes).
@@ -83,6 +86,7 @@ command -v jq   >/dev/null || { echo "jq not found"   >&2; exit 1; }
 command -v git  >/dev/null || { echo "git not found"  >&2; exit 1; }
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$repo_root"
 
 die()  { echo "error: $*" >&2; exit 1; }
@@ -213,6 +217,17 @@ fi
 moved_run=0
 if [ -d ".icm/runs/$slug" ]; then
   [ -d "$runs_archive/$slug" ] && die "$runs_archive/$slug already exists — resolve by hand"
+  # First, what the run learned: the `## Learned rules` of its FAILURE.md go into the repo's own
+  # _shared/project-rules.md (run-pack.sh --sync-rules — idempotent, appends only, never removes),
+  # in this same commit, so the next run starts with them. A run without a FAILURE.md syncs nothing.
+  if [ -f ".icm/runs/$slug/FAILURE.md" ] && [ -x "$here/run-pack.sh" ]; then
+    if [ "$dry_run" = "1" ]; then
+      "$here/run-pack.sh" "$slug" --sync-rules --dry-run >&2 || true
+    else
+      "$here/run-pack.sh" "$slug" --sync-rules >&2 || echo "WARNING: run-pack.sh --sync-rules failed — the run's learned rules were not copied into _shared/project-rules.md" >&2
+      git diff --quiet -- .icm/_shared/project-rules.md 2>/dev/null || git add .icm/_shared/project-rules.md
+    fi
+  fi
   mkdir -p "$runs_archive"
   if [ "$dry_run" = "1" ]; then
     echo "[dry-run] would move .icm/runs/$slug/ → $runs_archive/$slug/" >&2

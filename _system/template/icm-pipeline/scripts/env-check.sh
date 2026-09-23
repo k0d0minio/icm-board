@@ -8,7 +8,10 @@
 # folder shape, the executable bits, the locale — and, when the repo declares a deploy block,
 # whether the Vercel route works (`lib/vercel.sh --check`); the reporting block's channel
 # variables are reported as warnings, never failures (a missing channel is a decision, not a
-# broken machine). python3 or sqlite3 is recommended for usage-snapshot.sh's OpenCode reader.
+# broken machine). python3 or sqlite3 is recommended for usage-snapshot.sh's OpenCode reader;
+# gitleaks for security-check.sh (its built-in patterns are the fallback); psql or docker when
+# the repo declares a run-scoped database (db-branch.sh); a `skills/` folder is optional and,
+# when present, its SKILL.md front matter must parse (list-skills.sh --check).
 #
 # It REPORTS, it does not repair — the estate's standing rule for every check. The one repair it
 # knows how to make, the executable bit on `.icm/scripts/*.sh`, is behind `--fix`; without the
@@ -63,6 +66,11 @@ if command -v python3 >/dev/null 2>&1 || command -v sqlite3 >/dev/null 2>&1; the
 else
   info "neither python3 nor sqlite3 found — usage-snapshot.sh records SKIP under OpenCode; Claude Code needs neither"
 fi
+if command -v gitleaks >/dev/null 2>&1; then
+  ok "Binary found: gitleaks (recommended — security-check.sh's scanner of record)"
+else
+  warn "gitleaks not found in PATH — security-check.sh runs its built-in patterns only (brew install gitleaks)"
+fi
 
 # 2. A GitHub route — a token in the environment, or a logged-in `gh` CLI (lib/gh.sh takes
 #    either, in that order). Neither is a WARN; one is enough.
@@ -92,6 +100,19 @@ if [ -f ".icm/project.json" ]; then
       micro|standard) ok "complexity: $complexity" ;;
       "")             info "no \"complexity\" in .icm/project.json — read as \"standard\"" ;;
       *)              warn ".icm/project.json complexity is \"$complexity\" (expected \"micro\" or \"standard\" — read as \"standard\")" ;;
+    esac
+    stamp="$(jq -r '.migrations.stamp // empty' .icm/project.json)"
+    case "$stamp" in
+      millis|seconds) ok "migrations.stamp: $stamp" ;;
+      "")             info "no \"migrations.stamp\" — read as \"millis\" (V<17 digits>__<name>.sql for this branch's own migrations)" ;;
+      *)              warn ".icm/project.json migrations.stamp is \"$stamp\" (expected \"millis\" or \"seconds\" — read as \"millis\")" ;;
+    esac
+    iso="$(jq -r '.database.isolation // empty' .icm/project.json)"
+    case "$iso" in
+      schema)    if command -v psql >/dev/null 2>&1; then ok "database.isolation: schema (psql found)"; else warn "database.isolation is \"schema\" but psql is not in PATH — db-branch.sh will SKIP"; fi ;;
+      container) if command -v docker >/dev/null 2>&1 || command -v podman >/dev/null 2>&1; then ok "database.isolation: container (docker/podman found)"; else warn "database.isolation is \"container\" but neither docker nor podman is in PATH — db-branch.sh will SKIP"; fi ;;
+      none|"")   info "database.isolation: none — db-branch.sh says SKIP; declare schema|container to give each run its own database" ;;
+      *)         warn ".icm/project.json database.isolation is \"$iso\" (expected none|schema|container — read as none)" ;;
     esac
     REQ_ENVS="$(jq -r '.required_env[]?' .icm/project.json 2>/dev/null || true)"
     if [ -n "$REQ_ENVS" ]; then
@@ -131,6 +152,24 @@ if [ -d ".icm" ]; then
       info "No .icm/$sub yet — process-raw.sh creates it on first use"
     fi
   done
+  if [ -d ".icm/skills" ]; then
+    if [ -x ".icm/scripts/list-skills.sh" ]; then
+      if sk="$(bash .icm/scripts/list-skills.sh --check 2>/dev/null)"; then
+        ok "Capability skills: $(printf '%s' "$sk" | tail -1 | sed 's/^RESULT: OK //') skill(s) parse (.icm/skills/)"
+      else
+        warn "A .icm/skills/*/SKILL.md does not parse — run: .icm/scripts/list-skills.sh --check"
+      fi
+    else
+      ok "Subdirectory present: .icm/skills (list-skills.sh not executable — see step 5)"
+    fi
+  else
+    info "No .icm/skills yet — optional; icm-sync.sh / setup.sh --fix seed the three template skills"
+  fi
+  if [ -d ".icm/_shared/run-pack" ]; then
+    ok "Run-pack templates present: .icm/_shared/run-pack (run-pack.sh seeds every run's seven files)"
+  else
+    warn "No .icm/_shared/run-pack/ — run-pack.sh cannot seed a run's canonical files; icm-sync.sh --apply, or setup.sh --fix"
+  fi
 else
   fail "Current directory lacks an .icm folder"
 fi
@@ -138,18 +177,18 @@ fi
 # 5. Executable bits on the scripts a stage invokes. lib/ is sourced and excluded on purpose.
 echo "[5/8] Checking Script Execution Permissions..."
 if [ -d ".icm/scripts" ]; then
-  NON_EXEC="$(find .icm/scripts -maxdepth 1 -name '*.sh' ! -executable 2>/dev/null | sort || true)"
+  NON_EXEC="$( { find .icm/scripts -maxdepth 1 -name '*.sh' ! -executable 2>/dev/null; find .icm/skills -mindepth 3 -maxdepth 3 -path '*/scripts/*.sh' ! -executable 2>/dev/null; } | sort || true)"
   if [ -n "$NON_EXEC" ]; then
     n="$(printf '%s\n' "$NON_EXEC" | wc -l | tr -d ' ')"
     if [ "$FIX" -eq 1 ]; then
       # shellcheck disable=SC2086
       chmod +x $NON_EXEC
-      ok "$n script(s) in .icm/scripts lacked +x — fixed (--fix): $(printf '%s' "$NON_EXEC" | tr '\n' ' ')"
+      ok "$n script(s) in .icm/scripts (or a skill's scripts/) lacked +x — fixed (--fix): $(printf '%s' "$NON_EXEC" | tr '\n' ' ')"
     else
-      warn "$n script(s) in .icm/scripts lack +x (re-run with --fix to set it): $(printf '%s' "$NON_EXEC" | tr '\n' ' ')"
+      warn "$n script(s) in .icm/scripts (or a skill's scripts/) lack +x (re-run with --fix to set it): $(printf '%s' "$NON_EXEC" | tr '\n' ' ')"
     fi
   else
-    ok "All scripts in .icm/scripts possess executable permissions"
+    ok "All scripts in .icm/scripts (and the skills' scripts/) possess executable permissions"
   fi
 fi
 

@@ -14,7 +14,7 @@ precedent check below), and for the rare client who asks what the rate would be.
 **never a billing basis** — time-and-materials is not sold — and **never appears on any
 public surface**. It is revised with demand, deliberately, here.
 
-The Berceo deviation of 2026-08-27 (`workspaces/deals/alix-hahusseau/berceo-platform/03-quote.md`
+The Berceo deviation of 2026-08-27 (`workspaces/deals/berceo/berceo-platform/03-quote.md`
 named the rate at the client to make a reduction legible) is now policy: an anchor may be
 shown to a client *in a quote*, on a call or in a proposal, as the thing the fixed price is
 measured against — the engagement itself stays fixed-price.

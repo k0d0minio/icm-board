@@ -18,8 +18,9 @@ icm-board in view.
 
 ## Process
 
-1. If no client folder exists, create `workspaces/deals/<client>/` with `DEAL.md` per
-   [`deals/README.md`](../../../deals/README.md) — slug = their name, kebab-case;
+1. If no client folder exists, create `workspaces/deals/<repo>/` with `DEAL.md` per
+   [`deals/README.md`](../../../deals/README.md) — slug = the client repo's name (the
+   business, kebab-case; the repo takes the same name at signature);
    `- engagement:` names the engagement folder you create beside it (slug from the deal's
    subject, e.g. `vinecliff-site`); `- language:` from how they wrote.
 2. Write `<engagement>/01-intake.md`: who they are, where they came from, what they asked

@@ -25,6 +25,8 @@ wrong now — and `.icm/scripts/promote-uat.sh sync` afterwards carries the fix 
 - `.icm/scripts/rollback.sh --sha <merge-sha> --vercel [--revert]` — the two recoveries, prepared.
 - The repo's code rules — the file `_shared/conventions.md` points at — and the subtree
   `AGENTS.md` files, where the repo has them.
+- `.icm/_shared/project-rules.md` → **Learned rules** — the constraints earlier runs paid for;
+  read them before the first edit, with the same standing as the code rules.
 - `.icm/_shared/github.md` · `.icm/_shared/ci.md` — the lane-PR regime; what green means.
 - Only the source files the fault implicates.
 
@@ -46,7 +48,10 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    - `vercel rollback dpl_…` — production must be back **now**: `rollback.sh --sha <sha>
      --vercel` prints the previous READY deployment and the exact CLI/REST call. **The operator
      runs it**; the lane records the id and still ships the code fix or revert behind it.
-3. **Write `notes.md`** (template below) and, for fix-forward, open the lane PR:
+3. **Write `notes.md`** (template below) and, for fix-forward, open the lane PR — after the
+   zero-trust gate, since the script commits and pushes: `.icm/scripts/security-check.sh <slug>
+   --branch` → `RESULT: OK` (`BLOCKED` is a STOP; `.icm/skills/security-audit/SKILL.md`). An
+   incident is exactly when a key gets pasted into a fix.
 
    ```bash
    .icm/scripts/new-run.sh <slug> --lane hotfix --summary "<what was broken → what's true now>"
@@ -55,11 +60,15 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    It commits `.icm/runs/<slug>/`, pushes, opens a **ready** PR (body: Summary with a `- slug:`
    line, Steps to test — **no checklist**), and labels it `type:hotfix`. `--ready` is implied.
 4. **Settle the full gate.** `ci-status.sh <slug>` → `GREEN` with the product-app previews
-   listed. `RED` → fix on the branch, push, re-run. `PENDING` → re-run; nothing-has-failed-yet
-   is not green. The one blocking call is the only CI read — never subscribe to the PR.
+   listed. `RED` → record it in `.icm/runs/<slug>/lane/output/error.log` (the shape in
+   `stages/03_build/CONTEXT.md` → Outputs), fix on the branch, add the entry's `- resolved:`
+   line, push, re-run. `PENDING` → re-run; nothing-has-failed-yet is not green. The one
+   blocking call is the only CI read — never subscribe to the PR.
 5. **Finish the run on the branch.** The changelog entry, where the repo has one, is
    `audience: internal` unless the client saw the fault — then `public`. Run
-   `.icm/scripts/close-out.sh <slug>` → `CLOSED`, push, `ci-status.sh` once more → `GREEN`.
+   `.icm/scripts/retrospective.sh <slug>` (`CANDIDATES n` → read, `--apply`, commit the rules
+   with `notes.md`), then `.icm/scripts/close-out.sh <slug>` → `CLOSED`, push, `ci-status.sh`
+   once more → `GREEN`.
    `usage-snapshot.sh <slug> hotfix end`.
 6. **STOP.** Report the preview URL, the recovery chosen, and — where the operator rolled Vercel
    back — that production is on the previous deployment until this PR merges. "Smoke-test, then
@@ -83,6 +92,7 @@ everything this lane writes lands under `.icm/runs/<slug>/lane/`, on the run's o
 - migration: <none in the merge | carried by the merge — schema moved forward; reversible: false>
 - fix: <file/area>: <what changed>
 - changelog: <entry added (audience: internal | public) | announce: none>
+- learned: <n rule(s) appended to _shared/project-rules.md | none>
 ```
 
 ## Verify
@@ -92,5 +102,5 @@ everything this lane writes lands under `.icm/runs/<slug>/lane/`, on the run's o
 - One PR, `type:hotfix`, opened **ready**, no gate checkboxes; you never merged it, never called
   the rollback endpoint, never promoted a deployment. `rollback.sh` prepared; the operator acted.
 - The full gate settled `GREEN` on the head the operator will merge — never inherited.
-- `close-out.sh` reported `CLOSED` and its commit is on the PR's head; both usage lines are in
-  `usage.md`.
+- `retrospective.sh` ran before the close-out; `close-out.sh` reported `CLOSED` and its commit
+  is on the PR's head; both usage lines are in `usage.md`.

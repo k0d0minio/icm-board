@@ -119,7 +119,13 @@ mapfile -t PIPELINE_PROJECT < <(awk '$1=="P"{print $2}' "$MANIFEST")
 for p in "${PIPELINE_ICM[@]}" "${PIPELINE_PROJECT[@]}"; do
   [[ -f "$TEMPLATE/icm-pipeline/$p" ]] || { echo "MANIFEST names a file the template lacks: $p" >&2; exit 2; }
 done
-PIPELINE_CLAUDE=( "skills/pipeline/SKILL.md" )
+# The two skills the pipeline ships under .claude/ (template/claude-pipeline/…). setup.sh's
+# Baseline section requires both, so seeding one and not the other leaves a freshly
+# adopted repo failing its own /setup. Seeded when missing, drift-reported, never repaired.
+PIPELINE_CLAUDE=( "skills/pipeline/SKILL.md" "skills/setup/SKILL.md" )
+for p in "${PIPELINE_CLAUDE[@]}"; do
+  [[ -f "$TEMPLATE/claude-pipeline/$p" ]] || { echo "PIPELINE_CLAUDE names a file the template lacks: $p" >&2; exit 2; }
+done
 PIPELINE_GITHUB=( "pull_request_template.md" )
 
 # Canonical root assets (template/root/…): the new-shape bundle. Seeded — and required —
@@ -234,6 +240,11 @@ for repo in "${repos[@]}"; do
   for asset in "${assets[@]}"; do
     if [[ -f "$repo/.claude/$asset" ]] && ! cmp -s "$TEMPLATE/claude/$asset" "$repo/.claude/$asset"; then
       warns+=("drift from canonical: .claude/$asset differs from _system/template/claude/$asset")
+    fi
+  done
+  for p in "${PIPELINE_CLAUDE[@]}"; do
+    if [[ -f "$repo/.claude/$p" ]] && ! cmp -s "$TEMPLATE/claude-pipeline/$p" "$repo/.claude/$p"; then
+      warns+=("drift from canonical: .claude/$p differs from _system/template/claude-pipeline/$p")
     fi
   done
   for asset in "${CANONICAL_ROOT[@]}"; do

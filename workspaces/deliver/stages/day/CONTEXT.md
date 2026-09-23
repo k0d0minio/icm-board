@@ -20,13 +20,21 @@ that already exists and cuts the leftovers of work that already happened.
 | 4 | `_system/scripts/tickets-board.sh` output | The estate board |
 | 4 | `_system/scripts/ticket-hygiene.sh` output | Drift candidates — verified, never bulk-applied |
 | 4 | `.icm/today.md` (this repo) | Yesterday's plan — cleared or carried deliberately |
-| 4 | Each repo's `.icm/intake/` + `runs/` + git log | The reality the board must match |
+| 4 | Each repo's `.icm/intake/` + `runs/` + git log **at its ticket base branch** (`origin/<base>`, D38) | The reality the board must match |
 
 ## Process
 
-**1. Survey.** Run `tickets-board.sh` and show the board. Run `ticket-hygiene.sh` and
-show what it found. The scripts report; **you verify and fix with judgment** — never
-bulk-apply their findings.
+**1. Survey.** Run `pull-all.sh` first — both scripts read each client repo at
+`origin/<base>` (its ticket base branch, D38), so the refs are only as fresh as the last
+fetch. Run `tickets-board.sh` and show the board. Run `ticket-hygiene.sh` and show what it
+found. The scripts report; **you verify and fix with judgment** — never bulk-apply their
+findings. Verify a client repo the same way: `git -C projects/<repo> show
+origin/<base>:<path>` and `git log origin/<base>`, never its checked-out `main`.
+
+**Where a client repo is edited.** Every stub move and cut in steps 2 and 4 is made in a
+worktree of that repo cut from `origin/<base>` — the one step 5 ships from — never in the
+shared `projects/<repo>` checkout: on a UAT repo that checkout's `main` lags `uat`, so an
+edit there moves a stub that may already be done.
 
 **2. Reconcile — the board must be true before it's useful.**
 - *Merged but still open:* `possibly-done` names the commit it found, counting only

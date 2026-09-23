@@ -10,6 +10,11 @@
 #   Next       each epic's lowest-sequence open stub · triage stubs · legacy ready
 #   Queued     epic stubs behind their epic's next
 #
+# A client repo is read at its TICKET BASE BRANCH — `origin/<uat.branch>` where its
+# `.icm/project.json` declares one, else `origin/main` (D38; lib/ticket-base.sh) — never the
+# shared `projects/<repo>` checkout, which sits on `main` and on a UAT repo lags every stub
+# finished on `uat`. No ref → the working tree, said on stderr. icm-board reads its own disk.
+#
 # Sustentus is NOT exempt here — the board reads everything (its stubs parse natively);
 # writing tooling still leaves it alone. Legacy flat PREFIX-NNN tickets parse under the
 # old rules until their repo migrates.
@@ -31,6 +36,10 @@ for arg in "$@"; do
 done
 [[ -n "$APPS_ROOT" ]] || APPS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 [[ -d "$APPS_ROOT" ]] || { echo "Not a directory: $APPS_ROOT" >&2; exit 2; }
+
+# shellcheck source=lib/ticket-base.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/ticket-base.sh"
+TB_TMP="$(mktemp -d)"; trap 'rm -rf "$TB_TMP"' EXIT
 
 bold=$'\033[1m'; off=$'\033[0m'
 [[ -t 1 ]] || { bold=; off=; }
@@ -81,7 +90,8 @@ stub_title() { # H1 minus "Stub: "
 }
 
 for repo in "${repos[@]}"; do
-  intake="$repo/.icm/intake"
+  view="$(ticket_view "$repo" "$APPS_ROOT")"
+  intake="$view/.icm/intake"
   [[ -d "$intake" ]] || continue
   name="${repo#"$APPS_ROOT"/}"
   [[ "$repo" == "$APPS_ROOT" ]] && name="icm-board"
@@ -91,8 +101,8 @@ for repo in "${repos[@]}"; do
   # Every pipeline repo moves a merged run out of runs/ in the close-out that rides the
   # run's own PR (into runs/_done/, or wherever its project.json points), so runs/ = in
   # flight — sustentus included, since its close-out moved into the PR in September 2026.
-  if [[ -d "$repo/.icm/runs" ]]; then
-    for rd in "$repo/.icm/runs"/*/; do
+  if [[ -d "$view/.icm/runs" ]]; then
+    for rd in "$view/.icm/runs"/*/; do
       [[ -d "$rd" ]] || continue
       slug="$(basename "$rd")"
       [[ "$slug" == "_done" ]] && continue
@@ -117,7 +127,7 @@ for repo in "${repos[@]}"; do
         lane="$(dash_field "$f" lane)"; [[ -n "$lane" ]] && title="[$lane] $title"
         group="next"
         [[ -n "$(dash_field "$f" blocked)" ]] && group="blocked" && n_blocked=$((n_blocked + 1))
-        [[ -n "${today_of["$name $path"]:-}" ]] && group="today"
+        [[ -n "${today_of["${name#projects/} $path"]:-}" ]] && group="today"
         rows+="$group|$prio|$name|$path|$title"$'\n'
         n_open=$((n_open + 1)); repo_has=1
       done
@@ -155,7 +165,7 @@ for repo in "${repos[@]}"; do
       else
         group="queued"
       fi
-      [[ -n "${today_of["$name $path"]:-}" ]] && group="today"
+      [[ -n "${today_of["${name#projects/} $path"]:-}" ]] && group="today"
       rows+="$group|$prio|$name|$path|$title"$'\n'
       n_open=$((n_open + 1)); repo_has=1
     done
@@ -184,7 +194,7 @@ for repo in "${repos[@]}"; do
       blocked)             group="blocked"; n_blocked=$((n_blocked + 1)) ;;
       *)                   group="next" ;;
     esac
-    [[ -n "${today_of["$name $id"]:-}" ]] && group="today"
+    [[ -n "${today_of["${name#projects/} $id"]:-}" ]] && group="today"
     rows+="$group|$prio|$name|$id|$title"$'\n'
     n_open=$((n_open + 1)); repo_has=1
   done

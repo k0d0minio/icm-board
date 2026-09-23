@@ -191,8 +191,9 @@ appears rather than vanishing. The ticket base branch (D38) is the UAT branch wh
 `.icm/project.json` declares one, else `main` — what the template's `lib/project.sh →
 pipeline_base_branch` answers; on a UAT repo `main` carries a lagging copy only promotions
 update, and no reader uses it for tickets. (The dashboard's half is
-`jamienisbet` → `.icm/intake/ticket-base-branch/`; icm-board's board scripts follow in
-this repo's epic of the same name.)
+`jamienisbet` → `.icm/intake/ticket-base-branch/`.) icm-board's `tickets-board.sh` and
+`ticket-hygiene.sh` read the same branch locally — `origin/<base>` in each `projects/<repo>`,
+never its checked-out `main` (`_system/scripts/lib/ticket-base.sh`).
 
 | It reads | From |
 |---|---|

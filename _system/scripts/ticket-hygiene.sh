@@ -23,6 +23,12 @@
 #     today-dilution     more than 10 entries (spec cap, estate-wide)
 #     stale-today        the file predates yesterday — a plan from a past day
 #
+# Where it reads: a client repo at its TICKET BASE BRANCH — `origin/<uat.branch>` where its
+# `.icm/project.json` declares one, else `origin/main` (D38; lib/ticket-base.sh) — intake, dormant
+# flag and log alike, so a run merged into `uat` is found and a stub finished there is not
+# reported. Never the shared `projects/<repo>` checkout; no ref → the working tree, said on
+# stderr. icm-board reads its own disk and HEAD.
+#
 # Dormancy: a repo carrying an empty `.icm/dormant` file is parked — `off-ticket` is
 # silenced for it; every other check still runs.
 #
@@ -38,6 +44,10 @@ APPS_ROOT="${1:-}"
 [[ -d "$APPS_ROOT" ]] || { echo "Not a directory: $APPS_ROOT" >&2; exit 2; }
 
 EXEMPT=("sustentus")
+
+# shellcheck source=lib/ticket-base.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/ticket-base.sh"
+TB_TMP="$(mktemp -d)"; trap 'rm -rf "$TB_TMP"' EXIT
 
 bold=$'\033[1m'; yellow=$'\033[33m'; green=$'\033[32m'; dim=$'\033[2m'; off=$'\033[0m'
 [[ -t 1 ]] || { bold=; yellow=; green=; dim=; off=; }
@@ -65,16 +75,20 @@ for repo in "${repos[@]}"; do
   for e in "${EXEMPT[@]}"; do [[ "$base" == "$e" ]] && skip=1; done
   (( skip )) && continue
 
-  intake="$repo/.icm/intake"
+  view="$(ticket_view "$repo" "$APPS_ROOT")"
+  intake="$view/.icm/intake"
   [[ -d "$intake" ]] || continue
   name="${repo#"$APPS_ROOT"/}"
   [[ "$repo" == "$APPS_ROOT" ]] && name="icm-board"
+  # The log the base branch carries — where a run merged into `uat` actually is.
+  logref=HEAD
+  [[ "$view" != "$repo" ]] && logref="$(ticket_ref "$repo")"
 
   dormant=0
-  [[ -e "$repo/.icm/dormant" ]] && dormant=1
+  [[ -e "$view/.icm/dormant" ]] && dormant=1
 
   has_pipeline=0
-  [[ -f "$repo/.claude/skills/pipeline/SKILL.md" ]] && has_pipeline=1
+  [[ -f "$view/.claude/skills/pipeline/SKILL.md" ]] && has_pipeline=1
 
   issues=()
   open_keys=()   # slugs (and legacy IDs) used by possibly-done
@@ -145,7 +159,7 @@ for repo in "${repos[@]}"; do
   # .icm/ — the work itself, not the ticket admin. Slugs shorter than 6 chars are
   # skipped (too generic to match against subjects honestly).
   if (( ${#open_keys[@]} > 0 )); then
-    log="$(git -C "$repo" log --format='%H %s' -300 2>/dev/null || true)"
+    log="$(git -C "$repo" log --format='%H %s' -300 "$logref" 2>/dev/null || true)"
     for key in "${open_keys[@]}"; do
       [[ "${#key}" -ge 6 ]] || continue
       while read -r sha subject; do
@@ -160,7 +174,7 @@ for repo in "${repos[@]}"; do
 
   # off-ticket work: recent commits, zero open tickets. Silenced for dormant repos.
   if (( ${#open_keys[@]} == 0 && !dormant )); then
-    last="$(git -C "$repo" log -1 --format=%ct 2>/dev/null || echo 0)"
+    last="$(git -C "$repo" log -1 --format=%ct "$logref" 2>/dev/null || echo 0)"
     if (( last > 0 && (now - last) < 14 * 86400 )); then
       issues+=("off-ticket: commits in the last 14 days but no open tickets — work is invisible to the board")
     fi
@@ -187,8 +201,8 @@ if [[ -f "$today_md" ]]; then
     n_today=$((n_today + 1))
     t_repo="$(sed -E 's/^- *([^·]+) ·.*/\1/; s/[[:space:]]*$//' <<<"$line")"
     t_path="$(sed -E 's/^- *[^·]+ · *([^[:space:]]+).*/\1/' <<<"$line")"
-    rdir="$APPS_ROOT/projects/$t_repo"
-    [[ "$t_repo" == "icm-board" ]] && rdir="$APPS_ROOT"
+    rdir="$APPS_ROOT"
+    [[ "$t_repo" == "icm-board" ]] || rdir="$(ticket_view "$APPS_ROOT/projects/$t_repo" "$APPS_ROOT")"
     if [[ ! -f "$rdir/.icm/intake/$t_path.md" && ! -f "$rdir/.icm/intake/$t_path" ]]; then
       t_issues+=("today-unresolved: '$t_repo · $t_path' — no such open stub")
     fi

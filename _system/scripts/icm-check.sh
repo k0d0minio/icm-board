@@ -27,9 +27,14 @@
 # AGENTS.md + importer pair, and only a repo carrying neither warns. AGENTS.md itself is
 # never templated — each repo writes its own Layer 0, exactly as CLAUDE.md was.
 #
-# EVERY repo is additionally checked — and with --fix, seeded — against the pipeline
+# Every ADOPTED repo is additionally checked — and with --fix, seeded — against the pipeline
 # (contracts/PIPELINE.md): template/icm-pipeline/ → .icm/, template/claude-pipeline/ →
-# .claude/, template/github-pipeline/ → .github/. There is no profile to declare any more
+# .claude/, template/github-pipeline/ → .github/. Adopted means the repo carries
+# `.icm/MANIFEST`, which only icm-sync.sh (or an earlier --fix) lands. A repo without it has
+# never been synced and is not being worked on through the pipeline, so none of the pipeline
+# is reported for it — not the missing files, not the drift, and not the security gate or
+# the health probe (Jamie, 2026-09-23); its label says `no pipeline` and adopting it is
+# `icm-sync.sh --apply <repo>`, never this script. There is no profile to declare any more
 # (decision D22): the `- profile:` line an older .icm/CONTEXT.md carries is not read, and
 # how much of the pipeline a repo leans on is its own `complexity` in .icm/project.json
 # (`micro` | `standard`). The pipeline file list is NOT hardcoded here: it is read from
@@ -184,6 +189,10 @@ for repo in "${repos[@]}"; do
   # one fact, so an un-migrated repo is measured exactly as it was before the move.
   migrated=0
   [[ -f "$repo/AGENTS.md" ]] && migrated=1
+  # Has this repo adopted the pipeline? Only a sync lands .icm/MANIFEST; without it the
+  # pipeline is not reported, seeded or drift-checked here at all.
+  adopted=0
+  [[ -f "$repo/.icm/MANIFEST" ]] && adopted=1
 
   # --- .icm baseline ---
   [[ -f "$repo/.icm/CONTEXT.md" ]]        || missing+=(".icm/CONTEXT.md")
@@ -216,7 +225,8 @@ for repo in "${repos[@]}"; do
   [[ -f "$repo/opencode.json" ]] && \
     warns+=("legacy opencode.json at root — the rails file is opencode.jsonc (a .json copy is strict JSON to Biome and breaks \`biome check\`)")
 
-  # --- the pipeline (every repo — there is no profile to declare, D22) ---
+  # --- the pipeline (every adopted repo — there is no profile to declare, D22) ---
+  if (( adopted )); then
   for p in "${PIPELINE_ICM[@]}";     do [[ -f "$repo/.icm/$p"     ]] || missing+=(".icm/$p"); done
   for p in "${PIPELINE_PROJECT[@]}"; do [[ -f "$repo/.icm/$p"     ]] || missing+=(".icm/$p (project-owned — seeded once)"); done
   for p in "${PIPELINE_CLAUDE[@]}";  do [[ -f "$repo/.claude/$p"  ]] || missing+=(".claude/$p"); done
@@ -235,6 +245,7 @@ for repo in "${repos[@]}"; do
     printf '%s\n' "${PIPELINE_ICM[@]}" | grep -qxF "$rel" \
       || warns+=("not in the template's manifest: .icm/$rel — the repo's own addition, or a retired file to git rm (never removed here)")
   done < <(find "$repo/.icm/stages" "$repo/.icm/lanes" -name 'CONTEXT.md' 2>/dev/null | sort)
+  fi
 
   # --- canonical drift (report-only, never repaired — repos own their copies) ---
   for asset in "${assets[@]}"; do
@@ -242,7 +253,7 @@ for repo in "${repos[@]}"; do
       warns+=("drift from canonical: .claude/$asset differs from _system/template/claude/$asset")
     fi
   done
-  for p in "${PIPELINE_CLAUDE[@]}"; do
+  (( adopted )) && for p in "${PIPELINE_CLAUDE[@]}"; do
     if [[ -f "$repo/.claude/$p" ]] && ! cmp -s "$TEMPLATE/claude-pipeline/$p" "$repo/.claude/$p"; then
       warns+=("drift from canonical: .claude/$p differs from _system/template/claude-pipeline/$p")
     fi
@@ -333,6 +344,7 @@ for repo in "${repos[@]}"; do
         fi
       done
     fi
+    if (( adopted )); then
     for p in "${PIPELINE_ICM[@]}" "${PIPELINE_PROJECT[@]}"; do
       if [[ ! -f "$repo/.icm/$p" ]]; then
         mkdir -p "$(dirname "$repo/.icm/$p")"
@@ -361,6 +373,7 @@ for repo in "${repos[@]}"; do
         actions+=("created .github/$p")
       fi
     done
+    fi
     fixed=$((fixed + 1)); repo_fixed=1
     missing=()
     # re-verify what we just created
@@ -376,9 +389,11 @@ for repo in "${repos[@]}"; do
         [[ -f "$repo/$asset" ]] || missing+=("$asset (fix failed)")
       done
     fi
+    if (( adopted )); then
     for p in "${PIPELINE_ICM[@]}" "${PIPELINE_PROJECT[@]}"; do [[ -f "$repo/.icm/$p" ]] || missing+=(".icm/$p (fix failed)"); done
     for p in "${PIPELINE_CLAUDE[@]}"; do [[ -f "$repo/.claude/$p" ]] || missing+=(".claude/$p (fix failed)"); done
     for p in "${PIPELINE_GITHUB[@]}"; do [[ -f "$repo/.github/$p" ]] || missing+=(".github/$p (fix failed)"); done
+    fi
   fi
 
   # --- hook registration (D18) ---
@@ -444,10 +459,13 @@ for repo in "${repos[@]}"; do
   fi
 
   # --- report ---
-  # Every repo is a pipeline repo (D22); what is worth showing beside the name is the one thing
-  # that still varies — a repo that has declared itself `micro` in its own project.json.
+  # Every adopted repo is a pipeline repo (D22); what is worth showing beside the name is
+  # whether it has adopted at all, and a repo that has declared itself `micro` in its own
+  # project.json.
   label="$name"
-  if [[ -n "$JQ" && -f "$repo/.icm/project.json" ]] && \
+  if (( ! adopted )); then
+    label="$name ${dim}(no pipeline)${off}"
+  elif [[ -n "$JQ" && -f "$repo/.icm/project.json" ]] && \
      [[ "$("$JQ" -r '.complexity // empty' "$repo/.icm/project.json" 2>/dev/null)" == "micro" ]]; then
     label="$name ${dim}(micro)${off}"
   fi

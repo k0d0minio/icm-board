@@ -69,3 +69,7 @@ unpromoted batch. It is lag, not a gap.
 3. The jamienisbet stub `ticket-base-branch/dashboard-reads-ticket-base`: the dashboard still
    reads each repo's default branch.
 4. `icm-check.sh`: after agorasim, no `pr-conventions` / `ticket-craft` drift should remain.
+
+## 2026-09-24 — agorasim
+
+Jamie pruned the Neon project, taking `run/admin-quote-builder` with the seven previews; its run had merged as #120, so nothing was lost. #121 merged (`99bf7d5`). `promote-uat.sh sync` stopped again: `uat` had carried its own sync. Only three template files conflicted (`database-migration` skill, `references/tools.md`, `template-version`), and all three were resolved to `main`'s. `uat` was pushed; `status` reads `UAT 1 stub(s) · unapproved · main ahead 0`. The fixed cleanup workflow ran green on #121's close. It found nothing to delete, because Vercel skipped the preview as not affected, so the delete path is still unproven on a live branch. **All six pipeline repos are now at `de444cd`.** Still owed: one real ticket PR on agorasim, and the jamienisbet dashboard stub.

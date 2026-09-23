@@ -18,9 +18,9 @@
 #                  a diverged T file is drift, reported with the icm-sync.sh command.
 #    2. Formatter  a formatter config that would touch T paths and no exclusion for them:
 #                  reported with the exact lines to add (D17/D19: per repo, by hand; never written).
-#    3. project.json  name, complexity, required_checks, personas, deploy, reporting, migrations,
-#                  support, health_endpoint — missing or still at the stub's value is a line with
-#                  the question.
+#    3. project.json  name, complexity, required_checks, personas, deploy, reporting, migrations
+#                  (stamp/tool/out_of_order), database (isolation), security, support,
+#                  health_endpoint — missing or still at the stub's value is a line with the question.
 #    4. Environment   env-check.sh (route + binaries) and env.sh audit (names only).
 #    5. Tickets    validate-intake.sh over every live epic and triage/; triage-report.sh against
 #                  the cap; a loose TODO.md/BACKLOG.md at the root.
@@ -130,7 +130,7 @@ if [ -f "$manifest" ]; then
     else
       if [ "$FIX" -eq 1 ] && [ -n "$tmpl_dir" ] && [ -f "$tmpl_dir/icm-pipeline/$path" ]; then
         if [ "$path" = "project.json" ]; then mkdir -p .icm; jq --arg n "$(basename "$repo_root")" '.name = $n' "$tmpl_dir/icm-pipeline/$path" > ".icm/$path"; fixed "created .icm/project.json (name filled)"
-        else case "$path" in scripts/lib/*|scripts/lib/*.json) seed "$tmpl_dir/icm-pipeline/$path" ".icm/$path" ;; scripts/*.sh) seed "$tmpl_dir/icm-pipeline/$path" ".icm/$path" +x ;; *) seed "$tmpl_dir/icm-pipeline/$path" ".icm/$path" ;; esac; fi
+        else case "$path" in scripts/lib/*|scripts/lib/*.json) seed "$tmpl_dir/icm-pipeline/$path" ".icm/$path" ;; scripts/*.sh|skills/*/scripts/*.sh) seed "$tmpl_dir/icm-pipeline/$path" ".icm/$path" +x ;; *) seed "$tmpl_dir/icm-pipeline/$path" ".icm/$path" ;; esac; fi
       else
         fail ".icm/$path missing ($owner)$( [ -z "$tmpl_dir" ] && echo ' — no template source to seed from: --template <path|url>, or icm-sync.sh from icm-board')"
       fi
@@ -183,7 +183,7 @@ fi
 
 # --- 2. formatter exposure ---------------------------------------------------------------------------------------
 echo "[2/11] Formatter exposure — would a formatter rewrite a template-owned file?"
-t_paths=".icm/stages/ .icm/lanes/ .icm/_shared/ .icm/intake/CONTEXT.md .icm/scripts/ .icm/MANIFEST .claude/skills/ .github/pull_request_template.md opencode.jsonc"
+t_paths=".icm/stages/ .icm/lanes/ .icm/_shared/ .icm/skills/ .icm/intake/CONTEXT.md .icm/scripts/ .icm/MANIFEST .claude/skills/ .github/pull_request_template.md opencode.jsonc"
 fmt_cfg=""
 for c in .prettierrc .prettierrc.json .prettierrc.js .prettierrc.cjs .prettierrc.yaml .prettierrc.yml prettier.config.js prettier.config.mjs biome.json biome.jsonc; do [ -f "$c" ] && fmt_cfg="${fmt_cfg:+$fmt_cfg }$c"; done
 [ -f package.json ] && jq -e '.prettier' package.json >/dev/null 2>&1 && fmt_cfg="${fmt_cfg:+$fmt_cfg }package.json#prettier"
@@ -213,7 +213,12 @@ if [ -f .icm/project.json ]; then
   else warn "deploy not declared — which Vercel project(s) does this repo deploy as, on which team, under which token NAME? (deploy-status.sh, env.sh and rollback.sh stop without it)"; fi
   if jq -e '.reporting' .icm/project.json >/dev/null 2>&1; then ok "reporting: announce → $(reporting_channels announce | paste -sd', ' -) · alert → $(reporting_channels alert | paste -sd', ' - | sed 's/^$/none (red job)/') · from $(project_field .reporting.announce_from session)"
   else warn "reporting block absent — read as announce: [github-release], alert: none; add the block to change it"; fi
-  if [ -n "$(migrations_paths)" ]; then ok "migrations: $(migrations_paths | paste -sd', ' -) · reversible: $(migrations_reversible)"; else info "migrations.path empty — check-migrations.sh looks for tracked migrations/ folders; rollback.sh assumes forward-only (reversible: false)"; fi
+  if [ -n "$(migrations_paths)" ]; then ok "migrations: $(migrations_paths | paste -sd', ' -) · reversible: $(migrations_reversible) · stamp: $(migrations_stamp) · tool: $(migrations_tool) · out_of_order: $(migrations_out_of_order)"; else info "migrations.path empty — check-migrations.sh looks for tracked migrations/ folders; rollback.sh assumes forward-only (reversible: false); stamp: $(migrations_stamp), tool: $(migrations_tool)"; fi
+  case "$(database_isolation)" in
+    none) warn "database.isolation: none — does this repo have a database? schema (one Postgres schema per run on \$$(database_url_env)) or container (one local Postgres per run) gives each run its own; none is right for a repo without one" ;;
+    *)    ok "database: $(database_isolation) isolation via \$$(database_url_env)$( [ "$(database_isolation)" = container ] && echo " · $(database_image), db $(database_name)")" ;;
+  esac
+  [ -n "$(security_audit_command)" ] && ok "security.audit_command: $(security_audit_command)" || info "security.audit_command empty — security-check.sh audits npm/pnpm/yarn lockfiles it finds; set it for another ecosystem (pip-audit, cargo audit)"
   ok "support: tier $(support_tier)$( [ -n "$(support_failsafe)" ] && echo " · fail-safe $(support_failsafe)") · sentry via \$$(support_sentry_env)"
   if [ -n "$(health_endpoints | head -n1)" ]; then ok "health_endpoint: $(health_endpoints | paste -sd', ' -) — health-check.sh reads it once after the merge"
   elif project_has '.deploy.projects'; then warn "health_endpoint empty while deploy is declared — which URL on each production project answers 200 when it is up (e.g. https://<production_url>/api/health)? Until it is set, health-check.sh reports SKIP after every merge and nobody is told production is down"

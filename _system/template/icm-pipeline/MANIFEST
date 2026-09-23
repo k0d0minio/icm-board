@@ -15,6 +15,11 @@
 # icm-board in reach. A file the template retires leaves this list and is REPORTED by
 # `icm-sync.sh` for the operator to `git rm` — never deleted by a script (retired so far:
 # `scripts/notify.sh`, replaced by `scripts/report.sh`).
+#
+# `skills/<name>/` (three seeded capability skills — `skills/README.md`) and `_shared/run-pack/`
+# (the seven canonical run files `run-pack.sh` seeds into every run) are template-owned like the
+# contracts: no identity, read `project.json` at runtime. A `skills/*/scripts/*.sh` is executable
+# like `scripts/*.sh`; `scripts/lib/` stays sourced-only.
 T MANIFEST
 T stages/01_scope/CONTEXT.md
 T stages/02_define/CONTEXT.md
@@ -32,6 +37,13 @@ T _shared/ci.md
 T _shared/stage-preamble.md
 T _shared/scope-template.md
 T _shared/conventions.md
+T _shared/run-pack/project.md
+T _shared/run-pack/plan.md
+T _shared/run-pack/tasks.md
+T _shared/run-pack/decisions.md
+T _shared/run-pack/status.md
+T _shared/run-pack/handoff.md
+T _shared/run-pack/FAILURE.md
 T scripts/lib/gh.sh
 T scripts/lib/changed-files.sh
 T scripts/lib/project.sh
@@ -53,11 +65,24 @@ T scripts/check-migrations.sh
 T scripts/process-raw.sh
 T scripts/deploy-status.sh
 T scripts/rollback.sh
-T scripts/security-check.sh
 T scripts/health-check.sh
 T scripts/usage-snapshot.sh
 T scripts/env.sh
 T scripts/setup.sh
+T scripts/list-skills.sh
+T scripts/db-branch.sh
+T scripts/security-check.sh
+T scripts/run-pack.sh
+T skills/README.md
+T skills/security-audit/SKILL.md
+T skills/security-audit/references/secret-patterns.md
+T skills/security-audit/scripts/audit.sh
+T skills/database-migration/SKILL.md
+T skills/database-migration/references/tools.md
+T skills/database-migration/scripts/preflight.sh
+T skills/preview-deploy/SKILL.md
+T skills/preview-deploy/references/checklist.md
+T skills/preview-deploy/scripts/status.sh
 T scripts/retrospective.sh
 T raw/README.md
 T raw/_processed/.gitkeep

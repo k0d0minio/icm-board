@@ -1,369 +1,305 @@
 #!/usr/bin/env bash
-# security-check.sh — Release stop class 2, measured: a secret in this branch's diff, or a known-
-# vulnerable dependency in a lockfile this branch changed. (TEMPLATE-OWNED)
+# security-check.sh — the zero-trust gate before a commit or a push: no secret, no known-high dependency (TEMPLATE-OWNED).
 #
-# Two passes over the files this branch changed (lib/changed-files.sh — the same answer format.sh
-# and lint.sh use: the fork point off <base> to the working tree, plus untracked files), and only
-# over the LINES it added — a secret main already carries is main's fault, found by `--all`, not
-# a reason to hold this PR:
+# The estate's standing rule is "no secrets in git, ever" (`.claude/skills/pr-conventions/SKILL.md`),
+# and a rule a human has to remember is a rule that fails on a Friday. This is the deterministic
+# half of it: a scan of exactly what is about to leave the machine, run by Build before each commit
+# and by every lane before its push, and wired by a repo as its git pre-commit hook where it has one
+# (`_shared/project-rules.md` → The factory). It trusts nothing it did not read: not the file name,
+# not the author, not the branch.
 #
-#   1. Secrets   `gitleaks` when it is installed (the repo's own `.gitleaks.toml` honoured when
-#                present; an inline `gitleaks:allow` comment is honoured either way): the added
-#                lines of every changed file, copied under their repo-relative paths into a
-#                temporary folder so one `detect --no-git` scans exactly the diff whatever the
-#                gitleaks version, the line numbers mapped back. Without gitleaks, the built-in
-#                pattern set below over the same lines: provider-shaped tokens (AWS, GitHub,
-#                Slack, Stripe, Google, Anthropic, OpenAI, Resend, npm, SendGrid, Twilio),
-#                private-key blocks, JWTs, connection strings carrying a password, and a
-#                `key|secret|token|password = "<16+ mixed chars>"` assignment whose value is not
-#                an obvious placeholder or an environment lookup. The patterns are a floor, not
-#                gitleaks — env-check.sh names the install. Lockfiles, minified bundles, source
-#                maps, media and binaries are never scanned; `error.log` itself is skipped.
-#   2. Dependencies   the audit the repo's lockfile implies, at the repo root, on EVERY call
-#                (`--no-audit` skips it — the audit is the one network call here, and the skip is
-#                the operator's recorded waiver, never the stage's shortcut): pnpm-lock.yaml →
-#                `pnpm audit --audit-level=high`; package-lock.json → `npm audit --audit-level=high`;
-#                yarn.lock → `yarn npm audit --severity high` (berry) or `yarn audit --level high`
-#                (classic); Cargo.lock → `cargo audit`; requirements.txt / poetry.lock /
-#                pyproject.toml → `pip-audit`. High and critical count, whether or not this branch
-#                touched the dependency — the repo ships what its lockfile pins. A lockfile whose
-#                tool is not installed, or a registry that cannot be reached, is SKIPPED with the
-#                reason — a fact about the machine, never a finding.
+# Two checks, in order:
+#   1. Secrets — `gitleaks` over the staged changes (`gitleaks protect --staged --redact`; on a
+#      gitleaks that has the newer verbs, `gitleaks git --staged`), or over the branch's commits
+#      since its fork point (`--branch`), or the whole tree (`--all`). When gitleaks is not
+#      installed the gate does NOT go quiet: a built-in scan of the same change set runs instead,
+#      over the highest-signal shapes (cloud and API keys, tokens, private-key blocks, a database
+#      URL carrying a password, a JWT, a quoted `secret = "…"`), and says on its own line that it is
+#      the fallback. A staged `.env*` file that is not an example is a finding by itself. `--strict`
+#      turns "gitleaks absent" into a failure.
+#   2. Dependencies — `npm|pnpm|yarn audit` at the high level, or the repo's own
+#      `.icm/project.json` → `security.audit_command` for another ecosystem. It hits the network,
+#      so on the staged scope it runs only when the change set touches a manifest or lockfile —
+#      the moment a dependency can change; `--branch` and `--all` always run it; `--audit` and
+#      `--no-audit` override. An audit that could not run (offline, no registry) is a WARN, never a
+#      block — except under `--strict`.
 #
-# What a finding does: it is printed as `[SECRET] <file>:<line> — <rule>` or `[AUDIT] <tool> →
-# <summary>` — the matched VALUE is never printed, never logged — and, when the run is known
-# (`<slug>`, or the run whose run.md records the current branch), appended to
-# `.icm/runs/<slug>/03_build/output/error.log` (`--log <file>` names another file) as ONE ENTRY
-# PER FINDING in the shape Build's Outputs define for that file: a dated `## ` header naming the
-# source and the class (`security-check.sh — secret: <rule>` · `— audit: <tool>`), then the finding
-# line verbatim. The session adds the `- resolved:` line once the secret is rotated or the bump
-# landed — that is what lets `retrospective.sh` learn from it; this script never edits an entry it
-# wrote. Then `RESULT: FINDINGS n`, exit 1. A secret found is a secret to ROTATE, not merely to
-# remove from the diff — say so in the run's notes.
+# Every finding is REDACTED before it is printed or written: the rule, the file and the line, the
+# first four characters of the match and nothing more. On a finding the gate writes the redacted
+# trace to the run's own error log — `.icm/runs/<slug>/03_build/output/error.log`, or
+# `lane/output/error.log` for a lane run — as one entry in error.log's shape (a dated `## ` header
+# naming `security-check.sh` and the rule ids, then the findings; the `- resolved:` line is the
+# session's to add once the gate passes), so `retrospective.sh` reads it like any other error the
+# run fixed and lists it as unresolved until then —
+# and exits 1, which is what aborts a pre-commit hook. It
+# never edits a file, never unstages anything, never rotates a key: the secret is removed by the
+# person who staged it, and rotated by the operator through the provider (the `security-audit` skill
+# says how). `--no-verify` is not an answer the pipeline accepts.
 #
-# It never fetches, installs, upgrades, commits or edits anything; there is no `--fix`.
+# The run: `<slug>` as the first argument, else the current branch `claude/<slug>` when that run is
+# live, else the live run whose `run.md` records this branch. Without one the trace is printed only.
 #
-# Usage: .icm/scripts/security-check.sh [<slug>] [--base <ref>] [--all] [--no-audit] [--no-secrets]
-#                                        [--log <file>] [--quiet]
+# Usage: .icm/scripts/security-check.sh [<slug>] [--staged|--branch|--all] [--base <ref>]
+#                                        [--audit|--no-audit] [--strict]
 # Verdict (stdout, last line):
-#   RESULT: CLEAN         exit 0  — nothing in the added lines, no high/critical advisory (or none owed)
-#   RESULT: FINDINGS n    exit 1  — n findings, listed above (and in error.log) — Release stop class 2
-#   RESULT: SKIP          exit 0  — nothing to scan: no changed files, and no audit owed
-set -euo pipefail
+#   RESULT: OK            exit 0  — nothing found (a `[WARN]` above it names a check that could not run)
+#   RESULT: SKIP          exit 0  — nothing staged (--staged) or no changed files (--branch)
+#   RESULT: BLOCKED <n>   exit 1  — <n> finding(s); the redacted trace is above and in error.log
+#   RESULT: FAIL          exit 1  — --strict, and a check could not run
+set -uo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$repo_root"
 die() { echo "error: $*" >&2; exit 1; }
-
 command -v git >/dev/null 2>&1 || die "git not found"
-command -v jq  >/dev/null 2>&1 || die "jq not found"
-
-slug=""; base=""; all=0; audit="yes"; do_secrets=1; log=""; quiet=0
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --base)       base="${2:-}"; [ -n "$base" ] || die "--base needs a ref"; shift 2 ;;
-    --all)        all=1; shift ;;
-    --no-audit)   audit="no"; shift ;;
-    --no-secrets) do_secrets=0; shift ;;
-    --log)        log="${2:-}"; [ -n "$log" ] || die "--log needs a file"; shift 2 ;;
-    --quiet)      quiet=1; shift ;;
-    -h|--help)    sed -n '2,45p' "${BASH_SOURCE[0]}"; exit 0 ;;
-    --*)          die "unknown flag: $1 (usage: security-check.sh [<slug>] [--base <ref>] [--all] [--no-audit] [--no-secrets] [--log <file>] [--quiet])" ;;
-    *)            [ -z "$slug" ] && slug="$1" || die "unexpected argument: $1"; shift ;;
-  esac
-done
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not a git repository"
 
 # shellcheck source=lib/project.sh
-source "$here/lib/project.sh"
-# shellcheck source=lib/changed-files.sh
-source "$here/lib/changed-files.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"
 
-branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
-head_sha="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
-
-# --- the run, and where its findings go --------------------------------------------------------------------
-run_dir=""
-if [ -n "$slug" ]; then
-  for d in ".icm/runs/$slug" "$runs_archive_rel/$slug"; do
-    [ -f "$d/run.md" ] && { run_dir="$d"; break; }
-  done
-  [ -n "$run_dir" ] || die "no run.md for '$slug' in .icm/runs/ or $runs_archive_rel/ — pass --log <file>, or omit the slug"
-else
-  # The run whose run.md records this branch — the same `- branch:` line resolve-run.sh checks out.
-  for f in .icm/runs/*/run.md; do
-    [ -f "$f" ] || continue
-    b="$(grep -m1 '^- branch:' "$f" 2>/dev/null | sed -E 's/^- branch:[[:space:]]*//; s/[[:space:]]+#.*$//; s/[[:space:]]*$//' || true)"
-    if [ -n "$b" ] && [ "$b" = "$branch" ]; then run_dir="$(dirname "$f")"; slug="$(basename "$run_dir")"; break; fi
-  done
-fi
-if [ -z "$log" ] && [ -n "$run_dir" ]; then log="$run_dir/03_build/output/error.log"; fi
-
-# --- the files: this branch's changes, or the whole tree -----------------------------------------------------
-if [ -z "$base" ]; then
-  if git rev-parse --verify --quiet 'origin/main^{commit}' >/dev/null; then base="origin/main"
-  elif git rev-parse --verify --quiet 'main^{commit}' >/dev/null; then base="main"
-  else base="origin/main"; fi
-fi
-
-fork=""
-declare -a files=()
-if [ "$all" -eq 1 ]; then
-  mapfile -t files < <({ git ls-files; git ls-files --others --exclude-standard; } | sort -u \
-    | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)
-else
-  fork="$(fork_point "$base")" || exit 1
-  mapfile -t files < <(changed_files "$fork")
-fi
-
-skip_path() { # lockfiles, generated bundles, media, binaries by extension — and the log this script writes
+slug=""; scope="staged"; base="origin/main"; audit="auto"; strict=0
+while [ $# -gt 0 ]; do
   case "$1" in
-    *.lock|pnpm-lock.yaml|*/pnpm-lock.yaml|package-lock.json|*/package-lock.json|bun.lockb|*/bun.lockb) return 0 ;;
-    *.min.js|*.min.css|*.map|*.svg|*.png|*.jpg|*.jpeg|*.gif|*.webp|*.ico|*.pdf|*.woff|*.woff2|*.ttf|*.eot|*.otf) return 0 ;;
-    *.zip|*.gz|*.tgz|*.tar|*.7z|*.mp3|*.mp4|*.wav|*.mov|*.webm|*.wasm|*.jar|*.class|*.pyc) return 0 ;;
-    */error.log) return 0 ;;
+    --staged)   scope="staged"; shift ;;
+    --branch)   scope="branch"; shift ;;
+    --all)      scope="all"; shift ;;
+    --base)     base="${2:-}"; [ -n "$base" ] || die "--base needs a ref"; shift 2 ;;
+    --audit)    audit="yes"; shift ;;
+    --no-audit) audit="no"; shift ;;
+    --strict)   strict=1; shift ;;
+    -h|--help)  sed -n '2,45p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    --*)        die "unknown flag: $1" ;;
+    *)          [ -z "$slug" ] && slug="$1" || die "unexpected argument: $1"; shift ;;
   esac
-  return 1
-}
-
-declare -a scan_files=()
-skipped=0
-for f in "${files[@]}"; do
-  if skip_path "$f" || ! grep -Iq '' "$f" 2>/dev/null; then skipped=$((skipped + 1)); continue; fi
-  scan_files+=("$f")
 done
 
-if [ "$all" -eq 1 ]; then
-  echo "scanning the whole tree: ${#scan_files[@]} file(s) ($skipped skipped: lockfiles, bundles, media, binaries)"
-else
-  echo "scanning ${#scan_files[@]} changed file(s) on $branch against $base (fork ${fork:0:7}; $skipped skipped: lockfiles, bundles, media, binaries)"
-fi
-
-# One "<line>\t<text>" per line this branch ADDED to <file> — the whole file when it is untracked or --all.
-added_lines() {
-  local f="$1"
-  if [ "$all" -eq 1 ] || [ -z "$fork" ] || ! git ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then
-    awk '{ print NR "\t" $0 }' "$f"
+# --- the run, for the error log --------------------------------------------------------------------
+branch="$(git symbolic-ref --short HEAD 2>/dev/null || true)"
+if [ -z "$slug" ] && [ -n "$branch" ]; then
+  cand="${branch#claude/}"
+  if [ -d ".icm/runs/$cand" ]; then slug="$cand"
   else
-    git diff -U0 --no-color "$fork" -- "$f" | awk '
-      /^@@/     { if (match($0, /\+[0-9]+/)) n = substr($0, RSTART + 1, RLENGTH - 1) + 0; next }
-      /^\+\+\+ / { next }
-      /^\+/     { print n "\t" substr($0, 2); n++ }'
-  fi
-}
-
-declare -a findings=() pending=()
-declare -A flagged=()   # "<file>:<line>" already carrying a finding — one line, one finding
-add_finding() { pending+=("$1"); }
-# Print a pass's findings sorted by file and line, then bank them.
-flush_findings() {
-  [ "${#pending[@]}" -gt 0 ] || return 0
-  local sorted
-  mapfile -t sorted < <(printf '%s\n' "${pending[@]}" | sort -t: -k1,1 -k2,2n)
-  [ "$quiet" -eq 1 ] || printf '  %s\n' "${sorted[@]}"
-  findings+=("${sorted[@]}"); pending=()
-}
-
-# --- pass 1: secrets -----------------------------------------------------------------------------------------
-
-# A line that is plainly not a literal secret: a placeholder, a template, an environment lookup,
-# or an explicit allow comment. Case-insensitive, applied to the whole line.
-placeholder='(<[^>]*>|\$\{|\$[A-Z_]{3,}|process\.env|import\.meta\.env|os\.environ|getenv\(|(^|[^A-Za-z0-9_])env\(|xxx|your[-_ ]|example|placeholder|changeme|change[-_ ]me|dummy|redacted|\*\*\*|\.\.\.|todo|fixme|sample|lorem|0000000000|1111111111|1234567890|security-check: ?allow|gitleaks:allow)'
-
-# The built-in floor. "<name>::<ERE>"; a name ending in "(ci)" is matched case-insensitively.
-# A word boundary is spelled (^|[^A-Za-z0-9_]) — `\b` is GNU-only.
-patterns=(
-  'aws-access-key::(^|[^A-Za-z0-9_])(A3T[A-Z0-9]|AKIA|ASIA|ABIA|ACCA)[A-Z0-9]{16}'
-  'github-token::(^|[^A-Za-z0-9_])(gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})'
-  'slack-token::(^|[^A-Za-z0-9_])xox[abprs]-[A-Za-z0-9-]{10,}'
-  'slack-webhook::hooks\.slack\.com/services/T[A-Za-z0-9]+/B[A-Za-z0-9]+/[A-Za-z0-9]+'
-  'stripe-key::(^|[^A-Za-z0-9_])(sk|rk)_(live|test)_[A-Za-z0-9]{16,}'
-  'stripe-webhook-secret::(^|[^A-Za-z0-9_])whsec_[A-Za-z0-9]{24,}'
-  'google-api-key::(^|[^A-Za-z0-9_])AIza[0-9A-Za-z_-]{35}'
-  'anthropic-key::(^|[^A-Za-z0-9_])sk-ant-[A-Za-z0-9_-]{20,}'
-  'openai-key::(^|[^A-Za-z0-9_])sk-(proj-)?[A-Za-z0-9_-]{32,}'
-  'resend-key::(^|[^A-Za-z0-9_])re_[A-Za-z0-9]{6,}_[A-Za-z0-9]{16,}'
-  'npm-token::(^|[^A-Za-z0-9_])npm_[A-Za-z0-9]{36}'
-  'sendgrid-key::(^|[^A-Za-z0-9_])SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}'
-  'twilio-key::(^|[^A-Za-z0-9_])SK[0-9a-fA-F]{32}([^A-Za-z0-9_]|$)'
-  'private-key::-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY( BLOCK)?-----'
-  'jwt::(^|[^A-Za-z0-9_])eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'
-  'connection-string-password::(postgres(ql)?|mysql|mongodb(\+srv)?|redis|amqp|mssql)://[^:/@[:space:]"'"'"']+:[^@[:space:]"'"'"']{4,}@'
-  'generic-assignment(ci)::(api[_-]?key|secret|token|passw(or)?d|private[_-]?key|auth[_-]?key)[A-Za-z0-9_]*[[:space:]]*[:=][[:space:]]*["'"'"'`][A-Za-z0-9_/+=.-]{16,}["'"'"'`]'
-)
-
-scan_patterns() {
-  local f buf p name rx flags hits n text val
-  for f in "${scan_files[@]}"; do
-    buf="$(added_lines "$f")"
-    [ -n "$buf" ] || continue
-    for p in "${patterns[@]}"; do
-      name="${p%%::*}"; rx="${p#*::}"; flags="-E"
-      case "$name" in *"(ci)") flags="-Ei"; name="${name%(ci)}" ;; esac
-      hits="$(printf '%s\n' "$buf" | grep $flags -- "$rx" || true)"
-      [ -n "$hits" ] || continue
-      while IFS=$'\t' read -r n text; do
-        [ -n "$n" ] || continue
-        printf '%s' "$text" | grep -Eiq -- "$placeholder" && continue
-        # One line, one finding: the rules run most-specific first, and the first to name a line wins.
-        [ -z "${flagged[$f:$n]+x}" ] || continue
-        if [ "$name" = "generic-assignment" ]; then
-          # The noisiest rule earns its finding only on a value that looks generated — digits AND letters.
-          val="$(printf '%s' "$text" | grep -oE -- "[\"'\`][A-Za-z0-9_/+=.-]{16,}[\"'\`]" | head -1 || true)"
-          printf '%s' "$val" | grep -q '[0-9]'    || continue
-          printf '%s' "$val" | grep -q '[A-Za-z]' || continue
-        fi
-        flagged["$f:$n"]=1
-        add_finding "[SECRET] $f:$n — $name (pattern)"
-      done <<< "$hits"
+    for rm in .icm/runs/*/run.md; do
+      [ -f "$rm" ] || continue
+      if grep -Eq "^- branch:[[:space:]]*${branch}([[:space:]]|$)" "$rm"; then slug="$(basename "$(dirname "$rm")")"; break; fi
     done
-  done
-}
+  fi
+fi
+log=""
+if [ -n "$slug" ] && [ -d ".icm/runs/$slug" ]; then
+  if [ -d ".icm/runs/$slug/lane" ]; then log=".icm/runs/$slug/lane/output/error.log"; else log=".icm/runs/$slug/03_build/output/error.log"; fi
+fi
 
-# gitleaks over exactly the added lines: each file's added text lands at its own path under a
-# temporary folder, a sidecar file maps the folder's line numbers back to the repo's. Returns 1
-# when gitleaks could not run, so the caller falls back to the patterns.
-scan_gitleaks() {
-  local tmp rep f rc cfg=() file line rule real
-  tmp="$(mktemp -d)"; rep="$tmp/report.json"
-  for f in "${scan_files[@]}"; do
-    mkdir -p "$tmp/src/$(dirname "$f")" "$tmp/map/$(dirname "$f")"
-    added_lines "$f" | awk -F'\t' -v src="$tmp/src/$f" -v map="$tmp/map/$f" '
-      { print $1 > map; sub(/^[^\t]*\t/, ""); print > src }'
-  done
-  [ ! -f .gitleaks.toml ] || cfg=(--config .gitleaks.toml)
-  set +e
-  gitleaks detect --no-git --source "$tmp/src" "${cfg[@]}" --report-format json --report-path "$rep" --exit-code 2 >"$tmp/out" 2>&1
+findings=()       # redacted lines
+warnings=()
+finding() { findings+=("$1"); echo "  [FOUND] $1"; }
+warn()    { warnings+=("$1"); echo "  [WARN] $1"; }
+ok()      { echo "  [OK] $*"; }
+
+echo "=== security-check: scope=$scope${slug:+ run=$slug}${branch:+ branch=$branch} ==="
+
+# --- the change set --------------------------------------------------------------------------------
+# paths: the files in scope (for the .env rule and the audit trigger); added lines: file<TAB>line<TAB>text
+added_lines() {
+  awk '
+    /^\+\+\+ / { f = substr($0, 5); sub(/^b\//, "", f); next }
+    /^@@ /     { split($0, a, " "); split(a[3], b, ","); n = substr(b[1], 2) + 0; next }
+    /^\+/ && !/^\+\+\+/ { printf "%s\t%d\t%s\n", f, n, substr($0, 2); n++; next }
+    /^-/       { next }
+    /^ /       { n++ }
+  '
+}
+case "$scope" in
+  staged)
+    mapfile -t paths < <(git diff --cached --name-only --diff-filter=ACMR)
+    if [ "${#paths[@]}" -eq 0 ]; then echo "nothing staged — nothing to check"; echo "RESULT: SKIP"; exit 0; fi
+    lines="$(git diff --cached -U0 --no-color --diff-filter=ACMR | added_lines)" ;;
+  branch)
+    # shellcheck source=lib/changed-files.sh
+    source "$(dirname "${BASH_SOURCE[0]}")/lib/changed-files.sh"
+    fork="$(fork_point "$base")" || exit 1
+    mapfile -t paths < <(changed_files "$fork")
+    if [ "${#paths[@]}" -eq 0 ]; then echo "no changed files since the fork point off $base"; echo "RESULT: SKIP"; exit 0; fi
+    lines="$( git diff -U0 --no-color --diff-filter=ACMR "$fork" | added_lines
+              git ls-files --others --exclude-standard | while IFS= read -r f; do [ -f "$f" ] && awk -v f="$f" '{ printf "%s\t%d\t%s\n", f, NR, $0 }' "$f"; done )" ;;
+  all)
+    mapfile -t paths < <(git ls-files)
+    lines="" ;;
+esac
+echo "[1/2] Secrets — $( [ "$scope" = all ] && echo "every tracked file" || echo "${#paths[@]} file(s) in scope")"
+
+# Rule 0: a real .env file in the change set. Examples are the manifest and are fine.
+for p in "${paths[@]}"; do
+  case "$(basename "$p")" in
+    .env.example|.env.sample|.env.template|.env.dist|.env.local.example) ;;
+    .env|.env.*) finding "env-file-in-git  $p  (a .env file is never committed — env vars only; \`git rm --cached $p\` and add it to .gitignore)" ;;
+  esac
+done
+
+# --- gitleaks, or the built-in fallback ----------------------------------------------------------------
+gitleaks_ran=0
+if command -v gitleaks >/dev/null 2>&1; then
+  report="$(mktemp)"; trap 'rm -f "$report"' EXIT
+  newer=0; gitleaks git --help >/dev/null 2>&1 && newer=1
+  case "$scope" in
+    staged) if [ "$newer" -eq 1 ]; then gl=(gitleaks git --staged); else gl=(gitleaks protect --staged); fi ;;
+    branch) if [ "$newer" -eq 1 ]; then gl=(gitleaks git --log-opts="$fork..HEAD"); else gl=(gitleaks detect --log-opts="$fork..HEAD"); fi ;;
+    all)    if [ "$newer" -eq 1 ]; then gl=(gitleaks dir .); else gl=(gitleaks detect --no-git); fi ;;
+  esac
+  "${gl[@]}" --redact --verbose --no-banner --exit-code 9 --report-format json --report-path "$report" >/dev/null 2>&1
   rc=$?
-  set -e
-  case "$rc" in
-    0) ;;
-    2)
-      while IFS=$'\t' read -r file line rule; do
-        [ -n "$file" ] || continue
-        file="${file#"$tmp/src/"}"
-        real="$(sed -n "${line}p" "$tmp/map/$file" 2>/dev/null || true)"
-        flagged["$file:${real:-$line}"]=1
-        add_finding "[SECRET] $file:${real:-$line} — $rule (gitleaks)"
-      done < <(jq -r '.[] | [.File, (.StartLine|tostring), .RuleID] | @tsv' "$rep" 2>/dev/null)
-      ;;
-    *)
-      echo "  [WARN] gitleaks exited $rc — $(tr '\n' ' ' < "$tmp/out" | head -c 160) — using the built-in patterns instead"
-      rm -rf "$tmp"; return 1 ;;
-  esac
-  rm -rf "$tmp"; return 0
-}
-
-secrets_ran=0
-lines_word="the added lines"; [ "$all" -eq 0 ] || lines_word="every line"
-if [ "$do_secrets" -eq 1 ] && [ "${#scan_files[@]}" -gt 0 ]; then
-  secrets_ran=1
-  if command -v gitleaks >/dev/null 2>&1; then
-    echo "[1/2] secrets — gitleaks over $lines_word$( [ -f .gitleaks.toml ] && echo ' (.gitleaks.toml honoured)')"
-    scan_gitleaks || scan_patterns
+  if [ "$rc" -eq 0 ] || [ "$rc" -eq 9 ]; then
+    gitleaks_ran=1
+    if [ -s "$report" ] && command -v jq >/dev/null 2>&1; then
+      while IFS=$'\t' read -r rule file line fp; do
+        [ -n "$rule" ] || continue
+        finding "gitleaks:$rule  $file:$line  (fingerprint $fp)"
+      done < <(jq -r '.[] | [.RuleID, .File, (.StartLine|tostring), (.Fingerprint // "")] | @tsv' "$report" 2>/dev/null)
+    elif [ "$rc" -eq 9 ]; then
+      finding "gitleaks reported leaks but the report could not be read (jq missing?) — run: ${gl[*]} --redact"
+    fi
+    ok "gitleaks ran (${gl[*]})"
   else
-    echo "[1/2] secrets — built-in patterns over $lines_word (gitleaks not installed; env-check.sh names it)"
-    scan_patterns
+    warn "gitleaks exited $rc without a verdict — falling back to the built-in patterns (run it by hand: ${gl[*]} --redact --verbose)"
   fi
-  flush_findings
-elif [ "$do_secrets" -eq 0 ]; then
-  echo "[1/2] secrets — skipped (--no-secrets)"
 else
-  echo "[1/2] secrets — nothing to scan"
+  warn "gitleaks not installed — built-in patterns only (brew install gitleaks · https://github.com/gitleaks/gitleaks); --strict would fail here"
 fi
 
-# --- pass 2: dependencies ------------------------------------------------------------------------------------
-
-net_re='ENOAUDIT|ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|ERR_PNPM_(FETCH|META_FETCH|NO_OFFLINE)|fetch failed|couldn.t fetch|unable to fetch|Network|network|unexpected error occurred|getaddrinfo'
-
-run_audit() { # <label> <hint> <cmd...>  — prints one line per outcome; a vulnerability is a finding
-  local label="$1" hint="$2"; shift 2
-  local tool="$1" out rc summary
-  if ! command -v "$tool" >/dev/null 2>&1; then
-    echo "  [SKIP] $label — $tool not installed ($hint)"; return 0
+if [ "$gitleaks_ran" -eq 0 ]; then
+  # The fallback: the shapes that are unambiguous. Each is a POSIX ERE; the last is case-insensitive.
+  # `allow` drops the obvious placeholders so an .env.example line is not a finding — judged on the
+  # MATCH and a short tail after it (the host of a database URL), never on the whole line: a real
+  # key on a line that also says "example" is still a key.
+  allow='(example|placeholder|xxxx|<your|changeme|change-me|dummy|process\.env|os\.environ|\$\{|env\(|redacted|user:pass|password@|localhost|127\.0\.0\.1)'
+  rules=(
+    "aws-access-key|(A3T[A-Z0-9]|AKIA|ASIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA)[A-Z0-9]{16}"
+    "github-token|gh[pousr]_[A-Za-z0-9]{36,}"
+    "github-fine-grained-token|github_pat_[A-Za-z0-9_]{22,}"
+    "slack-token|xox[baprs]-[A-Za-z0-9-]{10,}"
+    "slack-webhook|hooks\.slack\.com/services/T[A-Za-z0-9]+/B[A-Za-z0-9]+/[A-Za-z0-9]+"
+    "stripe-live-key|(sk|rk)_live_[A-Za-z0-9]{16,}"
+    "openai-key|sk-(proj-)?[A-Za-z0-9_-]{32,}"
+    "anthropic-key|sk-ant-[A-Za-z0-9_-]{20,}"
+    "resend-key|re_[A-Za-z0-9]{24,}"
+    "sendgrid-key|SG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}"
+    "google-api-key|AIza[0-9A-Za-z_-]{35}"
+    "private-key-block|-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY"
+    "database-url-with-password|(postgres(ql)?|mysql|mongodb(\+srv)?|redis|amqp)://[^:/@[:space:]'\"]+:[^@[:space:]'\"]{4,}@"
+    "jwt|eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"
+    "generic-secret-assignment|(api[_-]?key|secret|token|passw(or)?d|client[_-]?secret)[A-Za-z0-9_]*[[:space:]]*[:=][[:space:]]*['\"][A-Za-z0-9_/+=.-]{16,}['\"]"
+  )
+  skip_file='(^|/)(pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?|.*\.min\.js|.*\.map|.*\.(png|jpe?g|gif|webp|svg|ico|pdf|woff2?|ttf))$|^\.icm/runs/[^/]+/.*/error\.log$'
+  scan() { # stdin: file<TAB>line<TAB>text
+    awk -F'\t' -v allow="$allow" -v skip="$skip_file" -v rulestr="$(printf '%s\n' "${rules[@]}")" '
+      BEGIN { n = split(rulestr, R, "\n"); for (i = 1; i <= n; i++) { p = index(R[i], "|"); name[i] = substr(R[i], 1, p - 1); re[i] = substr(R[i], p + 1) } }
+      {
+        if ($1 ~ skip) next
+        text = $3
+        for (i = 1; i <= n; i++) {
+          hay = (name[i] == "generic-secret-assignment") ? tolower(text) : text
+          if (match(hay, re[i])) {
+            window = tolower(substr(text, RSTART, RLENGTH + 32))
+            if (window ~ allow) continue
+            printf "%s\t%s:%s\t%s…[redacted]\n", name[i], $1, $2, substr(text, RSTART, 4)
+            break
+          }
+        }
+      }'
+  }
+  if [ "$scope" = "all" ]; then
+    hits="$(git ls-files -z | xargs -0 -r awk 'BEGIN{OFS="\t"} { print FILENAME, FNR, $0 }' 2>/dev/null | scan)"
+  else
+    hits="$(printf '%s\n' "$lines" | scan)"
   fi
-  echo "  running: $*"
-  set +e
-  if command -v timeout >/dev/null 2>&1; then out="$(timeout 180 "$@" 2>&1)"; rc=$?; else out="$("$@" 2>&1)"; rc=$?; fi
-  set -e
-  case "$label" in
-    "yarn (classic)")
-      # yarn 1 exits with a severity bitmask: 1 info · 2 low · 4 moderate · 8 high · 16 critical.
-      if printf '%s' "$out" | grep -Eq -- "$net_re"; then echo "  [SKIP] $label — the registry could not be reached"; return 0; fi
-      if [ $(( rc & 24 )) -eq 0 ]; then echo "  [OK] $label — no high or critical advisory"; return 0; fi
-      ;;
-    *)
-      if [ "$rc" -eq 0 ]; then echo "  [OK] $label — no high or critical advisory"; return 0; fi
-      if [ "$rc" -eq 124 ]; then echo "  [SKIP] $label — timed out after 180s"; return 0; fi
-      if printf '%s' "$out" | grep -Eq -- "$net_re" && ! printf '%s' "$out" | grep -Eiq 'vulnerabilit'; then
-        echo "  [SKIP] $label — the registry could not be reached"; return 0
-      fi
-      ;;
-  esac
-  summary="$(printf '%s\n' "$out" | grep -Ei -- '[0-9]+ (high|critical)|vulnerabilit(y|ies) found|found [0-9]+ known|Severity:' | tail -n1 | sed -E 's/^[[:space:]]+//' | head -c 160)"
-  add_finding "[AUDIT] $label → ${summary:-exit $rc} (run: $* for the table)"
-}
-
-audit_ran=0
-if [ "$audit" = "no" ]; then
-  echo "[2/2] dependencies — skipped (--no-audit: the operator's waiver, recorded in the run's record)"
-else
-  echo "[2/2] dependencies — the lockfile's own audit, at high"
-  [ -f pnpm-lock.yaml ]   && { audit_ran=1; run_audit "pnpm audit" "the repo's package manager" pnpm audit --audit-level=high; }
-  [ -f package-lock.json ] && { audit_ran=1; run_audit "npm audit" "the repo's package manager" npm audit --audit-level=high; }
-  if [ -f yarn.lock ]; then
-    audit_ran=1
-    ymaj="$(yarn --version 2>/dev/null | cut -d. -f1 || echo 1)"
-    if [ "${ymaj:-1}" -ge 2 ]; then run_audit "yarn npm audit" "the repo's package manager" yarn npm audit --severity high
-    else run_audit "yarn (classic)" "the repo's package manager" yarn audit --level high; fi
+  if [ -n "$hits" ]; then
+    while IFS=$'\t' read -r name where masked; do
+      [ -n "$name" ] || continue
+      finding "$name  $where  $masked"
+    done <<<"$hits"
   fi
-  [ -f bun.lock ] || [ -f bun.lockb ] && { audit_ran=1; echo "  [SKIP] bun lockfile — no audit wired for bun here; the repo's CI owns it"; }
-  if [ -f Cargo.lock ]; then
-    audit_ran=1
-    if command -v cargo >/dev/null 2>&1 && cargo audit --version >/dev/null 2>&1; then run_audit "cargo audit" "" cargo audit
-    else echo "  [SKIP] cargo audit — cargo-audit not installed (cargo install cargo-audit)"; fi
-  fi
-  if [ -f requirements.txt ] || [ -f poetry.lock ] || [ -f pyproject.toml ] || [ -f Pipfile.lock ]; then
-    audit_ran=1
-    if [ -f requirements.txt ]; then run_audit "pip-audit" "pipx install pip-audit" pip-audit -r requirements.txt
-    else run_audit "pip-audit" "pipx install pip-audit" pip-audit; fi
-  fi
-  [ "$audit_ran" -eq 1 ] || echo "  [INFO] no lockfile at the repo root — nothing to audit"
-  flush_findings
+  ok "built-in patterns ran (${#rules[@]} rules — the fallback, not gitleaks' full set)"
 fi
 
-# --- the record, and the verdict -----------------------------------------------------------------------------
+# --- 2. dependencies -----------------------------------------------------------------------------------
+echo "[2/2] Dependencies — high and critical advisories"
+manifest_re='(^|/)(package\.json|pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?|requirements[^/]*\.txt|poetry\.lock|Pipfile\.lock|Cargo\.lock|go\.sum|Gemfile\.lock|composer\.lock)$'
+run_audit="no"
+case "$audit" in
+  yes) run_audit="yes" ;;
+  no)  run_audit="no" ;;
+  auto)
+    if [ "$scope" != "staged" ]; then run_audit="yes"
+    else for p in "${paths[@]}"; do if printf '%s' "$p" | grep -Eq "$manifest_re"; then run_audit="yes"; break; fi; done; fi ;;
+esac
+if [ "$run_audit" = "no" ]; then
+  echo "  [INFO] audit skipped — no manifest or lockfile in the change set (--audit forces it; --branch and --all always audit)"
+else
+  cmd=""; kind=""
+  override="$(security_audit_command)"
+  if [ -n "$override" ]; then cmd="$override"; kind="project.json → security.audit_command"
+  elif [ -f pnpm-lock.yaml ] && command -v pnpm >/dev/null 2>&1; then cmd="pnpm audit --audit-level=high --json"; kind="pnpm"
+  elif [ -f package-lock.json ] && command -v npm >/dev/null 2>&1; then cmd="npm audit --audit-level=high --json"; kind="npm"
+  elif [ -f yarn.lock ] && command -v yarn >/dev/null 2>&1; then
+    if yarn --version 2>/dev/null | grep -q '^1\.'; then cmd="yarn audit --level high --json"; kind="yarn-classic"; else cmd="yarn npm audit --severity high --json"; kind="yarn-berry"; fi
+  fi
+  if [ -z "$cmd" ]; then
+    echo "  [INFO] no lockfile the gate knows (pnpm/npm/yarn) and no security.audit_command — audit skipped"
+  else
+    out="$(bash -c "$cmd" 2>&1)"; rc=$?
+    case "$kind" in
+      pnpm|npm)
+        hi="$(printf '%s' "$out" | jq -r '(.metadata.vulnerabilities.high // 0) + (.metadata.vulnerabilities.critical // 0)' 2>/dev/null || echo "")"
+        if [ -n "$hi" ]; then
+          if [ "$hi" -gt 0 ]; then finding "dependency-audit  $kind reports $hi high/critical advisor(y|ies) — run: ${cmd% --json}"
+          else ok "$kind audit: no high/critical advisories"; fi
+        elif [ "$rc" -eq 0 ]; then ok "$kind audit: clean"
+        else warn "$kind audit could not run (exit $rc — offline, or no registry?): $(printf '%s' "$out" | tail -1 | cut -c1-120)"; fi ;;
+      yarn-classic)
+        if [ $((rc & 24)) -ne 0 ]; then finding "dependency-audit  yarn reports high/critical advisories — run: yarn audit --level high"
+        elif [ "$rc" -eq 0 ] || [ "$rc" -lt 8 ]; then ok "yarn audit: no high/critical advisories"
+        else warn "yarn audit could not run (exit $rc)"; fi ;;
+      yarn-berry)
+        if [ "$rc" -eq 0 ]; then ok "yarn npm audit: no high/critical advisories"
+        elif [ "$rc" -eq 1 ]; then finding "dependency-audit  yarn npm audit reports high/critical advisories — run: yarn npm audit --severity high"
+        else warn "yarn npm audit could not run (exit $rc)"; fi ;;
+      *)
+        if [ "$rc" -eq 0 ]; then ok "audit ($cmd): clean"
+        else finding "dependency-audit  '$cmd' exited $rc — $(printf '%s' "$out" | tail -1 | cut -c1-120)"; fi ;;
+    esac
+  fi
+fi
 
+# --- the verdict, and the trace ------------------------------------------------------------------------
 echo "-------------------------------------------------"
 n="${#findings[@]}"
-if [ "$n" -gt 0 ] && [ -n "$log" ]; then
-  mkdir -p "$(dirname "$log")"
-  stamp="$(date -u +%FT%TZ)"
-  {
-    for line in "${findings[@]}"; do
-      # One entry per finding, in error.log's shape: the header carries the CLASS (the rule, or
-      # the audit tool) so retrospective.sh signs it as a class, never as this file:line.
-      case "$line" in
-        "[SECRET] "*) cls="secret: $(printf '%s' "$line" | sed -E 's/^.* — ([^ ]+) \((pattern|gitleaks)\)$/\1/')" ;;
-        "[AUDIT] "*)  cls="audit: $(printf '%s' "$line" | sed -E 's/^\[AUDIT\] ([^→]+) →.*$/\1/; s/[[:space:]]+$//')" ;;
-        *)            cls="finding" ;;
-      esac
-      echo "## $stamp security-check.sh — $cls ($branch @ $head_sha)"
-      echo "$line"
-      echo
-    done
-  } >> "$log"
-  echo "appended $n entr$( [ "$n" -eq 1 ] && echo y || echo ies) to $log — add each entry's '- resolved:' line once the secret is rotated or the bump landed"
-elif [ "$n" -gt 0 ]; then
-  echo "no run resolved for this branch — findings printed only (pass <slug> or --log <file> to record them)"
-fi
-
 if [ "$n" -gt 0 ]; then
-  echo "a secret is rotated by the operator, never just deleted from the diff; an advisory is bumped on the branch, or waived by the operator in the run's record (--no-audit)"
-  echo "RESULT: FINDINGS $n"; exit 1
+  head="$(git rev-parse --short HEAD 2>/dev/null || echo none)"
+  if [ -n "$log" ]; then
+    mkdir -p "$(dirname "$log")"
+    # The entry takes error.log's one shape (stages/03_build/CONTEXT.md → Outputs; retrospective.sh
+    # reads it): a dated header naming the source and the error CLASS — here the rule ids, so the
+    # collector's signature is "security-check.sh — <rule>" and not a file name — then the
+    # redacted findings verbatim. No `- resolved:` line is written here: the collector reads one as
+    # a fix that landed, and only the session knows when it has. It adds the line (and a `- rule:`
+    # line only when the leak was a constraint of this repo) once the gate passes.
+    rules_hit="$(printf '%s\n' "${findings[@]}" | awk '{ sub(/:.*$/, "", $1); print $1 }' | sort -u | paste -sd', ' -)"
+    {
+      echo "## $(date -u +%Y-%m-%dT%H:%M:%SZ) security-check.sh — $rules_hit"
+      echo "scope=$scope head=$head branch=${branch:-?} — BLOCKED $n (redacted trace; the secret itself is never written)"
+      printf -- '%s\n' "${findings[@]}"
+      echo "(unresolved until the session adds a \`- resolved:\` line: remove the secret from the change, have the operator rotate it, re-run the gate, then write what was wrong and what is true now)"
+      echo
+    } >> "$log"
+    echo "trace (redacted) appended to $log — add its \`- resolved:\` line once the gate passes"
+  else
+    echo "no live run resolved for this branch — trace printed only (pass <slug> to log it)"
+  fi
+  echo "aborted: remove the secret from the change (never --no-verify), have the operator rotate it, then re-run"
+  echo "RESULT: BLOCKED $n"; exit 1
 fi
-if [ "$secrets_ran" -eq 0 ] && [ "$audit_ran" -eq 0 ]; then
-  echo "RESULT: SKIP"; exit 0
+if [ "$strict" -eq 1 ] && [ "${#warnings[@]}" -gt 0 ]; then
+  echo "--strict: ${#warnings[@]} check(s) could not run — install what is missing, or drop --strict"
+  echo "RESULT: FAIL"; exit 1
 fi
-echo "RESULT: CLEAN"; exit 0
+echo "RESULT: OK"; exit 0

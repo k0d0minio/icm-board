@@ -46,7 +46,10 @@ glossary to follow, rewrite it.
    run folder, the intake folder, every feature branch and PR cut from it. One string traces the
    work end to end. Then the first act of every stage:
    `.icm/scripts/usage-snapshot.sh <slug> scope start` — it creates `.icm/runs/<slug>/usage.md`
-   (`SKIP` is fine, never a stop).
+   (`SKIP` is fine, never a stop). Scope is the **advisor** pass — the model that settles a
+   source is the frontier one: `.icm/scripts/select-model.sh --stage 01_scope` prints `opus`
+   (`--complexity research` → `fable`, for a spike). If this session is on a lower tier, say so
+   in one line; the operator decides, and nothing switches itself.
 
 2. **Record the source.** Write `.icm/runs/<slug>/01_scope/_source/story.md` under a provenance
    header saying who it came from, when, and in what medium:
@@ -141,8 +144,10 @@ order` agreeing with the stubs). What it cannot judge, you still must: each stub
      independently shippable, names a persona, carries the initiative/objective link, and sits on a
      real seam; re-cutting the same graph reproduces the same order.
 
-7. **Write `.icm/runs/<slug>/run.md`** (Outputs below) and **commit straight to `main` and push**
-   — `story.md`, `scope.md`, `run.md` and `.icm/intake/<slug>/**`, nothing else. Commit message:
+7. **Write `.icm/runs/<slug>/run.md`** (Outputs below), seed the run's canonical file pack —
+   `.icm/scripts/run-pack.sh <slug> --init` (`status.md` reads `phase: scope`; write `handoff.md`
+   as "review scope.md and the batch on main, then `new`") — and **commit straight to `main` and
+   push** — `story.md`, `scope.md`, `run.md`, the pack, and `.icm/intake/<slug>/**`, nothing else. Commit message:
    `docs: <slug> — story committed, intake cut`. **The path guard:** touch nothing outside
    `.icm/runs/<slug>/**` and `.icm/intake/<slug>/**`. There is no PR and no docs-only-PR
    fallback: `main`'s ruleset lets only its bypass list push directly, and the identities that can
@@ -173,6 +178,9 @@ the only other paths a front writes are its own `run.md` and its own `.icm/intak
 - `.icm/intake/<slug>/` — `breakdown.md` + one stub per future feature PR, `validate-intake.sh` →
   `RESULT: OK`.
 - `.icm/runs/<slug>/usage.md` — the `scope start`/`end` usage lines (append-only; travels with the run).
+- The canonical file pack at `.icm/runs/<slug>/` — `project.md`, `plan.md`, `tasks.md`,
+  `decisions.md` (the `D-n` rows mirrored), `status.md`, `handoff.md`, `FAILURE.md`
+  (`run-pack.sh`; the front fills `status.md` and `handoff.md`, the rest is Define's and Build's).
 - `.icm/runs/<slug>/run.md` — the run's pointer index:
 
   ```md

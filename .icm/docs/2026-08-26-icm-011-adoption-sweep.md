@@ -1,5 +1,7 @@
 # ICM-011 — the adoption sweep, run 2026-08-26
 
+> *2026-09-23 — dated record, left as written. Five of these folders were renamed to the repo's name and five removed (decision D28); the renamed ones link to their new path, the removed ones are plain text.*
+
 *The one-time record of walking the ladder with Jamie. Ticket:
 `ICM-011` (purged in the D14 clean slate). Source of truth for the
 rungs: the admin dashboard (`app.jamienisbet.com`), read live during the sweep.*
@@ -22,8 +24,6 @@ rungs: the admin dashboard (`app.jamienisbet.com`), read live during the sweep.*
 | `karen` | Karen · Barzinho | `lost` | `04_proposal` | proposal, counter-analysis, structure memo, confirmed facts, diligence questions |
 | `jerome` | Jerome · Le Pavillon Vert | `lost` | `04_proposal` | `proposal.pdf` referenced, not copied |
 | `magali` | Magali · CollabImmo | `client` | `01_intake` | none — follow-on only |
-
-*Folders as of 2026-09-23: the deal folders were renamed to their repo slugs (`rui-matias` → `kau-american-bbq`, `alix-hahusseau` → `berceo`, `billy-carlson` → `vinecliff`) and the one-off leads' folders (`dragon`, `alex-valexo`, `karen`, `jerome`, `magali`) removed; the links above follow the renames and the removed ones are names only — the row stays as the record.*
 
 **Jamie's decision on the five bare `talking` rows:** adopt at `01_intake`, not
 `02_discovery`. They have gone quiet 8–14 days with no artifacts and no terms, so the

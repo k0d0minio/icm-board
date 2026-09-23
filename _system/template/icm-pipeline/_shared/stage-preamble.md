@@ -28,7 +28,15 @@ The guard below applies only to the adopting stages.
      real one. Tell the user to run `new` (the next intake stub, or `new <stub-name>`) — or to fix
      the slug — and stop. (The script itself never creates anything — it only reports `STOP`.)
 
-2. Load the stage contract (`.icm/stages/NN_*/CONTEXT.md`) and follow it.
+2. **Read where the last session stopped** — `.icm/runs/<slug>/status.md` (five lines: phase,
+   step, ci, blocked, updated), then `handoff.md` (next steps, blockers, do-nots). These are two
+   of the seven canonical files every run carries (`.icm/scripts/run-pack.sh` — `project.md`,
+   `plan.md`, `tasks.md`, `decisions.md`, `status.md`, `handoff.md`, `FAILURE.md`); a run
+   missing them is seeded with `run-pack.sh <slug> --init`, never written from memory. A
+   `blocked: yes` is a STOP until the named blocker is cleared.
+
+3. Load the stage contract (`.icm/stages/NN_*/CONTEXT.md`) and follow it. Every stage leaves
+   `status.md` and `handoff.md` true at its stop — the next session's first read.
 
 ## Run-scoped isolation — the rule every stage and lane holds
 
@@ -60,8 +68,11 @@ every stage and every lane, including the two that never run the procedure above
    free to pick.
 5. **What a run may write outside its folder is what its contract names**, and only that: the
    code and docs the spec covers, the stub it consumes (`new-run.sh --stub`), a triage stub it
-   parks (its own new file), the changelog page, the archive move (`close-out.sh`). Each is a
-   file this run alone creates or moves — never an edit to a file another live run is writing.
+   parks (its own new file), the changelog page, the archive move (`close-out.sh`) and, in that
+   same close-out commit, the learned rules it appends to `_shared/project-rules.md`
+   (`run-pack.sh --sync-rules` — append-only, so two runs closing out never rewrite each
+   other's lines). Each is a file this run alone creates, moves or appends to — never an edit to
+   a line another live run is writing.
 
 A conflict inside `.icm/runs/<slug>/` when `main` is merged in therefore means someone broke this
 rule, not that two runs legitimately met: **STOP** and ask, never pick a side

@@ -8,7 +8,10 @@
 # folder shape, the executable bits, the locale — and, when the repo declares a deploy block,
 # whether the Vercel route works (`lib/vercel.sh --check`); the reporting block's channel
 # variables are reported as warnings, never failures (a missing channel is a decision, not a
-# broken machine). python3 or sqlite3 is recommended for usage-snapshot.sh's OpenCode reader.
+# broken machine). python3 or sqlite3 is recommended for usage-snapshot.sh's OpenCode reader;
+# gitleaks for security-check.sh (its built-in patterns are the fallback); psql or docker when
+# the repo declares a run-scoped database (db-branch.sh); a `skills/` folder is optional and,
+# when present, its SKILL.md front matter must parse (list-skills.sh --check).
 #
 # It REPORTS, it does not repair — the estate's standing rule for every check. The one repair it
 # knows how to make, the executable bit on `.icm/scripts/*.sh`, is behind `--fix`; without the
@@ -63,6 +66,11 @@ if command -v python3 >/dev/null 2>&1 || command -v sqlite3 >/dev/null 2>&1; the
 else
   info "neither python3 nor sqlite3 found — usage-snapshot.sh records SKIP under OpenCode; Claude Code needs neither"
 fi
+if command -v gitleaks >/dev/null 2>&1; then
+  ok "Binary found: gitleaks (recommended — security-check.sh's scanner of record)"
+else
+  warn "gitleaks not found in PATH — security-check.sh runs its built-in patterns only (brew install gitleaks)"
+fi
 
 # 2. A GitHub route — a token in the environment, or a logged-in `gh` CLI (lib/gh.sh takes
 #    either, in that order). Neither is a WARN; one is enough.
@@ -92,6 +100,19 @@ if [ -f ".icm/project.json" ]; then
       micro|standard) ok "complexity: $complexity" ;;
       "")             info "no \"complexity\" in .icm/project.json — read as \"standard\"" ;;
       *)              warn ".icm/project.json complexity is \"$complexity\" (expected \"micro\" or \"standard\" — read as \"standard\")" ;;
+    esac
+    stamp="$(jq -r '.migrations.stamp // empty' .icm/project.json)"
+    case "$stamp" in
+      millis|seconds) ok "migrations.stamp: $stamp" ;;
+      "")             info "no \"migrations.stamp\" — read as \"millis\" (V<17 digits>__<name>.sql for this branch's own migrations)" ;;
+      *)              warn ".icm/project.json migrations.stamp is \"$stamp\" (expected \"millis\" or \"seconds\" — read as \"millis\")" ;;
+    esac
+    iso="$(jq -r '.database.isolation // empty' .icm/project.json)"
+    case "$iso" in
+      schema)    if command -v psql >/dev/null 2>&1; then ok "database.isolation: schema (psql found)"; else warn "database.isolation is \"schema\" but psql is not in PATH — db-branch.sh will SKIP"; fi ;;
+      container) if command -v docker >/dev/null 2>&1 || command -v podman >/dev/null 2>&1; then ok "database.isolation: container (docker/podman found)"; else warn "database.isolation is \"container\" but neither docker nor podman is in PATH — db-branch.sh will SKIP"; fi ;;
+      none|"")   info "database.isolation: none — db-branch.sh says SKIP; declare schema|container to give each run its own database" ;;
+      *)         warn ".icm/project.json database.isolation is \"$iso\" (expected none|schema|container — read as none)" ;;
     esac
     REQ_ENVS="$(jq -r '.required_env[]?' .icm/project.json 2>/dev/null || true)"
     if [ -n "$REQ_ENVS" ]; then
@@ -131,6 +152,24 @@ if [ -d ".icm" ]; then
       info "No .icm/$sub yet — process-raw.sh creates it on first use"
     fi
   done
+  if [ -d ".icm/skills" ]; then
+    if [ -x ".icm/scripts/list-skills.sh" ]; then
+      if sk="$(bash .icm/scripts/list-skills.sh --check 2>/dev/null)"; then
+        ok "Capability skills: $(printf '%s' "$sk" | tail -1 | sed 's/^RESULT: OK //') skill(s) parse (.icm/skills/)"
+      else
+        warn "A .icm/skills/*/SKILL.md does not parse — run: .icm/scripts/list-skills.sh --check"
+      fi
+    else
+      ok "Subdirectory present: .icm/skills (list-skills.sh not executable — see step 5)"
+    fi
+  else
+    info "No .icm/skills yet — optional; icm-sync.sh / setup.sh --fix seed the three template skills"
+  fi
+  if [ -d ".icm/_shared/run-pack" ]; then
+    ok "Run-pack templates present: .icm/_shared/run-pack (run-pack.sh seeds every run's seven files)"
+  else
+    warn "No .icm/_shared/run-pack/ — run-pack.sh cannot seed a run's canonical files; icm-sync.sh --apply, or setup.sh --fix"
+  fi
 else
   fail "Current directory lacks an .icm folder"
 fi
@@ -138,18 +177,18 @@ fi
 # 5. Executable bits on the scripts a stage invokes. lib/ is sourced and excluded on purpose.
 echo "[5/9] Checking Script Execution Permissions..."
 if [ -d ".icm/scripts" ]; then
-  NON_EXEC="$(find .icm/scripts -maxdepth 1 -name '*.sh' ! -executable 2>/dev/null | sort || true)"
+  NON_EXEC="$( { find .icm/scripts -maxdepth 1 -name '*.sh' ! -executable 2>/dev/null; find .icm/skills -mindepth 3 -maxdepth 3 -path '*/scripts/*.sh' ! -executable 2>/dev/null; } | sort || true)"
   if [ -n "$NON_EXEC" ]; then
     n="$(printf '%s\n' "$NON_EXEC" | wc -l | tr -d ' ')"
     if [ "$FIX" -eq 1 ]; then
       # shellcheck disable=SC2086
       chmod +x $NON_EXEC
-      ok "$n script(s) in .icm/scripts lacked +x — fixed (--fix): $(printf '%s' "$NON_EXEC" | tr '\n' ' ')"
+      ok "$n script(s) in .icm/scripts (or a skill's scripts/) lacked +x — fixed (--fix): $(printf '%s' "$NON_EXEC" | tr '\n' ' ')"
     else
-      warn "$n script(s) in .icm/scripts lack +x (re-run with --fix to set it): $(printf '%s' "$NON_EXEC" | tr '\n' ' ')"
+      warn "$n script(s) in .icm/scripts (or a skill's scripts/) lack +x (re-run with --fix to set it): $(printf '%s' "$NON_EXEC" | tr '\n' ' ')"
     fi
   else
-    ok "All scripts in .icm/scripts possess executable permissions"
+    ok "All scripts in .icm/scripts (and the skills' scripts/) possess executable permissions"
   fi
 fi
 
@@ -208,31 +247,30 @@ else
   warn "No UTF-8 locale in effect (LANG='${LANG:-unset}') — any UTF-8 locale is fine, e.g. C.UTF-8"
 fi
 
-# 9. The security utilities — optional, reported, never required. security-check.sh scans with
-#    gitleaks when it is here and with its built-in patterns when it is not; its dependency audit
-#    needs the tool the lockfile implies (the repo's own package manager, or cargo-audit /
-#    pip-audit as extra installs). health-check.sh pings with curl (step 1) whatever endpoint
-#    the manifest declares.
-echo "[9/9] Checking Security Utilities (security-check.sh, health-check.sh)..."
-if command -v gitleaks >/dev/null 2>&1; then
-  ok "Binary found: gitleaks — security-check.sh scans the diff with it$( [ -f .gitleaks.toml ] && echo ' (.gitleaks.toml honoured)')"
-else
-  info "gitleaks not found — security-check.sh falls back to its built-in patterns (install: brew install gitleaks, or https://github.com/gitleaks/gitleaks#installing)"
-fi
+# 9. The dependency audit's tool and the health endpoint — optional, reported, never required.
+#    security-check.sh (its scanner, gitleaks, is step 1's business) audits with the tool the
+#    lockfile implies, or with `security.audit_command` for another ecosystem; health-check.sh
+#    pings with curl (step 1) whatever endpoint the manifest declares.
+echo "[9/9] Checking the Dependency Audit Tool & Health Endpoint (security-check.sh, health-check.sh)..."
 lock_seen=0
 audit_tool() { # <lockfile> <tool> <how it is checked> <install hint>
   [ -f "$1" ] || return 0
   lock_seen=1
   if eval "$3" >/dev/null 2>&1; then ok "$1 present and $2 available — security-check.sh audits with it"
-  else warn "$1 present but $2 not available — security-check.sh SKIPs the dependency audit ($4)"; fi
+  else warn "$1 present but $2 not available — security-check.sh's audit cannot run here ($4)"; fi
 }
-audit_tool pnpm-lock.yaml    pnpm        'command -v pnpm'        "the repo's package manager"
-audit_tool package-lock.json npm         'command -v npm'         "the repo's package manager"
-audit_tool yarn.lock         yarn        'command -v yarn'        "the repo's package manager"
-audit_tool Cargo.lock        cargo-audit 'cargo audit --version'  'cargo install cargo-audit'
-audit_tool requirements.txt  pip-audit   'command -v pip-audit'   'pipx install pip-audit'
-audit_tool poetry.lock       pip-audit   'command -v pip-audit'   'pipx install pip-audit'
-[ "$lock_seen" -eq 1 ] || info "no lockfile at the repo root — security-check.sh has no dependency audit to run here"
+audit_tool pnpm-lock.yaml    pnpm 'command -v pnpm' "the repo's package manager"
+audit_tool package-lock.json npm  'command -v npm'  "the repo's package manager"
+audit_tool yarn.lock         yarn 'command -v yarn' "the repo's package manager"
+if [ -f ".icm/project.json" ]; then
+  ac="$(jq -r '.security.audit_command // empty' .icm/project.json 2>/dev/null || true)"
+  if [ -n "$ac" ]; then
+    lock_seen=1; ac_tool="${ac%% *}"
+    if command -v "$ac_tool" >/dev/null 2>&1; then ok "security.audit_command: $ac — $ac_tool available"
+    else warn "security.audit_command names $ac_tool, not on PATH — security-check.sh's audit cannot run here"; fi
+  fi
+fi
+[ "$lock_seen" -eq 1 ] || info "no npm/pnpm/yarn lockfile at the repo root and no security.audit_command — security-check.sh has no dependency audit to run here"
 if [ -f ".icm/project.json" ]; then
   n_he="$(jq -r '[ (.health_endpoint // empty | if type == "array" then .[] else . end), ((.deploy.projects // [])[]? | .health_endpoint // empty) ] | map(select(. != "")) | unique | length' .icm/project.json 2>/dev/null || echo 0)"
   if [ "${n_he:-0}" -gt 0 ]; then ok "health_endpoint: $n_he declared — health-check.sh reads them after the merge"

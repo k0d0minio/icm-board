@@ -17,12 +17,13 @@ What a channel is — a GitHub Release by default, Slack, email — is the repo'
 
 1. A **blocking CI failure** (`RESULT: RED`, or a `PENDING` that will not settle).
 2. A **security-critical finding introduced by this diff** — an exploitable defect: auth bypass,
-   leaked secret, tenant-scoping hole. **Measured first** by `security-check.sh <slug>`: a
-   secret in the lines this branch added, or a high/critical advisory in the repo's lockfile
-   (the audit runs on every read, whether or not this branch touched the dependency), is
-   `FINDINGS n` (the same lines in `03_build/output/error.log`); the review passes cover what a
-   pattern cannot. The one waiver is the operator's: a pre-existing advisory that cannot be
-   bumped on this branch, recorded in the `## Release` record and re-read with `--no-audit`.
+   leaked secret, tenant-scoping hole. **Measured first** by `security-check.sh <slug> --branch
+   --audit` (step 4): a secret in what this branch added, or a high/critical advisory in the
+   repo's lockfile (the audit runs on every Release read, whether or not this branch touched the
+   dependency), is `BLOCKED n` with the redacted trace in `03_build/output/error.log`; the
+   review passes cover what a pattern cannot. The one waiver is the operator's: a pre-existing
+   advisory that cannot be bumped on this branch, recorded in the `## Release` record and
+   re-read with `--branch --no-audit`.
 3. A **deploy-breaking config finding** — measured, not eyeballed: `env.sh audit --changed`
    reports `GAPS` (a key this branch added is missing from a surface it is scoped to); a
    migration without a working `down` **in a repo that declares `migrations.reversible: true`**
@@ -39,6 +40,8 @@ hold it.
 
 - `.icm/_shared/stage-preamble.md` — run it **first**: resolve the run or STOP.
 - `.icm/runs/<slug>/run.md` — branch + PR pointers.
+- `.icm/runs/<slug>/status.md` and `handoff.md` — where Build stopped (the canonical file pack);
+  `FAILURE.md` for what it learned, which the close-out copies into the repo's rules.
 - `.icm/runs/<slug>/02_define/output/spec.md` — acceptance criteria + `complexity:` (review
   effort) + `touches:` (conditional-pass triggers) + personas.
 - `.icm/runs/<slug>/03_build/output/notes.md` — what changed, known gaps; the `## Release`
@@ -62,7 +65,8 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
 
 1. **Run the shared preamble**, then the first act of every stage:
    `.icm/scripts/usage-snapshot.sh <slug> release start` (one `- usage:` line in the run's
-   `usage.md`; `SKIP` is fine, never a stop). Confirm Build finished: `notes.md` exists and the
+   `usage.md`; `SKIP` is fine, never a stop). Read `status.md` and `handoff.md`; set `status.md`
+   to `phase: release`. Confirm Build finished: `notes.md` exists and the
    PR is open (not draft). An acceptance criterion Build already flagged as unmet → send back to
    `/pipeline build <slug>`; don't release known-broken work. Then **project the stage label**:
 
@@ -103,13 +107,16 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
      is stop class 3 with the rows naming the fix (declare the key, add it where it is scoped —
      the value is the operator's). A `support.tier` of `basic`/`retainer` with no fail-safe page
      or Sentry key (`setup.sh` section 11) is the same class.
-   - **Security, measured first:** `.icm/scripts/security-check.sh <slug>` → `RESULT: CLEAN` (or
-     `SKIP`). `FINDINGS n` is stop class 2 with the `file:line` named: a secret is rotated by the
-     operator and removed from the diff, never merely deleted. An advisory is bumped on the
-     branch when the bump is a lockfile change; otherwise **STOP and put it to the operator** —
-     a chore lane fixes it first, or they waive it: `security-check: audit waived — <advisory>,
-     <why>` in the `## Release` record, and the re-read is `security-check.sh <slug> --no-audit`.
-     The waiver is theirs, never yours. The value is never in the output and never in the record.
+   - **The gate, over the whole branch:** `.icm/scripts/security-check.sh <slug> --branch --audit`
+     → `RESULT: OK` — the deterministic input to stop class 2 (a leaked secret, a known-high
+     dependency this branch introduced), read before the diff is. `BLOCKED n` is stop class 2 with
+     the redacted trace in `error.log`: follow `.icm/skills/security-audit/SKILL.md` → On BLOCKED
+     and send back to Build. A `[WARN]` that gitleaks is absent goes in the record, not under it.
+     The audit runs on every Release read, whether or not this branch touched the dependency —
+     the repo ships what its lockfile pins. A pre-existing advisory that cannot be bumped on
+     this branch is the **operator's** call: a chore lane first, or their waiver — `audit
+     waived — <advisory>, <why>` in the record's `security` slot — and the re-read is
+     `security-check.sh <slug> --branch --no-audit`. The waiver is theirs, never yours.
    - **Code review — always, in-session.** Run **`/code-review`** at the spec's complexity
      (`trivial → low`, `standard → medium`, `complex → high`). There is no CI review job; this
      pass is the review.
@@ -161,15 +168,17 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    .icm/scripts/check-migrations.sh
    ```
 
-   `RESULT: OK` or `SKIP` → carry on. `RESULT: STALE <n>` → this is the deploy-breaking class
+   `RESULT: OK` or `SKIP` → carry on. `RESULT: STALE <n>` (or `MISNAMED <n>` — a migration not in
+   the repo's declared stamp form, `migrations.stamp`) → this is the deploy-breaking class
    (stop class 3) with a mechanical, in-ticket fix, so fix it here: re-run with `--apply`, read
    the renames it lists (and anything it says "also mentions" an old stamp — that file is yours
    to correct), and commit them on the branch as their own commit
    (`fix: <slug> — re-stamp migrations after main`). A rename is code — that push takes the full
    CI path. If the repo keeps a persistent preview database that already applied the old stamps,
    reset it the way the repo says (`_shared/project-rules.md` → The factory) before trusting a
-   preview again. The script renames and never commits; it never touches a migration `main`
-   already has.
+   preview again — and the run's own database, where `db-branch.sh` bound one, is dropped and
+   re-made (`down`, then `up`; the `database-migration` skill). The script renames and never
+   commits; it never touches a migration `main` already has.
 
    **(b) Run the retrospective, then append the `## Release` record.** First, while the run
    folder is still live:
@@ -178,19 +187,23 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    .icm/scripts/retrospective.sh <slug>
    ```
 
-   It reads the run's `error.log` (what Build fixed, entry by entry) and the archive's, and names
-   the error classes that earn a rule: one Build flagged with `- rule:`, or one that recurred
-   (`--min`, default 2, across this run and the archived runs) and carries a `- resolved:`
-   line. `RESULT: SKIP` (no `error.log` — a clean run) or `NONE` → carry on. `CANDIDATES n` →
-   read them: they are the session's own words from the moment of the fix. Re-run with
-   `--apply` to append them to `_shared/project-rules.md` → Learned rules (it appends, never
-   commits); a candidate that reads as a slip rather than a constraint is deleted from the file
-   before the commit — that edit is the editorial control, and the PR is where the operator
-   sees the rest. Then **append the `## Release` record to `notes.md`** (template below) with
-   its `- learned:` line, commit it **with the docs edits, the changelog page and the appended
-   rules**, and push. This push is the one the Pipeline workflow's release-completeness step
-   reads — it sees `notes.md` at its `.icm/runs/` path, with the record in it, next to the docs
-   and changelog files it checks for.
+   It reads the run's `error.log` (what Build fixed, entry by entry — a `security-check.sh`
+   block among them) and the archive's, and names the error classes that earn a rule: one Build
+   flagged with `- rule:`, or one that recurred (`--min`, default 2, across this run and the
+   archived runs) and carries a `- resolved:` line. `RESULT: SKIP` (no `error.log` — a clean
+   run) or `NONE` → carry on. `CANDIDATES n` → read them: they are the session's own words from
+   the moment of the fix. Re-run with `--apply` to append them to `_shared/project-rules.md` →
+   Learned rules (it appends, never commits); a candidate that reads as a slip rather than a
+   constraint is deleted from the file before the commit — that edit is the editorial control,
+   and the PR is where the operator sees the rest. (`FAILURE.md`'s own `## Learned rules` — what
+   no tool logged — reach the same section through `close-out.sh` in step (c).) Then bring the
+   pack to its final state — `status.md` (`phase: release · step: done · ci: GREEN`),
+   `handoff.md` ("merged and archived; nothing to pick up"), `FAILURE.md` with any retrospective
+   this stage added — and **append the `## Release` record to `notes.md`** (template below) with
+   its `- learned:` line, commit it all **with the docs edits, the changelog page and the
+   appended rules**, and push. This push is the one the Pipeline workflow's release-completeness
+   step reads — it sees `notes.md` at its `.icm/runs/` path, with the record in it, next to the
+   docs and changelog files it checks for.
 
    **(c) Then close the run out, as its own commit and its own push:**
 
@@ -198,7 +211,9 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    .icm/scripts/close-out.sh <slug>
    ```
 
-   It `git mv`s `.icm/runs/<slug>/` into the runs archive (`runs_archive` in `.icm/project.json`;
+   It first copies the run's `FAILURE.md` → `## Learned rules` into `_shared/project-rules.md`
+   (`run-pack.sh --sync-rules`, appends only — the next run in this repo starts with them), then
+   `git mv`s `.icm/runs/<slug>/` into the runs archive (`runs_archive` in `.icm/project.json`;
    `.icm/runs/_done/` by default) — and the intake epic with it, if this stub was the last one it
    had left unshipped — and commits that on the branch.
    `RESULT: CLOSED` → push. `RESULT: STOP` → read the reason and fix it; do not merge a run you
@@ -267,8 +282,7 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 
 - gate: Ready to merge ticked — merge authorised
 - ci: GREEN on <sha> (ci-status.sh, after the last push)
-- reviews: code <effort> · security <run — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
-- security-check: <CLEAN on <sha> | SKIP — nothing to scan | audit waived — <advisory>, <why> (the operator)> <· secret rotated: <what>, where one was found on the way>
+- reviews: code <effort> · security <security-check.sh --branch --audit: OK | BLOCKED → sent back | audit waived — <advisory>, <why> (the operator)> <+ /security-review — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
 - parked: <triage stub filename(s) | none>
 - migrations: <ok | skip — none of this run's own | re-stamped <n> after main (check-migrations.sh --apply)>
 - learned: <n rule(s) appended to _shared/project-rules.md | none | skip — no error.log>
@@ -289,11 +303,11 @@ all in the one PR.
 - The merge rested on a **settled `GREEN` from `ci-status.sh` on the exact head that merged** —
   established after your last push, never inherited, never read off a Vercel event or the
   `Vercel Preview Comments` check. Merged once; never on RED, never on PENDING.
+- `security-check.sh <slug> --branch --audit` read `OK` on the branch that merged; a `BLOCKED`
+  was never merged around. An audit waiver, where there is one, is in the record in the
+  operator's words, not yours.
 - `check-migrations.sh` read `OK` or `SKIP` on the head that merged — after the merge of `main`,
   and after any re-stamp it asked for. A `STALE` was fixed on the branch, never merged past.
-- `security-check.sh` read `CLEAN` or `SKIP` on the head that merged. A `FINDINGS` was fixed on
-  the branch and its secret rotated by the operator, never merged past and never argued down;
-  an audit waiver, where there is one, is in the record in the operator's words, not yours.
 - `retrospective.sh` ran on the live run folder **before** the close-out moved it; what it
   appended is in the head that merged, and the record's `- learned:` line says how many. A rule
   you judged a slip was deleted from the file, never left for the next run to obey.

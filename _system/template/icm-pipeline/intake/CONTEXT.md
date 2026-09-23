@@ -128,8 +128,9 @@ new run's `touches:` overlaps a live run's; the operator decides.
 present, `.icm/scripts/select-model.sh <epic>/<feature-slug>` reads them and prints the model the
 session that picks the stub up should be opened on — `sonnet` for `low`/`medium`, `opus` for
 `high`, `fable` for `research`; an explicit `recommended-model` wins; a stub with neither reads as
-`medium`. It prints a recommendation and starts nothing (`_shared/scope-template.md` → Complexity
-and the model). The stub's word seeds Define's own `complexity:` in `spec.md`, which keeps its own
+`medium`. Add `--stage 02_define` (the advisor pass — `opus`) or `--stage 03_build` (the executor
+— `sonnet` unless `high`) and it prints the harness flag for that pass. It prints a
+recommendation and starts nothing (`_shared/scope-template.md` → Complexity and the model). The stub's word seeds Define's own `complexity:` in `spec.md`, which keeps its own
 vocabulary because the labels depend on it: `low → trivial`, `medium → standard`, `high → complex`;
 a `research` stub is a spike, and Define sets the spec's complexity from what the spike is.
 

@@ -6,14 +6,14 @@
 
 ## Problem
 
-Two new template-owned scripts — `_system/template/icm-pipeline/scripts/security-check.sh`
-(Release stop class 2, measured) and `health-check.sh` (Release step 9a, one bounded read of
-production) — plus the contract, `env-check.sh` and `lib/project.sh` edits that carry them
-land in the template only. Every pipeline repo reports them as missing (and its contracts as
-drift) until `icm-sync.sh --apply <repo>` runs, and `health-check.sh` reads a
-`health_endpoint` from the project-owned `.icm/project.json` that no repo has filled yet.
-The D22 additions (`select-model.sh`, `check-migrations.sh`, `process-raw.sh`) were verified
-on sustentus only and never rolled out either — the same sync carries both.
+`_system/template/icm-pipeline/scripts/health-check.sh` (Release step 9a, one bounded read of
+production — D30) plus the contract, `env-check.sh` and `lib/project.sh` edits that carry it
+land in the template only, beside D29's batch (`security-check.sh`, the three seeded skills,
+`db-branch.sh`, `run-pack.sh`, `list-skills.sh`) and D27's `retrospective.sh`. Every pipeline
+repo reports them as missing (and its contracts as drift) until `icm-sync.sh --apply <repo>`
+runs, and `health-check.sh` reads a `health_endpoint` from the project-owned
+`.icm/project.json` that no repo has filled yet — `/setup` asks for it. The D22 additions
+were verified on sustentus only and never rolled out either — one sync carries all of it.
 
 ## Proposed change
 

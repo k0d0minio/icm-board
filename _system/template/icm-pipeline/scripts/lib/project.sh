@@ -67,7 +67,7 @@
 #                   the fail-safe page and the Sentry key exist when tier is basic or retainer;
 #                   Release step 4 stops (class 3) when they do not.
 #   uat             object {branch, url} — OPTIONAL: the persistent client UAT environment
-#                   (decision D30; `.icm/uat/CONTEXT.md`). Declared only by `/setup`, never
+#                   (decision D31; `.icm/uat/CONTEXT.md`). Declared only by `/setup`, never
 #                   seeded filled. `branch` is the long-lived integration branch every run's PR
 #                   targets instead of main once declared (`uat` by convention); `url` is the one
 #                   fixed address the client opens — a domain assigned to that branch in Vercel,
@@ -231,7 +231,7 @@ support_failsafe()   { project_field '.support.failsafe_page' ''; }
 support_sentry_env() { project_field '.support.monitoring.sentry_dsn_env' 'SENTRY_DSN'; }
 
 # --- uat ---------------------------------------------------------------------------------------------
-# The persistent client UAT environment, where the repo declares one (D30). Not declared → every
+# The persistent client UAT environment, where the repo declares one (D31). Not declared → every
 # helper answers as the pipeline always did: base branch main, no batch, no promotion.
 
 uat_declared() { project_has '.uat.branch'; }

@@ -166,7 +166,7 @@ first in the build order), Build merges `origin/main` before its ready flip, and
 `new-run.sh` warns on an overlap with a live run. The migration check in Release is the one
 place parallel runs can still collide without git noticing.
 
-**A client UAT environment is optional and persistent (decision D30).** Nothing is seeded on:
+**A client UAT environment is optional and persistent (decision D31).** Nothing is seeded on:
 `/setup` alone declares `uat: {branch, url}` in a repo's `project.json`, and until it does every
 run merges into `main` and ships on the merge. Once declared, every run's PR — spine and lane —
 targets the long-lived UAT branch instead (`lib/project.sh → pipeline_base_branch`; a hotfix still

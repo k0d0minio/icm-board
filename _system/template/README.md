@@ -62,7 +62,7 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
   intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
   uat/CONTEXT.md                 ← OPTIONAL in effect, always seeded: the persistent client
                                     UAT environment — one branch, one address, the batch the
-                                    client signs off, the promotion (D30). Inert until /setup
+                                    client signs off, the promotion (D31). Inert until /setup
                                     declares `uat` in project.json                     (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
   _shared/run-pack/{project,plan,tasks,decisions,status,handoff,FAILURE}.md

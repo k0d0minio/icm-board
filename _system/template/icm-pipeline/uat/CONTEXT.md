@@ -5,7 +5,7 @@
 seeded stub is empty). Without it nothing in this file applies: every run's PR targets `main`,
 Release ships on the merge, and `promote-uat.sh` answers `SKIP`. With it, every run in the repo
 — spine and lane alike — reaches the client's UAT first and production later, as a batch the
-client signed off. Decision D30 (icm-board `.icm/project.md`).
+client signed off. Decision D31 (icm-board `.icm/project.md`).
 
 ## What it is, and what it is not
 

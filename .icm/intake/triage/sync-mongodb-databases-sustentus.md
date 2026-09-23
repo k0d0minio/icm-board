@@ -76,6 +76,16 @@ After icm-board's D35 PR merges, in this order — each its own step, Jamie's me
   #1150's `Preview smoke` (the web deploy was still building at close; expect the #418 walks,
   sustentus's own `triage/react-418-hydration-mismatch-on-three-routes`), and `MongoDB cleanup`
   dropping that database when #1150 closes. Then close this stub.
+- 2026-09-23, later still: #1150 merged (`b8b84bf5`). `Drop the PR's MongoDB databases` passed —
+  the second half of the round trip (copy → migrate → cleanup) now confirmed working end to end,
+  D37 holds. **Still open, and now the last piece:** `Preview smoke` never ran on this PR at all —
+  not a fail, no run. Its `Vercel – web` deployment (`dpl_ECvZgCVoAXQjqe3qZvRG5LvPr44b`) was still
+  `BUILDING` when the PR closed and never posted a `deployment_status` success the smoke workflow
+  listens for, so the walk had nothing to trigger on — unrelated to D35/D36/D37, and to the #418
+  hydration stub. The preview database this smoke run would have hit is already dropped, so this
+  cycle can't retroactively prove it. **Close this stub once a PR's web preview reaches `READY`
+  before the PR closes and `Preview smoke` actually runs (pass or fail) against a
+  `preview_<branch>` database** — that's the one proof point left of the original four.
 
 ## Prompt
 

@@ -6,6 +6,7 @@
 - size: L
 - depends-on: template-ticket-scripts, board-scripts-ticket-base
 - sequence: 4 of 4
+- blocked: agorasim — its Neon project is at the 10-branch cap, so #121's preview cannot provision; Jamie prunes the seven stale `preview/claude/*` branches (2026-09-23)
 - sources: breakdown · `gh api repos/k0d0minio/{berceo,agorasim}` 2026-09-23 — berceo public,
   agorasim private (free plan, no branch protection), default branch `main` · memory: berceo
   rulesets (merge gate requires `Vercel`, admin bypass)
@@ -42,6 +43,10 @@ The dashboard still reads the default branch until the jamienisbet stub lands.
 - [ ] `icm-check.sh` shows no `pr-conventions` / `ticket-craft` drift across the estate
 - [ ] The dashboard stub in jamienisbet merged (the board reads the ticket base branch)
 - [ ] A dated rollout note in `.icm/docs/` — repos changed, skipped and why
+
+## Progress
+
+- 2026-09-23: berceo, jamienisbet, remi-ai, sustentus, vinecliff synced to `de444cd` and merged (berceo#23, jamienisbet#149, remi-ai#121, sustentus#1153, vinecliff#19); berceo `uat` takes `main` by hand (conflicts: #21 carried its own sync); `type:tickets` created in all six; berceo proof done — berceo#24 merged at once into `uat` with `--admin`, on the board from `uat`. agorasim#121 open, blocked on the Neon cap (its cleanup workflow never ran — fixed in icm-board#69). Dashboard stub in jamienisbet not started. Full note: `.icm/docs/2026-09-23-ticket-base-rollout.md`.
 
 ## Prompt
 

@@ -26,16 +26,15 @@ repo announcing from CI a merged ticket PR would reach the client as a release.
   read from `.icm/project.json` when present, `main` otherwise (the hook must work in repos with no
   `.icm/scripts/`); its message says "the board reads the ticket base branch".
 - `release.yaml`: skip a PR labelled `type:tickets` (belt and braces with `announce: none`).
-- `labels.yaml` / the label set `setup.sh` reports: add `type:tickets`; `setup.sh` and
-  `promote-uat.sh init` report the repo's auto-merge setting as an operator act.
+- `labels.yaml` / the label set `setup.sh` reports: add `type:tickets`; the label is the
+  operator's act `setup.sh` names.
 - `new-run.sh` and `promote-uat.sh`: comments and messages that call `main` the home of the intake
   cut; `promote-uat.sh sync` names the knowledge lane beside the hotfix.
-- Define decides whether a small `ticket-pr.sh` (branch + label + body + arm auto-merge) earns its
+- Define decides whether a small `ticket-pr.sh` (branch + label + body + path-guard check + immediate merge) earns its
   place. The hand procedure in `pr-conventions` stays the contract either way, because most client
   repos have no `.icm/scripts/`.
-- Document the `.icm/`-only ignore step in `_shared/ci.md` as a recipe (per-repo `vercel.json`),
-  including the open question: does an ignore-step cancel leave the `Vercel` status a required
-  check needs? Proving it is stub 4.
+- Optional, for cost only: document an `.icm/`-only ignore step in `_shared/ci.md` as a recipe
+  (per-repo `vercel.json`). The merge never waits for it.
 
 ## Acceptance criteria (rough)
 

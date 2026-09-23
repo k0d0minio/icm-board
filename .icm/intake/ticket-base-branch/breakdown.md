@@ -4,8 +4,9 @@
 - sources: Jamie's report 2026-09-23 (a finished stub still shows open on a UAT repo because its
   `_done/` move never reached `main`) · Jamie's rulings 2026-09-23 — every client repo's `.icm/`
   ticket change goes through a PR; icm-board keeps its direct `Plan:`/`Wrap:`/`Deal:` commits
-  (no UAT branch, nothing to drift); the knowledge lane stays on `main`; GitHub auto-merge is the
-  preferred way to land a ticket PR · investigation 2026-09-23 of the template, icm-board's board
+  (no UAT branch, nothing to drift); the knowledge lane stays on `main`; the session that opens a ticket
+  PR merges it immediately, without waiting for Vercel or any check (auto-merge rejected: not on
+  the free plan for private repos) · investigation 2026-09-23 of the template, icm-board's board
   scripts and the jamienisbet dashboard (below)
 
 ## What I understood
@@ -40,12 +41,15 @@ nothing reads it for tickets.
   client as `pr-<n>`); path guard `.icm/intake/**` plus, for Scope, `.icm/runs/<slug>/**` —
   anything else is not a ticket PR.
 - **Landing it** — "merging is publishing" replaces "pushing is publishing". The session that
-  opened the PR arms **GitHub auto-merge (squash)** where the repo allows it. Where it does not
-  (auto-merge needs the repo toggle *and* a plan that supports it: public repos, or a paid plan
-  for private ones — agorasim is private on the free plan, berceo is public; both have
-  `allow_auto_merge=false` today), the fallback is **to be confirmed by Jamie in stub 1**: the
-  session merges its own `type:tickets` PR on a settled GREEN, or Jamie merges it. A ticket PR is
-  the one PR an agent may land; code, lane and promotion PRs stay the operator's.
+  opened the ticket PR **merges it immediately** (squash), without waiting for Vercel or any other
+  check (Jamie, 2026-09-23): the diff is ticket markdown only, so there is nothing for a check to
+  catch. The safety is the **path guard, verified before the merge**: `git diff --name-only
+  origin/<base>...HEAD` lists only `.icm/intake/**` (and, for Scope, `.icm/runs/<slug>/**`) —
+  anything else and it is not a ticket PR, so the session stops and does not merge. Where a
+  ruleset requires checks (berceo's merge gate requires `Vercel`), the merge goes through the
+  admin bypass (`gh pr merge --squash --admin`), which is why that bypass must stay. GitHub
+  auto-merge is not used. A ticket PR is the one PR an agent merges; code, lane and promotion PRs
+  stay the operator's.
 - **Scope's front becomes a ticket PR** into the base branch — the reversal of PR regime 1. The
   stub exists (for `new`) once it merges. The scope is reviewed before `new`, as today.
 - **Exceptions that stay on `main`:** hotfix (production is wrong now) and the knowledge lane
@@ -59,12 +63,13 @@ carry no ticket state. Sustentus stays exempt from the baseline; its T files fol
 (D20).
 
 **Costs found in the investigation that the stubs must answer:**
-- A ready ticket PR triggers a Vercel preview, a Neon `preview/<branch>` branch (D32) or a Mongo
-  `preview_<branch>` database (D35); a merge into `uat` rebuilds the client's address for a
-  markdown change. An ignore step that skips `.icm/`-only diffs must still leave a passing
-  `Vercel` status, because rulesets such as berceo's merge gate require it — unproven.
-- An open ticket PR conflicts with a run's close-out moving the same stub. Auto-merge keeps the
-  window short; that is why landing matters.
+- A ticket PR's push can still start a Vercel preview, a Neon `preview/<branch>` branch (D32) or a
+  Mongo `preview_<branch>` database (D35), and a merge into `uat` rebuilds the client's address
+  for a markdown change. The merge does not wait for any of it, so this is cost and noise, not a
+  blocker: an ignore step that skips `.icm/`-only diffs is worth adding, not required.
+- An open ticket PR conflicts with a run's close-out moving the same stub. Merging immediately
+  keeps that window to seconds; a PR that no longer merges cleanly is rebased on its base and
+  retried once, then reported.
 - `projects/` is one shared tree with a sweeper: `/day` must cut ticket branches in a worktree, or
   switch the checkout back to `main` before ending.
 

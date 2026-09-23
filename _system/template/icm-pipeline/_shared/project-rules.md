@@ -68,7 +68,7 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   MongoDB cluster via `$MONGODB_URI`: production is `<production_name>`, the shared preview
   database `<preview_name>` (both never dropped or reset); previews <share `<preview_name>` |
   each read `preview_<branch>` — `MONGODB_PREVIEW_PER_BRANCH=1` on the Preview target (set: yes/no),
-  Vercel's system variables exposed (yes/no), the app's connection code reads the name through
+  the app's connection code reads the name through
   `.icm/scripts/lib/db-name.mjs` (yes/no — the file that does it)>; `<the preview-migrate
   workflow>` seeds and migrates the PR's database on each push and the smoke check waits for it;
   the UAT branch's database is `preview_<uat>`; production migrates by <the workflow>;

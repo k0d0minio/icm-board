@@ -1,7 +1,7 @@
-# Verification — the five system enhancements (D28), 2026-09-23
+# Verification — the five system enhancements (D29), 2026-09-23
 
 *What shipped from `.icm/docs/2026-09-23-icm-system-enhancements-directive.md`, how it was
-proven, and what is not proven yet. Decision: `.icm/project.md` → D28. Branch
+proven, and what is not proven yet. Decision: `.icm/project.md` → D29. Branch
 `claude/icm-system-enhancements-51ef33`, merged over D27 (the retrospective collector, #48).*
 
 ## Method

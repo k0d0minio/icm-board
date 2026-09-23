@@ -101,7 +101,7 @@ default, and never something a session opts into on its own behalf.
 
 ## The PR regimes
 
-1. **The front (Scope) — a ticket PR (D37).** No feature PR exists yet, and none is opened. Scope
+1. **The front (Scope) — a ticket PR (D38).** No feature PR exists yet, and none is opened. Scope
    carries `run.md`, `01_scope/_source/story.md`, `01_scope/output/scope.md` and the intake cut in
    one commit on `claude/tickets-<slug>-<YYYYMMDD>`, opens a **ticket PR** into the repo's
    **ticket base branch** — `lib/project.sh → pipeline_base_branch`: the UAT branch where

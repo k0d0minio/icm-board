@@ -142,7 +142,7 @@ where it does not — [TICKETS.md](../../../../_system/contracts/TICKETS.md) § 
   after 6, editing `breakdown.md` and asking for a re-cut steers it. His yes gates 6.
 - Decides push: everything stays **uncommitted** unless he says otherwise. On his word
   the cut lands as **one ticket PR** into the repo's ticket base branch (`uat` where
-  declared, else `main`; D37), merged at once — the repo's `pr-conventions` skill → The
+  declared, else `main`; D38), merged at once — the repo's `pr-conventions` skill → The
   ticket PR; paths staged explicitly, the branch cut in a worktree, never by moving the
   shared checkout. The register (`.icm/project.md`) is outside the ticket PR's path
   guard, so it goes on a `claude/` PR of its own into the same base, which he merges.

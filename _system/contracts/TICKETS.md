@@ -187,7 +187,7 @@ base branch (§ What the dashboard reads) — and what exists around it — is t
 
 The board (`websites/admin-dashboard/lib/tickets.ts`) reads each repo's `.icm/` from its
 **ticket base branch** via the GitHub API and parses leniently — a malformed stub still
-appears rather than vanishing. The ticket base branch (D37) is the UAT branch where
+appears rather than vanishing. The ticket base branch (D38) is the UAT branch where
 `.icm/project.json` declares one, else `main` — what the template's `lib/project.sh →
 pipeline_base_branch` answers; on a UAT repo `main` carries a lagging copy only promotions
 update, and no reader uses it for tickets. (The dashboard's half is

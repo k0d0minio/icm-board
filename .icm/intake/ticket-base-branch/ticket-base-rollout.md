@@ -1,4 +1,4 @@
-# Stub: Roll D37 out — sync the estate, the operator's per-repo acts, prove it on berceo
+# Stub: Roll D38 out — sync the estate, the operator's per-repo acts, prove it on berceo
 
 - feature-slug: ticket-base-rollout
 - epic: ticket-base-branch
@@ -47,7 +47,7 @@ The dashboard still reads the default branch until the jamienisbet stub lands.
 
 In icm-board (`~/Apps`, local machine only — `projects/` is invisible to cloud sessions), carry out
 stub 4 of the `ticket-base-branch` epic: read `.icm/intake/ticket-base-branch/breakdown.md`,
-`ticket-base-rollout.md`, and the D37 entry in `.icm/project.md`. Prove the new ticket route on
+`ticket-base-rollout.md`, and the D38 entry in `.icm/project.md`. Prove the new ticket route on
 berceo first (sync, skills by hand, one real `type:tickets` PR merged at once and visible on the
 board), then agorasim, then the
 rest of the estate one PR per repo. The repo settings — labels, rulesets, Vercel — are

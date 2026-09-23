@@ -98,7 +98,7 @@ open the rest of the docs tree "for consistency"; the map plus one page is the w
    and push on `RED`, then **stop** and hand the PR URL to the operator. The merge is theirs,
    from GitHub. **On a UAT repo** the PR still targets `main`, and the hand-off names the
    required follow-up: `promote-uat.sh sync` after the merge, because the UAT branch — the base
-   every run is cut from and the ticket base branch the board reads (D37) — does not carry the
+   every run is cut from and the ticket base branch the board reads (D38) — does not carry the
    page until it runs (`.icm/uat/CONTEXT.md`).
 
 ## Outputs

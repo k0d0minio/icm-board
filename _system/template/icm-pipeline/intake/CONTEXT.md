@@ -12,7 +12,7 @@ The stub folder is the only state (no branch or run PR of its own); Scope lands 
 gets an intake folder, however small** — a single-PR scope gets exactly one stub whose
 `feature-slug` is the scope slug itself.
 
-**Where ticket state lives (D37).** This folder has one home: the **ticket base branch** —
+**Where ticket state lives (D38).** This folder has one home: the **ticket base branch** —
 `lib/project.sh → pipeline_base_branch`, the UAT branch where `.icm/project.json` declares one,
 else `main`. The board and every script that reads the queue read it there; on a UAT repo `main`
 carries a lagging copy that only promotions update, and nothing reads it for tickets. Every write

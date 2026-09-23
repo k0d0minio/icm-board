@@ -26,7 +26,7 @@ finds the run's merge (it is on `uat`), and step 5 writes to the branch nothing 
   as today.
 - `/day` step 5: per changed client repo, one ticket PR into its base branch (the shape in
   `pr-conventions`), cut in a throwaway worktree off `origin/<base>` — never on the shared
-  checkout — then land it as D37 says. icm-board's own `today.md` and stubs keep the direct commit.
+  checkout — then land it as D38 says. icm-board's own `today.md` and stubs keep the direct commit.
 - The day gate is unchanged: Jamie sees each repo's ticket diff before anything is committed.
 - `/project`'s push rule follows the same route.
 
@@ -43,7 +43,7 @@ finds the run's merge (it is on `uat`), and step 5 writes to the branch nothing 
 
 In icm-board (`~/Apps`, the local machine — `projects/` is invisible to cloud sessions), carry out
 stub 3 of the `ticket-base-branch` epic: read `.icm/intake/ticket-base-branch/breakdown.md` and
-`board-scripts-ticket-base.md`, and the D37 entry in `.icm/project.md`. Make
+`board-scripts-ticket-base.md`, and the D38 entry in `.icm/project.md`. Make
 `_system/scripts/tickets-board.sh` and `ticket-hygiene.sh` read each client repo's ticket base
 branch from git refs rather than the shared working tree, and rewrite `/day` step 5 so client-repo
 ticket changes go out as a `type:tickets` PR from a throwaway worktree, while icm-board keeps its

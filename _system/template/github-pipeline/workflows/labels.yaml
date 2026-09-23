@@ -14,7 +14,9 @@ name: Pipeline labels
 #
 # Same-repo PRs only: a forked PR gets a read-only token that cannot write labels. The label
 # vocabulary itself is the repo's `.github/labels.yml` (add `type:hotfix` and `type:handover`
-# when adopting the lanes).
+# when adopting the lanes, and `type:tickets` — the ticket PR's label, decision D38). A ticket PR
+# that touches `.icm/runs/<slug>/` (Scope's front) triggers this job and is skipped below: a
+# front has no spec.md.
 
 on:
   pull_request:

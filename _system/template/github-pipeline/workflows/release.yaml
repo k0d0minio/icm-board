@@ -28,6 +28,11 @@ name: Release
 # Merges into the DEFAULT BRANCH only. On a repo with a UAT environment (.icm/uat/CONTEXT.md) every
 # run merges into the UAT branch first and is not a release; the client is told once, when the
 # batch's promotion PR merges into main — which this job announces like any other merge.
+#
+# Never a ticket PR (decision D38; the pr-conventions skill → The ticket PR): a PR labelled
+# `type:tickets` carries only .icm/intake/ (and, for Scope, .icm/runs/<slug>/) and is skipped here
+# before a step runs. Its body's `announce: none` would skip it too — the label is the belt, the
+# body line the braces, so a ticket PR missing one of them still never reaches the client as pr-<n>.
 
 on:
   pull_request:
@@ -57,7 +62,8 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.pull_request.merged == true &&
        github.event.pull_request.head.repo.full_name == github.repository &&
-       github.event.pull_request.base.ref == github.event.repository.default_branch)
+       github.event.pull_request.base.ref == github.event.repository.default_branch &&
+       !contains(github.event.pull_request.labels.*.name, 'type:tickets'))
     runs-on: ubuntu-latest
     name: Announce the merge
     timeout-minutes: 10

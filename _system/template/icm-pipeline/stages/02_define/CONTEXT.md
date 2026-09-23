@@ -84,7 +84,7 @@ overruns on a one-line `Context budget:` note in `spec.md`.
    fresh branch off the pipeline's **base branch** before running it — `origin/main`, or the UAT
    branch where the repo declares one (`.icm/project.json` → `uat.branch`;
    `lib/project.sh → pipeline_base_branch`; `.icm/uat/CONTEXT.md`) — never a branch whose PR has
-   already merged. That base is also the **ticket base branch** (D37): the stub you are consuming
+   already merged. That base is also the **ticket base branch** (D38): the stub you are consuming
    landed there through Scope's ticket PR, so a branch cut from it already carries it. The PR
    targets that same base; on a UAT repo the script brings `origin/main` in itself when it finds
    it missing (a hotfix not yet synced), and warns when the branch was not cut from the UAT

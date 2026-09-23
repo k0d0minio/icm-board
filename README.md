@@ -60,7 +60,7 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
   dashboard work is cut in `k0d0minio/jamienisbet` — epics and stubs per
   `_system/contracts/TICKETS.md`. Here they commit straight to `main`; in a client repo
   they go through a ticket PR into its ticket base branch (`uat` where declared, else
-  `main`), merged at once by the session that opened it (D37).
+  `main`), merged at once by the session that opened it (D38).
 - **CI is the source of truth** — don't run checks locally.
 
 ## History

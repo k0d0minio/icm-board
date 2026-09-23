@@ -153,7 +153,7 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
   branch where one is declared, else `main` — merged at once by the session that opened it
   once its path guard (`.icm/intake/**`) holds; code goes through a PR on a `claude/`
   branch that the operator merges. **icm-board alone** commits its tickets (`Plan:`/`Wrap:`)
-  and deals (`Deal:`) straight to `main`: no UAT branch, nothing to drift (D37; the
+  and deals (`Deal:`) straight to `main`: no UAT branch, nothing to drift (D38; the
   canonical `pr-conventions` skill → The ticket PR).
 - **No secrets in git, ever** — env vars only; flag any plaintext credential found. Deal
   folders record that access exists, never its value.

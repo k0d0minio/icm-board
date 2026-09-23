@@ -62,7 +62,7 @@ from production. `lib/mongo.mjs` refuses its name on every other drop, the refer
 
 | Where | Without UAT | With UAT |
 |---|---|---|
-| Tickets — cuts, moves, Scope's front (D37) | a ticket PR into `main`, merged at once by the session that opened it | a ticket PR into `<uat>`, merged at once — the UAT branch is the **ticket base branch**; the board reads it, and `main`'s copy lags until a promotion |
+| Tickets — cuts, moves, Scope's front (D38) | a ticket PR into `main`, merged at once by the session that opened it | a ticket PR into `<uat>`, merged at once — the UAT branch is the **ticket base branch**; the board reads it, and `main`'s copy lags until a promotion |
 | Define — the run branch | cut from `origin/main` | cut from `origin/<uat>` (the stub is already there), with `origin/main` brought in first so an unsynced hotfix is not lost; `new-run.sh` brings `main` in itself when it finds it missing, and warns when the branch was not cut from the UAT branch |
 | Define — the PR | `base: main` | `base: <uat>` (`new-run.sh` reads `lib/project.sh → pipeline_base_branch`) |
 | Build step 10 · Release step 7(a) | merge `origin/main` | merge `origin/main`, then `origin/<uat>` |
@@ -148,7 +148,7 @@ either way. The agent never calls `merge_pull_request` on a promotion PR.
 Run **after the promotion PR merged**, and — **required, not optional** — after every hotfix and
 every knowledge-lane PR that merged into `main`: until it runs, what those merges moved (a hotfix's
 close-out, a page) is missing from the UAT branch, which is the ticket base branch the board reads
-(D37), so the board shows their work as not done. In a
+(D38), so the board shows their work as not done. In a
 throwaway worktree it merges `origin/main` into the UAT branch — one merge commit — and, when
 that merge carries an approved batch that reached production, resets `batch.json` for the next
 batch in the same commit (the promotion logged under `promotions`; stubs merged after the

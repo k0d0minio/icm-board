@@ -148,7 +148,7 @@ order` agreeing with the stubs). What it cannot judge, you still must: each stub
 7. **Write `.icm/runs/<slug>/run.md`** (Outputs below), seed the run's canonical file pack —
    `.icm/scripts/run-pack.sh <slug> --init` (`status.md` reads `phase: scope`; write `handoff.md`
    as "review scope.md and the batch on the base branch, then `new`") — and **land it through a
-   ticket PR** (D37): cut `claude/tickets-<slug>-<YYYYMMDD>` from `origin/<base>` (`<base>` =
+   ticket PR** (D38): cut `claude/tickets-<slug>-<YYYYMMDD>` from `origin/<base>` (`<base>` =
    `pipeline_base_branch`), commit `story.md`, `scope.md`, `run.md`, the pack, and
    `.icm/intake/<slug>/**`, nothing else — commit message `docs: <slug> — story committed,
    intake cut` — push, open the PR into `<base>` titled `Scope: <slug> — intake cut`, and merge

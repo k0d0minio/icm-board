@@ -48,7 +48,7 @@ claude/                          → copied to <repo>/.claude/        (every liv
   skills/
     ticket-craft/SKILL.md        ← the intake contract as working knowledge
     pr-conventions/SKILL.md     ← branches, commits, CI-is-truth, no secrets
-icm-pipeline/                    → copied to <repo>/.icm/           (every repo — D22)
+icm-pipeline/                    → copied to <repo>/.icm/           (every adopted repo — D22)
   MANIFEST                       ← the ownership list: T template-owned · P project-owned.
                                     Read by icm-check.sh AND icm-sync.sh — and itself a T
                                     file, so every repo carries `.icm/MANIFEST` and setup.sh
@@ -114,10 +114,10 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
                                     report.sh is the reporting hook: complete as seeded,
                                     steered by project.json → reporting, never edited.
                                     notify.sh is RETIRED — reported by icm-sync.sh for git rm
-claude-pipeline/                 → copied to <repo>/.claude/        (every repo — D22)
+claude-pipeline/                 → copied to <repo>/.claude/        (every adopted repo — D22)
   skills/pipeline/SKILL.md       ← the /pipeline router (seeded; drift-reported)
   skills/setup/SKILL.md          ← /setup: the report, the questions, the P files (seeded; drift-reported)
-github-pipeline/                 → copied to <repo>/.github/        (every repo — D22)
+github-pipeline/                 → copied to <repo>/.github/        (every adopted repo — D22)
   pull_request_template.md       ← carries both gate anchors
   workflows/{release,labels}.yaml ← REFERENCE workflows: seeded ONCE by /setup into a repo
                                     whose reporting.announce_from is `ci` — deliberately NOT

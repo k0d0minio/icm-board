@@ -31,9 +31,12 @@ re-derive those checks. A repo without the script yet is measured by `icm-check.
 created.
 - The script only creates missing files from the template; it never overwrites. Trust
   it — do not hand-create `.icm` or `.claude` files alongside it.
-- Every repo is checked (and, with `--fix`, seeded) against the one pipeline — there is
-  nothing to declare (D22); report pipeline gaps in their own group. The project-owned
-  files are then filled by `/setup` in the repo, never here.
+- Every **adopted** repo (it carries `.icm/MANIFEST`) is checked (and, with `--fix`,
+  seeded) against the one pipeline — there is nothing to declare (D22); report pipeline
+  gaps in their own group. A repo never synced is labelled `no pipeline` and nothing of the
+  pipeline is flagged for it — not the security gate, not the health probe: it is not being
+  worked on. Adopting it is `icm-sync.sh --apply`, on Jamie's word. The project-owned files
+  are then filled by `/setup` in the repo, never here; an empty `health_endpoint` is fine.
 - Legacy flat `PREFIX-NNN` tickets are reported as *unmigrated*, never converted —
   migration is `/project`'s judgment work.
 - Drift is **reported, never repaired** — repos own their copies. Where a drifted copy
@@ -92,7 +95,7 @@ asks.
 
 ## Audit
 
-- Every repo in the report is accounted for: ok, gapped, seeded, or exempt.
+- Every repo in the report is accounted for: ok, gapped, seeded, no pipeline, or exempt.
 - Nothing beyond `--fix`'s own writes touched any repo.
 - Every drift line ends the session as either a Jamie decision or a named open question
   — not silently dropped.

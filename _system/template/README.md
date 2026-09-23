@@ -91,7 +91,7 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
            project-body,project-labels,ci-status,close-out,triage-report,env-check,
            select-model,check-migrations,process-raw,
            deploy-status,rollback,usage-snapshot,env,setup,retrospective,
-           list-skills,db-branch,security-check,run-pack,
+           list-skills,db-branch,security-check,run-pack,health-check,
            client-status,promote-uat}.sh                                              (T)
                                     select-model.sh routes complexity × stage → tier
                                     (haiku · sonnet · opus/fable; advisor for Scope and
@@ -102,7 +102,10 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
                                     schema or container; security-check.sh is the
                                     pre-commit zero-trust gate (gitleaks + npm audit, a
                                     built-in fallback, a redacted trace in the run's
-                                    error.log); run-pack.sh seeds and checks the pack
+                                    error.log); run-pack.sh seeds and checks the pack;
+                                    health-check.sh reads the declared health_endpoint
+                                    once after the merge (Release 9a) — a failure is
+                                    report.sh alert plus one uncommitted bug-lane stub
   scripts/{format,lint,validate-knowledge-map,report}.sh   ← the repo's own hooks      (P)
                                     report.sh is the reporting hook: complete as seeded,
                                     steered by project.json → reporting, never edited.

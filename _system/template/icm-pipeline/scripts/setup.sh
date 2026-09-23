@@ -19,10 +19,11 @@
 #    2. Formatter  a formatter config that would touch T paths and no exclusion for them:
 #                  reported with the exact lines to add (D17/D19: per repo, by hand; never written).
 #    3. project.json  name, complexity, required_checks, personas, deploy, reporting, migrations
-#                  (stamp/tool/out_of_order), database (isolation), security, support, uat —
-#                  missing or still at the stub's value is a line with the question; a declared
-#                  UAT environment is checked (url, batch.json, the branch on origin) and `--fix`
-#                  seeds the empty batch.json; undeclared is one info line, never a gap.
+#                  (stamp/tool/out_of_order), database (isolation), security, support,
+#                  health_endpoint, uat — missing or still at the stub's value is a line with
+#                  the question; a declared UAT environment is checked (url, batch.json, the
+#                  branch on origin) and `--fix` seeds the empty batch.json; undeclared is one
+#                  info line, never a gap.
 #    4. Environment   env-check.sh (route + binaries) and env.sh audit (names only).
 #    5. Tickets    validate-intake.sh over every live epic and triage/; triage-report.sh against
 #                  the cap; a loose TODO.md/BACKLOG.md at the root.
@@ -236,6 +237,9 @@ if [ -f .icm/project.json ]; then
   else
     info "uat: not declared — every run merges into main and ships on the merge; declare uat.branch + uat.url (/setup asks) for a persistent client UAT environment (.icm/uat/CONTEXT.md)"
   fi
+  if [ -n "$(health_endpoints | head -n1)" ]; then ok "health_endpoint: $(health_endpoints | paste -sd', ' -) — health-check.sh reads it once after the merge"
+  elif project_has '.deploy.projects'; then warn "health_endpoint empty while deploy is declared — which URL on each production project answers 200 when it is up (e.g. https://<production_url>/api/health)? Until it is set, health-check.sh reports SKIP after every merge and nobody is told production is down"
+  else info "health_endpoint empty — health-check.sh reports SKIP after the merge; set it with the deploy block (which URL answers 200 when production is up?)"; fi
   jq -e '.profile' .icm/project.json >/dev/null 2>&1 && info "a \"profile\" key is present and ignored (D22) — remove it when convenient"
 else
   fail ".icm/project.json missing — the manifest every script reads"

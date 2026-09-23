@@ -376,7 +376,7 @@ sync)
     else
       echo "announce: report.sh missing — nothing announced"
     fi
-    echo "production: .icm/scripts/deploy-status.sh --sha ${merge_sha:0:7} — one read, when you want it"
+    echo "production: .icm/scripts/deploy-status.sh --sha ${merge_sha:0:7} — one read, when you want it; then .icm/scripts/health-check.sh --sha ${merge_sha:0:7} — the application's own word, once (Release skipped it on the UAT merge)"
   fi
   echo "RESULT: SYNCED $ahead commit(s)$( [ "$landed" -eq 1 ] && echo " · batch of ${promo_on:-?} promoted")"
   exit 0 ;;

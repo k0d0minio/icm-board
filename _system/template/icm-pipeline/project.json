@@ -7,6 +7,7 @@
   "personas": [],
   "runs_archive": ".icm/runs/_done",
   "intake_archive": ".icm/intake/_done",
+  "health_endpoint": "",
 
   "deploy": {
     "platform": "vercel",

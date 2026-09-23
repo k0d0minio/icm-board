@@ -18,7 +18,7 @@ in `triage/` — the triage stub shape below, `found-by: codebase-audit · <date
 one-file PR — and never cuts an epic of its own. There is no story and no `scope.md` behind it; a
 quiet day writes nothing.
 
-One script may write here as well: `.icm/scripts/process-raw.sh` turns each client asset dropped in
+Two scripts may write here as well. `.icm/scripts/process-raw.sh` turns each client asset dropped in
 `.icm/raw/` into extracted text under `.icm/processed/` and parks **one triage stub per asset** —
 the triage shape below, `lane: chore`, `found-by: process-raw · <date>`, `complexity: research` —
 so an email or a voice note that arrived is on the board until somebody scopes it
@@ -26,6 +26,14 @@ so an email or a voice note that arrived is on the board until somebody scopes i
 source for `/pipeline scope`, and Scope retires it to `triage/_done/` with a `- superseded-by:`
 line when it records that source (`stages/01_scope/CONTEXT.md` step 2). Nothing is scoped, split or
 sequenced by a script.
+
+`.icm/scripts/health-check.sh`, when production fails its one post-merge read (Release step 9a),
+writes **one stub per merge SHA** — `triage/health-check-<date>-<short-sha>.md`, the triage shape
+below, `lane: bug`, `found-by: health-check · <date>`, `complexity: high` — carrying the endpoint,
+the code each attempt saw, the merge SHA and the recoveries `rollback.sh` prepares. It writes
+the file and commits nothing: the stage names it in its stop message and the operator decides —
+commit it for the bug lane, or open `/pipeline hotfix` by hand. Nothing parks a stub for the
+hotfix lane.
 
 **`.icm/intake/triage/` is the third resident** — the parking lane for off-ticket findings, with
 its own lighter stub shape (see **Triage** below). It is a permanent backlog folder, not an epic:

@@ -76,6 +76,10 @@
 #                   ships on the merge, exactly as before. `promote-uat.sh` and `client-status.sh`
 #                   read it; `new-run.sh`, `close-out.sh`, `deploy-status.sh --uat` and
 #                   `check-migrations.sh` change their base branch on it.
+#   health_endpoint the URL (or an array of URLs) that answers 200 when production is up —
+#                   health-check.sh GETs it once after the merge (Release step 9a). A project
+#                   may carry its own as deploy.projects[].health_endpoint instead, or as well.
+#                   Absent or empty reads as "not declared": health-check.sh says SKIP.
 #
 # Contract for callers (source after die() is defined; needs jq):
 #   source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"
@@ -112,6 +116,9 @@
 #   pipeline_base_branch                  the branch a run's PR targets and a run branch is cut
 #                                         from: uat.branch when declared, else main. A hotfix
 #                                         ignores it (production is wrong now — lanes/hotfix).
+#   health_endpoints                      one URL per line: the top-level health_endpoint (string
+#                                         or array), then every deploy.projects[].health_endpoint,
+#                                         in that order, de-duplicated; nothing when none declared.
 #   pipeline_lanes                        the lane vocabulary, space-separated — the one list
 #                                         new-run.sh, resolve-run.sh, project-labels.sh,
 #                                         close-out.sh, validate-intake.sh and triage-report.sh
@@ -239,6 +246,18 @@ uat_branch()   { project_field '.uat.branch' ''; }
 uat_url()      { project_field '.uat.url' ''; }
 pipeline_base_branch() {
   if uat_declared; then uat_branch; else printf '%s' "main"; fi
+}
+
+# --- health ------------------------------------------------------------------------------------------
+
+health_endpoints() {
+  [ -f "$project_json" ] || return 0
+  jq -r '
+    [ (.health_endpoint // empty | if type == "array" then .[] else . end),
+      ((.deploy.projects // [])[]? | .health_endpoint // empty) ]
+    | map(select(type == "string" and . != ""))
+    | reduce .[] as $u ([]; if index($u) then . else . + [$u] end)
+    | .[]' "$project_json" 2>/dev/null || true
 }
 
 # --- lanes -------------------------------------------------------------------------------------------

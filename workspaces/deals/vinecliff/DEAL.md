@@ -34,7 +34,7 @@
   Known already, so not re-asked: domain is on GoDaddy; one other person works the
   estate but won't operate the app; nothing is pre-booked ahead.
 - 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
-- 2026-09-23 — folder renamed from `billy-carlson` to `vinecliff`: the slug is now the repo name (Jamie's decision, 2026-09-23; decision D27).
+- 2026-09-23 — folder renamed from `billy-carlson` to `vinecliff`: the slug is now the repo name (Jamie's decision, 2026-09-23; decision D28).
 
 ## Notes (adopted)
 

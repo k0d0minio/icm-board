@@ -11,7 +11,7 @@ engagement's `07-kickoff.md`. Needs the client repo on disk.*
 | Delivery repo (`github_repo`) | **Connect / create repo** on the profile — at signature by default (sell `05`'s gate); adopted here if it already exists | Jamie |
 | Deal terms on the card (`value_minor` + `billing_type` + `deal_type` + `support_minor`) | The deal card, prefilled from `05-agreement.md` | Jamie |
 | Stripe customer (`stripe_customer_id`) | Billing flow or **Link Stripe customer** — done in stage 06 | Jamie |
-| Deal folder (`deal_slug`) | The deal card — names this client's folder | Jamie |
+| Deal folder (`workspaces/deals/<repo name>/`) | Named after `github_repo` (D28) — nothing to set | Jamie |
 
 The profile wears a warning badge per open gap; kickoff is not done while it wears one.
 

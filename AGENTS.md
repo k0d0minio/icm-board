@@ -89,6 +89,7 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
 - **CI is the source of truth.** Never run `build`/`lint`/`typecheck` locally; push and
   read the checks.
 - **Sustentus is exempt** from the estate baseline — its `.icm/` is authoritative (it
-  still has a deal folder here, like every relationship). Gates everywhere are human
+  still has a deal folder here, like every relationship); its **template-owned** pipeline
+  files are synced like any repo's, on Jamie's word (D20). Gates everywhere are human
   checkboxes: read, never tick.
 - **No secrets in git, ever.** Env vars only; flag any plaintext credential found.

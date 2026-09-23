@@ -53,8 +53,9 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   `run/<slug>`, a child of the production branch (`database.provider: neon`, the project id, the
   key's NAME in `neon.api_key_env`) | `schema` — one Postgres schema per run on `$DATABASE_URL` |
   `container` — one local Postgres per run | `none` — no database, or migrations are applied by
-  the preview and CI only>. Migrations: <the declared stamp form (`millis` default), the tool,
-  and whether out-of-order is configured in the tool's own file>.
+  the preview and CI only>. Migrations: <the declared stamp form (`millis` default; `epoch`
+  with `extension` for a MongoDB runner such as ts-migrate-mongoose), the tool, and whether
+  out-of-order is configured in the tool's own file>.
 - **The environments' databases** — <none declared | Neon project `<id>`: production is the
   `main` branch (protected: yes/no); previews are the Vercel integration's `preview/<git-branch>`
   (`neon.previews: vercel` — the toggle is on: yes/no); the UAT branch's database is

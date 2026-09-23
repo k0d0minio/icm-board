@@ -63,8 +63,10 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
      deploys somewhere and has no endpoint, so a repo that skipped it is asked again next run.
    - "`required_checks`: which check-run names must be green before a merge?" · "`personas`?"
    - "`migrations`: where do they live, are they reversible, which tool applies them (flyway /
-     prisma / drizzle / sql), and does that tool accept out-of-order stamps? New ones are named
-     `V<17 digits>__<name>.sql` (`stamp: millis`) unless you keep the legacy `seconds` form."
+     prisma / drizzle / mongodb / sql), and does that tool accept out-of-order stamps? New ones
+     are named `V<17 digits>__<name>.sql` (`stamp: millis`) unless you keep the legacy `seconds`
+     form — or, on a MongoDB runner such as ts-migrate-mongoose, `<13 digits>-<name>.ts`
+     (`stamp: epoch`, `extension: ts`)."
    - "`database`: does this repo have a database, and where does it live? For a **Neon** project
      (`provider: neon`): the project id (Neon Console → Settings; a Vercel-managed database says
      it under Storage → Open in Neon — an id like `nameless-sea-98952497`, not a secret), the

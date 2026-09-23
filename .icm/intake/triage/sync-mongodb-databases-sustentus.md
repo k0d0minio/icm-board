@@ -71,6 +71,11 @@ After icm-board's D35 PR merges, in this order — each its own step, Jamie's me
   once that's fixed and synced, re-run #1150 (or the next ready PR) to get the first clean pass
   through the copy, the preview migrate, the smoke wait and `MongoDB cleanup` on close — only
   then close this stub.
+- 2026-09-23, late: the name cap is fixed (D37, icm-board #64; sustentus #1152 synced to `be76910`).
+  #1150's copy and migrate passed into `preview_claude_sentry_web_ins_65692577`. **Still open:**
+  #1150's `Preview smoke` (the web deploy was still building at close; expect the #418 walks,
+  sustentus's own `triage/react-418-hydration-mismatch-on-three-routes`), and `MongoDB cleanup`
+  dropping that database when #1150 closes. Then close this stub.
 
 ## Prompt
 

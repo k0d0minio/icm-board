@@ -265,8 +265,10 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    **(a) Production, once.** `.icm/scripts/deploy-status.sh --sha <merge-sha>` — it waits,
    bounded, for the merge commit's production deployment(s) and prints the one line the record
    takes: `- production: READY on <sha> — web dpl_… (prev dpl_…) · docs dpl_…`, or
-   `ERROR <project> — see the hotfix lane`, or `PENDING` after the bound, or
-   `not declared (no deploy block)`. An `ERROR` un-merges nothing and starts nothing: it is a
+   `ERROR <project> — see the hotfix lane`, or `PENDING` after the bound, or `SKIPPED` when
+   every project's ignore step canceled its build (a merge touching no app — production
+   unchanged, the live deployment named; one skipped project beside READY ones stays `READY`),
+   or `not declared (no deploy block)`. An `ERROR` un-merges nothing and starts nothing: it is a
    line in the record and the operator's call to open `/pipeline hotfix`. **On a UAT repo** the
    PR merged into the UAT branch, so read that instead — `.icm/scripts/deploy-status.sh --sha
    <merge-sha> --uat` — which prints `- uat: READY on <sha> — web dpl_… · <the fixed UAT

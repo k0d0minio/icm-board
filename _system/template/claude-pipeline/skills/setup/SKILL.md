@@ -80,7 +80,8 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
      app reads its database name from (`mongodb.name_env`, `MONGODB_DATABASE_NAME`), the names of
      the production and the shared preview databases (`production_name`, `preview_name` — never
      dropped or reset), the repo's own seed and migrate commands (`seed_command`,
-     `migrate_command`; the migrate command takes `up [<name>]` and `down <name>`), the runner's
+     `migrate_command`; the migrate command takes `up [<name>] [--single]` and `down <name>
+     [--single]`), the runner's
      collection if not `migrations`, the cluster's caps (`limits` — 100 databases / 500
      collections on a shared Atlas tier, 0 for uncapped; `name_bytes` 38 there, 63 on a
      dedicated M10+ cluster), and `previews: branch` when each

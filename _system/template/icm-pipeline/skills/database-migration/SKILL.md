@@ -26,8 +26,8 @@ gives the run a database of its own. Both headers are the specification.
    spec's data-model change is verified there. Never point a session at production. On a
    MongoDB repo (`database.provider: mongodb`, `isolation: database`) the run's database is
    `run_<slug>` on the repo's own cluster, beside production and the shared preview database:
-   `up` runs the repo's seed command, then its migrate command, with the name variable
-   (`database.mongodb.name_env`) set to it — and `env` prints just that one export. Nothing is
+   `up` runs the repo's migrate command, then its seed command (migrate first: the seed's
+   models build the head's indexes), with the name variable (`database.mongodb.name_env`) set to it — and `env` prints just that one export. Nothing is
    cloned from production; the seed is the repo's, unchanged (D35).
 2. **Name the file with the script, never by hand**:
    `check-migrations.sh --new "<what it does>" --apply` → `CREATED <path>`. The name carries a UTC
@@ -64,12 +64,14 @@ gives the run a database of its own. Both headers are the specification.
    setting (`references/tools.md`); the tool's config file is the repo's to change, in this
    branch, when it does not already say so.
 5. **On a MongoDB repo, prove the round trip** (after step 3's `OK`, Build step 10 and Release
-   step 7): `db-branch.sh <slug> prove` → `PROVEN`. On a fresh `run_<slug>` at `main`'s shape it
-   runs this branch's own migrations up → down → up and compares the collection list and every
+   step 7): `db-branch.sh <slug> prove` → `PROVEN`. On a fresh, unseeded `run_<slug>` migrated
+   through exactly `main`'s migrations (the runner follows the stamp, so where this branch's are
+   stamped before some of `main`'s, those go up — and this branch's come down — one at a time,
+   `--single`) it runs this branch's own migrations up → down → up and compares the collection list and every
    index spec: `down` must restore them where `migrations.reversible` is true (and every file
    must export a `down`); the second `up` must reproduce the first; and, the runner's records of
    them forgotten the way a re-stamp forgets them, one more `up` must change nothing.
-   `UNPROVEN n` names what failed — fix it on this branch.
+   `UNPROVEN n` names what failed — fix it on this branch. The seed runs only after `PROVEN`.
 6. Release stop class 3 asks `env.sh audit --changed` and reads `migrations.reversible`: a
    forward-only migration in a merge with no rollback path is recorded in the `## Release`
    record's `- migrations:` line, not hidden.
@@ -86,7 +88,7 @@ say so in the stop message rather than assuming the preview proved the migration
 On a MongoDB repo with `database.mongodb.previews: branch`, every preview reads its own
 `preview_<branch>` — the app derives the name at runtime through `.icm/scripts/lib/db-name.mjs`
 once `MONGODB_PREVIEW_PER_BRANCH=1` is set on the Preview target — and the repo's preview-migrate
-workflow seeds and migrates it on each PR push; the smoke check waits for that job. With the flag
+workflow migrates and seeds it on each PR push; the smoke check waits for that job. With the flag
 unset, every preview shares `preview_name`, exactly as before.
 
 ## After the merge

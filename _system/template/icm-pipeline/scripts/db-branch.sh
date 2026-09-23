@@ -31,9 +31,11 @@
 #                         production and shared preview databases (decision D35). Needs `provider:
 #                         mongodb`, node and the repo's installed driver (lib/mongo.mjs finds it) —
 #                         no new binary. The data is the repo's own: `up` runs
-#                         `database.mongodb.seed_command`, then `migrate_command up`, with the name
+#                         `database.mongodb.migrate_command up`, then `seed_command`, with the name
 #                         variable (`mongodb.name_env`, default MONGODB_DATABASE_NAME) set to the
-#                         run's database; the template never seeds, and nothing is cloned from
+#                         run's database — migrate first, seed second: a seed written against the
+#                         head's models (Mongoose's autoIndex builds their indexes) belongs on the
+#                         migrated shape. The template never seeds, and nothing is cloned from
 #                         production. Before creating it, the cluster's caps are read
 #                         (`mongodb.limits` — the shared Atlas tiers cap databases and collections)
 #                         and the pipeline's databases counted.
@@ -51,10 +53,11 @@
 #                      the database, and remove the pointer line. Refuses any name that is not
 #                      `run_*` / `icm-db-*` / `run/*` — it only ever drops what `up` made.
 #   prove              (isolation: database) the migration proof Build and Release read: on a
-#                      freshly re-made `run_<slug>` — seed, then `migrate up <main's newest>` — it
-#                      snapshots the shape (collection list + index specs, lib/mongo.mjs snapshot)
-#                      and runs THIS BRANCH'S OWN migrations (the epoch-form files the base branch
-#                      does not have, as check-migrations.sh counts them) up → down → up:
+#                      freshly re-made, UNSEEDED `run_<slug>` migrated to exactly the base's
+#                      migrations, it snapshots the shape (collection list + index specs,
+#                      lib/mongo.mjs snapshot) and runs THIS BRANCH'S OWN migrations (the
+#                      epoch-form files the base branch does not have, as check-migrations.sh
+#                      counts them) up → down → up:
 #                        down must bring the shape back to the snapshot before them, and every own
 #                        file must export a `down` — only where migrations.reversible is true;
 #                        up again must reproduce the shape after them;
@@ -62,10 +65,20 @@
 #                        check-migrations.sh), up once more must change nothing: the idempotency
 #                        a re-stamped migration relies on.
 #                      A forward-only repo (reversible false) proves the up and the idempotency.
-#                      The run's database is left fully migrated, as `up` leaves it. The migrate
-#                      command takes `up [<name>]` and `down <name>`, <name> as the runner records
-#                      it (the file name after `<13 digits>-`, without the extension —
-#                      ts-migrate-mongoose's).
+#                      The seed runs only after a PROVEN, so the run's database is left migrated
+#                      and seeded, as `up` leaves it; the proof itself never sees the seed (its
+#                      models would build the head's indexes into the "base shape").
+#                      The migrate command takes `up [<name>] [--single]` and `down <name>
+#                      [--single]`, <name> as the runner records it (the file name after
+#                      `<13 digits>-`, without the extension) — ts-migrate-mongoose's, whose runs
+#                      follow the STAMP, not the file: `up <name>` applies every pending
+#                      migration stamped at or before it, `down <name>` reverts every applied one
+#                      stamped at or after it, `--single` exactly the one named. So where one of
+#                      the branch's own migrations is stamped before one of the base's
+#                      (migrations.out_of_order, a rebase), the base's shape is built one base
+#                      migration at a time past that stamp (`up <name> --single`), and the round
+#                      trip reverts the branch's own one at a time, newest first (`down <name>
+#                      --single`) — never a base migration. In order, neither needs `--single`.
 #
 # It adopts a run, it never makes one: the slug must already be a live run (`.icm/runs/<slug>/`),
 # the way every adopting stage resolves it (`resolve-run.sh`). Nothing here reaches outside the
@@ -99,7 +112,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     status|up|env|down|prove) verb="$1"; shift ;;
     --base) base="${2:-}"; [ -n "$base" ] || die "--base needs a ref"; shift 2 ;;
-    -h|--help) sed -n '2,85p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    -h|--help) sed -n '2,99p' "${BASH_SOURCE[0]}"; exit 0 ;;
     --*) die "unknown flag: $1" ;;
     *) [ -z "$slug" ] && slug="$1" || die "unexpected argument: $1"; shift ;;
   esac
@@ -223,10 +236,10 @@ case "$isolation" in
         if present; then say "state:      present"; verdict BOUND; else say "state:      absent — run: .icm/scripts/db-branch.sh $slug up"; verdict ABSENT; fi ;;
       up)
         need_commands; check_caps
-        in_db "$seed_cmd"
         in_db "$migrate_cmd up"
+        in_db "$seed_cmd"
         record_pointer "$pointer_database"
-        say "state:      present — seeded by the repo's seed command and migrated up"
+        say "state:      present — migrated up, then seeded by the repo's seed command"
         say "next:       eval \"\$(.icm/scripts/db-branch.sh $slug env)\"   then work inside it"
         verdict BOUND ;;
       env)
@@ -243,22 +256,34 @@ case "$isolation" in
         [ -n "$base" ] || base="origin/$(pipeline_base_branch)"
         git rev-parse --verify --quiet "${base}^{commit}" >/dev/null || die "base ref '$base' does not resolve — git fetch origin first, or pass --base <ref>"
         ext="$(migrations_extension)"; re="^[0-9]{13}-.+\.${ext//./\\.}$"
-        own=(); base_newest=""
+        own=(); on_base_all=()
         while IFS= read -r dir; do
           [ -n "$dir" ] || continue; dir="${dir%/}"
           on_base="$(git ls-tree -r --name-only "$base" -- "$dir/" 2>/dev/null | sed -E 's:^.*/::' | grep -E "$re" | sort || true)"
           here_now="$( [ -d "$dir" ] && find "$dir" -maxdepth 1 -type f -printf '%f\n' | grep -E "$re" | sort || true)"
           while IFS= read -r f; do [ -n "$f" ] && own+=("$dir/$f"); done < <(comm -13 <(printf '%s\n' "$on_base") <(printf '%s\n' "$here_now") | grep . || true)
-          last="$(printf '%s\n' "$on_base" | grep . | sort | tail -n1 || true)"
-          [ -z "$last" ] || { [ -n "$base_newest" ] && [ ! "$last" \> "$base_newest" ]; } || base_newest="$last"
+          while IFS= read -r f; do [ -n "$f" ] && on_base_all+=("$f"); done < <(printf '%s\n' "$on_base" | grep . || true)
         done < <(migrations_paths)
         [ "${#own[@]}" -gt 0 ] || { say "no migrations of this branch's own against $base (migrations.path, the epoch form) — nothing to prove"; verdict SKIP; }
         mapfile -t own < <(for f in "${own[@]}"; do printf '%s\t%s\n' "$(basename "$f")" "$f"; done | sort | cut -f2)
         rname() { local b; b="$(basename "$1")"; b="${b#*-}"; printf '%s' "${b%.*}"; }  # the runner's name
-        first="$(rname "${own[0]}")"
+        stamp_of() { local b; b="$(basename "$1")"; printf '%s' "${b:0:13}"; }            # the runner's createdAt
+        first="$(rname "${own[0]}")"; own_oldest="$(stamp_of "${own[0]}")"
+        # The runner orders by stamp. The base's migrations stamped before this branch's oldest go up
+        # in one `up <newest of them>`; any stamped at or after it (a rebase over newer base work) go
+        # up one at a time, since a bulk `up` would take this branch's own with them.
+        base_bulk=""; interleaved=()
+        while IFS= read -r f; do
+          [ -n "$f" ] || continue
+          if [ "$(stamp_of "$f")" \< "$own_oldest" ]; then base_bulk="$f"; else interleaved+=("$f"); fi
+        done < <(printf '%s\n' "${on_base_all[@]}" | grep . | sort -u || true)
+        base_newest="$base_bulk"; [ "${#interleaved[@]}" -eq 0 ] || base_newest="${interleaved[${#interleaved[@]}-1]}"
         reversible="$(migrations_reversible)"
         say "base:       $base (newest there: ${base_newest:-none})"
         say "own:        ${#own[@]} migration(s): $(for f in "${own[@]}"; do basename "$f"; done | paste -sd' ' -)"
+        if [ "${#interleaved[@]}" -gt 0 ]; then
+          say "order:      ${#interleaved[@]} of the base's migration(s) stamped at or after this branch's oldest ($(basename "${own[0]}")) — the runner follows the stamp, so the base shape goes up one at a time past it and the round trip reverts this branch's own one at a time (--single)"
+        fi
         say "reversible: $reversible (migrations.reversible)"
         fails=()
         if [ "$reversible" = true ]; then
@@ -266,25 +291,37 @@ case "$isolation" in
             grep -Eq '(export[^;]*[^a-z_]down[^a-z_]|export default[^;]*[^a-z_]down[^a-z_]|exports\.down|down[[:space:]]*[:=(])' "$f" || fails+=("$(basename "$f"): no down export — reversible: true means every migration carries one")
           done
         fi
-        # A fresh run database at the base's shape: dropped (only run_*), seeded, migrated to main's newest.
+        # A fresh run database at exactly the base's shape: dropped (only run_*), migrated through the
+        # base's migrations and none of this branch's, and not seeded — the seed's models would build
+        # the head's indexes into it.
         if present; then mongo drop "$db" >/dev/null || die "could not drop $db to start the proof clean"; fi
         remove_pointer
         need_commands; check_caps
-        in_db "$seed_cmd"
-        [ -z "$base_newest" ] || in_db "$migrate_cmd up $(rname "$base_newest")"
+        [ -z "$base_bulk" ] || in_db "$migrate_cmd up $(rname "$base_bulk")"
+        for f in "${interleaved[@]}"; do in_db "$migrate_cmd up $(rname "$f") --single"; done
         record_pointer "$pointer_database"
+        down_own() { # this branch's own migrations, and only those, reverted
+          if [ "${#interleaved[@]}" -eq 0 ]; then
+            ( export "$name_env=$db"; bash -c "$migrate_cmd down $first" 2>&1 | redact >&2 )
+          else
+            local i
+            for (( i=${#own[@]}-1; i>=0; i-- )); do
+              ( export "$name_env=$db"; bash -c "$migrate_cmd down $(rname "${own[$i]}") --single" 2>&1 | redact >&2 ) || return 1
+            done
+          fi
+        }
         snap() { mongo snapshot "$db" || die "could not snapshot $db"; }
         diff_of() { diff <(printf '%s' "$1" | jq -S .) <(printf '%s' "$2" | jq -S .) | head -20 | sed 's/^/            /' >&2 || true; }
         s0="$(snap)";                 say "step:       base shape — $(printf '%s' "$s0" | jq 'length') collection(s)"
         in_db "$migrate_cmd up";      s1="$(snap)"; say "step:       up    — $(printf '%s' "$s1" | jq 'length') collection(s)"
         if [ "$reversible" = true ] && [ "${#fails[@]}" -eq 0 ]; then
-          if ( export "$name_env=$db"; bash -c "$migrate_cmd down $first" 2>&1 | redact >&2 ); then
+          if down_own; then
             s2="$(snap)"; say "step:       down  — back to before $first"
             [ "$s2" = "$s0" ] || { fails+=("down does not restore the shape before this branch's migrations (collections or indexes differ)"); diff_of "$s0" "$s2"; }
             in_db "$migrate_cmd up";  s3="$(snap)"; say "step:       up    — again"
             [ "$s3" = "$s1" ] || { fails+=("up after down does not reproduce the shape of the first up"); diff_of "$s1" "$s3"; }
           else
-            fails+=("\`$migrate_cmd down $first\` failed — a down is missing or throws")
+            fails+=("reverting this branch's own migrations failed (\`$migrate_cmd down …\`) — a down is missing or throws")
             in_db "$migrate_cmd up"; s3="$(snap)"
           fi
         else
@@ -305,7 +342,8 @@ case "$isolation" in
           say "the run's database is left as the last step left it — db-branch.sh $slug down, then up, before trusting it"
           verdict "UNPROVEN ${#fails[@]}" 2
         fi
-        say "state:      $db fully migrated, as \`up\` leaves it"
+        in_db "$seed_cmd"
+        say "state:      $db fully migrated, then seeded, as \`up\` leaves it"
         verdict PROVEN ;;
     esac ;;
 

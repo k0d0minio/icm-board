@@ -52,9 +52,9 @@ batch. `lib/project.sh → neon_uat_branch` names it; `db-env.sh status` reads i
 On a **MongoDB** repo (`database.provider: mongodb`, `database.mongodb.previews: branch` —
 decision D35) the same shape holds without a copy of production: the UAT git branch deploys as a
 preview, so its database is `preview_<uat.branch>` (`lib/db-name.mjs`; `lib/project.sh →
-mongo_uat_database`), seeded and migrated by the repo's preview-migrate workflow on every push to
-the branch. `db-env.sh reset-uat --apply` drops it and re-makes it with the repo's seed and
-migrate commands — the client's test data goes, the shape is the UAT branch's; nothing is copied
+mongo_uat_database`), migrated and seeded by the repo's preview-migrate workflow on every push to
+the branch. `db-env.sh reset-uat --apply` drops it and re-makes it with the repo's migrate and
+seed commands — the client's test data goes, the shape is the UAT branch's; nothing is copied
 from production. `lib/mongo.mjs` refuses its name on every other drop, the reference
 `mongodb-cleanup.yaml` skips the UAT git branch, and `db-env.sh prune` never lists it.
 

@@ -52,8 +52,8 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 - **The run's database** — `database` in `.icm/project.json`: <`neon` — one Neon branch per run,
   `run/<slug>`, a child of the production branch (`database.provider: neon`, the project id, the
   key's NAME in `neon.api_key_env`) | `database` — one MongoDB database per run, `run_<slug>`, on
-  the cluster `$MONGODB_URI` names, seeded by `<seed_command>` and migrated by `<migrate_command>
-  up`; `db-branch.sh <slug> prove` round-trips this branch's migrations before the ready flip and
+  the cluster `$MONGODB_URI` names, migrated by `<migrate_command> up` and seeded by
+  `<seed_command>`; `db-branch.sh <slug> prove` round-trips this branch's migrations before the ready flip and
   the merge | `schema` — one Postgres schema per run on `$DATABASE_URL` |
   `container` — one local Postgres per run | `none` — no database, or migrations are applied by
   the preview and CI only>. Migrations: <the declared stamp form (`millis` default; `epoch`
@@ -70,7 +70,7 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   each read `preview_<branch>` — `MONGODB_PREVIEW_PER_BRANCH=1` on the Preview target (set: yes/no),
   the app's connection code reads the name through
   `.icm/scripts/lib/db-name.mjs` (yes/no — the file that does it)>; `<the preview-migrate
-  workflow>` seeds and migrates the PR's database on each push and the smoke check waits for it;
+  workflow>` migrates and seeds the PR's database on each push and the smoke check waits for it;
   the UAT branch's database is `preview_<uat>`; production migrates by <the workflow>;
   `mongodb-cleanup.yaml` drops a PR's databases on close (or: absent, because …); the cluster's
   caps are <100 databases / 500 collections (a shared tier) | uncapped>>.

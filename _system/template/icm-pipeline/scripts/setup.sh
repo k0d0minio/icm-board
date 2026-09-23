@@ -224,7 +224,7 @@ if [ -f .icm/project.json ]; then
   if [ -n "$(migrations_paths)" ]; then ok "migrations: $(migrations_paths | paste -sd', ' -) · reversible: $(migrations_reversible) · stamp: $(migrations_stamp) · tool: $(migrations_tool) · out_of_order: $(migrations_out_of_order)"; else info "migrations.path empty — check-migrations.sh looks for tracked migrations/ folders; rollback.sh assumes forward-only (reversible: false); stamp: $(migrations_stamp), tool: $(migrations_tool)"; fi
   case "$(database_isolation)" in
     none) warn "database.isolation: none — does this repo have a database? neon (one Neon branch per run — curl and the key named by database.neon.api_key_env, no psql), database (one MongoDB database per run on the repo's cluster — node and its driver), schema (one Postgres schema per run on \$$(database_url_env)) or container (one local Postgres per run) gives each run its own; none is right for a repo without one" ;;
-    database) if [ "$(database_provider)" = mongodb ]; then ok "database: database isolation — run_<slug> on the cluster \$$(database_url_env) names, seeded and migrated by the repo's own commands"; else fail "database.isolation is database but database.provider is not mongodb — set provider: mongodb and the database.mongodb block"; fi ;;
+    database) if [ "$(database_provider)" = mongodb ]; then ok "database: database isolation — run_<slug> on the cluster \$$(database_url_env) names, migrated and seeded by the repo's own commands"; else fail "database.isolation is database but database.provider is not mongodb — set provider: mongodb and the database.mongodb block"; fi ;;
     neon) if [ "$(database_provider)" = neon ]; then ok "database: neon isolation — run/<slug> branches of $(neon_production_branch), via \$$(database_url_env)"; else fail "database.isolation is neon but database.provider is not — set provider: neon and database.neon.project_id"; fi ;;
     *)    ok "database: $(database_isolation) isolation via \$$(database_url_env)$( [ "$(database_isolation)" = container ] && echo " · $(database_image), db $(database_name)")" ;;
   esac
@@ -262,7 +262,7 @@ if [ -f .icm/project.json ]; then
     elif [ "$mp" = "$ms" ]; then fail "database.mongodb.production_name and preview_name are the same ($mp) — previews would share production's database"
     else ok "mongodb: cluster via \$$(database_url_env) · production $mp · shared preview $ms · name via \$$(mongo_name_env) · previews $(mongo_previews)$( [ -n "$(mongo_uat_database)" ] && echo " · UAT $(mongo_uat_database)") · caps $(mongo_limit_databases)/$(mongo_limit_collections) · names ≤ $(mongo_limit_name_bytes)B"; fi
     { [ -n "$(mongo_seed_command)" ] && [ -n "$(mongo_migrate_command)" ]; } && ok "mongodb: seed \`$(mongo_seed_command)\` · migrate \`$(mongo_migrate_command)\`" \
-      || fail "database.mongodb.seed_command or migrate_command is empty — the repo's own commands (the migrate command takes up [<name>] and down <name>); the template never designs seeding"
+      || fail "database.mongodb.seed_command or migrate_command is empty — the repo's own commands (the migrate command takes up [<name>] [--single] and down <name> [--single]); the template never designs seeding"
     [ "$(migrations_tool)" = mongodb ] || warn "database.provider is mongodb but migrations.tool is $(migrations_tool) — db-branch.sh prove reads the epoch form a MongoDB runner writes (migrations.stamp: epoch, tool: mongodb)"
     ue="$(database_url_env)"
     if [ -n "${!ue:-}" ] && command -v node >/dev/null 2>&1; then

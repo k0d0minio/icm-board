@@ -39,6 +39,12 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   cloud environment panel. <Anything unusual about where a key must exist.>
 - **Local feedback scripts** — `scripts/format.sh` and `scripts/lint.sh` run <formatter / linter>
   over changed files only; CI stays the verdict. <Or: not wired — the stubs report SKIP.>
+- **Health endpoint** — `health_endpoint` in `.icm/project.json` (or per project under
+  `deploy.projects[]`): <the URL that answers 200 when production is up; `health-check.sh`
+  reads it once after the merge>. <Or: none declared — the read reports SKIP.>
+- **Secret scanning** — `security-check.sh` runs <gitleaks (the repo's `.gitleaks.toml`) |
+  the built-in patterns> over the lines a branch adds; the dependency audit is <the lockfile's
+  own tool at high | owned by CI / Dependabot, so the branch-time audit is advisory here>.
 - **Archive** — `runs_archive` / `intake_archive` in `.icm/project.json`. <Where they are served
   from, if anywhere; the default `_done/` folders need no note.>
 

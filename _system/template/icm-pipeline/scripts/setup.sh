@@ -19,7 +19,8 @@
 #    2. Formatter  a formatter config that would touch T paths and no exclusion for them:
 #                  reported with the exact lines to add (D17/D19: per repo, by hand; never written).
 #    3. project.json  name, complexity, required_checks, personas, deploy, reporting, migrations,
-#                  support — missing or still at the stub's value is a line with the question.
+#                  support, health_endpoint — missing or still at the stub's value is a line with
+#                  the question.
 #    4. Environment   env-check.sh (route + binaries) and env.sh audit (names only).
 #    5. Tickets    validate-intake.sh over every live epic and triage/; triage-report.sh against
 #                  the cap; a loose TODO.md/BACKLOG.md at the root.
@@ -214,6 +215,8 @@ if [ -f .icm/project.json ]; then
   else warn "reporting block absent — read as announce: [github-release], alert: none; add the block to change it"; fi
   if [ -n "$(migrations_paths)" ]; then ok "migrations: $(migrations_paths | paste -sd', ' -) · reversible: $(migrations_reversible)"; else info "migrations.path empty — check-migrations.sh looks for tracked migrations/ folders; rollback.sh assumes forward-only (reversible: false)"; fi
   ok "support: tier $(support_tier)$( [ -n "$(support_failsafe)" ] && echo " · fail-safe $(support_failsafe)") · sentry via \$$(support_sentry_env)"
+  if [ -n "$(health_endpoints | head -n1)" ]; then ok "health_endpoint: $(health_endpoints | paste -sd', ' -) — health-check.sh reads it once after the merge"
+  else info "health_endpoint empty — health-check.sh reports SKIP after the merge; which URL answers 200 when production is up (e.g. /api/health)?"; fi
   jq -e '.profile' .icm/project.json >/dev/null 2>&1 && info "a \"profile\" key is present and ignored (D22) — remove it when convenient"
 else
   fail ".icm/project.json missing — the manifest every script reads"

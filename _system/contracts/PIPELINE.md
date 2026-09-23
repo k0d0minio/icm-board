@@ -41,9 +41,11 @@ Two rows survive from the first, tiered design because they still describe real 
   stages/
     01_scope/CONTEXT.md      ← source recorded → settled in session → scope.md → the cut (T)
     02_define/CONTEXT.md     ← stub or request → spec.md → the run's ONE draft PR          (T)
-    03_build/CONTEXT.md      ← implement the approved spec; env.sh audit --changed; flip  (T)
-    04_release/CONTEXT.md    ← gate read → review → close-out → squash-merge → one read of
-                                production → report.sh announce                            (T)
+    03_build/CONTEXT.md      ← implement the approved spec; env.sh audit --changed;
+                                security-check.sh; flip                                   (T)
+    04_release/CONTEXT.md    ← gate read → review (security-check.sh measured) → close-out →
+                                squash-merge → one read of production (deploy-status.sh, then
+                                health-check.sh) → report.sh announce                      (T)
   lanes/
     bug/ tweak/ chore/       ← fast lanes: no spec, the merge button is the gate           (T)
     hotfix/                  ← human-invoked, opens READY; rollback.sh prepares a revert   (T)
@@ -67,7 +69,8 @@ Two rows survive from the first, tiered design because they still describe real 
     resolve-run.sh validate-spec.sh validate-intake.sh validate-decisions.sh new-run.sh
     project-body.sh project-labels.sh ci-status.sh close-out.sh triage-report.sh
     env-check.sh select-model.sh check-migrations.sh process-raw.sh
-    deploy-status.sh rollback.sh usage-snapshot.sh env.sh setup.sh                        (T)
+    deploy-status.sh rollback.sh security-check.sh health-check.sh
+    usage-snapshot.sh env.sh setup.sh                                                     (T)
     format.sh lint.sh validate-knowledge-map.sh report.sh                                 (P)
 .claude/skills/pipeline/SKILL.md   ← the /pipeline router (one skill, many stages)
 .claude/skills/setup/SKILL.md      ← /setup: the report, the questions, the P files
@@ -195,12 +198,14 @@ for every key.
 | `ci-status.sh <slug> \| --pr <n>` | block until CI settles; reads check runs **and** commit statuses, dedupes by newest attempt, re-reads the head each pass; required names from `required_checks`, a conditional smoke from `smoke_check` | `GREEN` 0 · `RED` 3 · `PENDING` 4 |
 | `close-out.sh <slug>` | archive the run (and the finished epic, and the front behind it) into `runs_archive` / `intake_archive`, committed **on the run's branch** — refuses `main`, refuses a PR closed unmerged; a dropped stub counts as settled | `CLOSED` 0 · `STOP` 3 |
 | `triage-report.sh` | the parking lane's counts by lane / source / area / age, near-duplicates, against the cap | `OK` 0 |
-| `env-check.sh [--fix]` | pre-flight: binaries, a GitHub route, `required_env`, `complexity`, the folder shape, executable bits (repaired only with `--fix`), a UTF-8 locale | `PASS` 0 · `FAIL` 1 |
+| `env-check.sh [--fix]` | pre-flight: binaries, a GitHub route, `required_env`, `complexity`, the folder shape, executable bits (repaired only with `--fix`), a UTF-8 locale, the security utilities (gitleaks, the lockfile's audit tool, a declared `health_endpoint` — reported, never required) | `PASS` 0 · `FAIL` 1 |
 | `select-model.sh <epic/slug \| stub \| path>` | a stub's, scope's or spec's `complexity` → the model to open the session on (`low`/`medium` → `sonnet`, `high` → `opus`, `research` → `fable`; an explicit `recommended-model` wins). **Prints a recommendation; launches nothing** | `MODEL <alias>` 0 · `INVALID` 2 |
 | `check-migrations.sh [--apply]` | Release step 7, after `main` is merged in: are this run's `YYYYMMDDHHMMSS_*.sql` migrations still newer than `main`'s? Reports; `--apply` re-stamps every local one in order (renames, never commits, never touches a migration `main` has) | `OK` 0 · `SKIP` 0 · `STALE n` 2 · `RESTAMPED n` 0 |
 | `process-raw.sh [--dry-run]` | `.icm/raw/` → `.icm/processed/`: extract text with **local** tools only (email, chat export, PDF, deck, image; **audio and video** through ffmpeg + whisper.cpp — `SKIP` with the install hints when either is absent, the recording never uploaded and never committed), log `manifest.json` (extractor, model, language for a transcription), archive the original to `raw/_processed/`, park one triage **pointer** stub per asset — it never scopes, cuts or sequences | `PROCESSED n` 0 · `DRY-RUN n` 0 · `EMPTY` 0 |
 | `deploy-status.sh <slug> \| --sha <sha>` | Release step 9, **once**: the merge commit's production deployment per `deploy.projects[]`, waited for (bounded), with the previous READY id — the `- production:` line | `READY` 0 · `ERROR <p>` 3 · `PENDING` 4 · `SKIP` 0 (no deploy block) |
 | `rollback.sh <slug> \| --sha <sha> [--revert] [--vercel]` | **prepares** a recovery: a `claude/hotfix-revert-<slug>` branch + the hotfix PR (through `new-run.sh`), and/or the previous READY deployment with the exact CLI/REST rollback call — printed, never called; warns when the merge carried a migration and `migrations.reversible` is false | `PREPARED …` 0 · `DRY-RUN` 0 · `SKIP` 0 |
+| `security-check.sh [<slug>] [--base <ref>] [--all] [--audit\|--no-audit]` | Build step 9 and Release step 4 — stop class 2, **measured**: the lines this branch added, scanned for secrets (gitleaks when installed, the repo's `.gitleaks.toml` honoured; the built-in patterns otherwise — a floor), and the lockfile's own audit at `high` when the branch changed a manifest or lockfile (`pnpm`/`npm`/`yarn audit`, `cargo audit`, `pip-audit`; a missing tool or an unreachable registry is SKIPPED, never a finding). Findings — `file:line` and the rule, **never the value** — appended to `runs/<slug>/03_build/output/error.log`; installs, fixes and edits nothing | `CLEAN` 0 · `FINDINGS n` 1 · `SKIP` 0 |
+| `health-check.sh [--sha <sha>] [--url <u>]…` | Release step 9(a), after `deploy-status.sh`, **once**: one GET per `health_endpoint` in `project.json` (top-level, or per deploy project), 200 expected, three attempts with exponential backoff — the `- health:` line. A failure calls `report.sh alert` (the repo's channels) and parks **one** `lane: bug` · `complexity: high` triage stub per merge SHA — written, never committed; rolls nothing back, opens no lane | `OK` 0 · `FAIL <endpoint>` 3 · `SKIP` 0 · `DRY-RUN` 0 |
 | `usage-snapshot.sh <slug> <stage> start\|end` · `--report <slug>` | appends one cumulative `- usage:` line to the run's `usage.md` from the harness's own store (Claude Code transcript · OpenCode SQLite), priced in-repo from `lib/model-prices.json`; never estimates, never blocks | `RECORDED` 0 · `SKIP (<why>)` 0 · `REPORT` 0 |
 | `env.sh audit\|init\|pull\|push-notes\|add\|doc` | the repo's env across five surfaces, driven by the deploy block: names only; `add` takes the value **on stdin only** and never prints it; `--changed` is Build's pre-push check and Release's stop class 3 | `OK` · `GAPS n` · `SEEDED n` · `PULLED n` · `PUSHED n` · `ADDED …` · `SKIP` · `DOC` |
 | `setup.sh [--fix] [--template <path\|url>] [--report]` | the eleven-section report behind `/setup`: baseline (from the repo's own `.icm/MANIFEST`), formatter exposure, `project.json`, environment, tickets, raw, runs, knowledge, reporting, workflows, support; `--fix` seeds what is missing from an explicit source, never overwrites; no default source | `OK` 0 · `GAPS n` 0 |

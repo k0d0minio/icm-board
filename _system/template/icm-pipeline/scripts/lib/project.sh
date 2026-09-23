@@ -49,6 +49,10 @@
 #                   — the after-handover line the deal agreed. setup.sh's Support section checks
 #                   the fail-safe page and the Sentry key exist when tier is basic or retainer;
 #                   Release step 4 stops (class 3) when they do not.
+#   health_endpoint the URL (or an array of URLs) that answers 200 when production is up —
+#                   health-check.sh GETs it once after the merge (Release step 9a). A project
+#                   may carry its own as deploy.projects[].health_endpoint instead, or as well.
+#                   Absent or empty reads as "not declared": health-check.sh says SKIP.
 #
 # Contract for callers (source after die() is defined; needs jq):
 #   source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"
@@ -72,6 +76,9 @@
 #   migrations_reversible                 prints true|false (default false).
 #   support_tier · support_failsafe · support_sentry_env
 #                                         the support block's scalars with their defaults.
+#   health_endpoints                      one URL per line: the top-level health_endpoint (string
+#                                         or array), then every deploy.projects[].health_endpoint,
+#                                         in that order, de-duplicated; nothing when none declared.
 #   pipeline_lanes                        the lane vocabulary, space-separated — the one list
 #                                         new-run.sh, resolve-run.sh, project-labels.sh,
 #                                         close-out.sh, validate-intake.sh and triage-report.sh
@@ -154,6 +161,18 @@ migrations_reversible() {
 support_tier()       { project_field '.support.tier' 'none'; }
 support_failsafe()   { project_field '.support.failsafe_page' ''; }
 support_sentry_env() { project_field '.support.monitoring.sentry_dsn_env' 'SENTRY_DSN'; }
+
+# --- health ------------------------------------------------------------------------------------------
+
+health_endpoints() {
+  [ -f "$project_json" ] || return 0
+  jq -r '
+    [ (.health_endpoint // empty | if type == "array" then .[] else . end),
+      ((.deploy.projects // [])[]? | .health_endpoint // empty) ]
+    | map(select(type == "string" and . != ""))
+    | reduce .[] as $u ([]; if index($u) then . else . + [$u] end)
+    | .[]' "$project_json" 2>/dev/null || true
+}
 
 # --- lanes -------------------------------------------------------------------------------------------
 # The one vocabulary list. bug/tweak/chore open draft; hotfix opens READY (an incident wants the

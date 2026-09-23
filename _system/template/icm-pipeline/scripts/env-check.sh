@@ -45,7 +45,7 @@ fail() { echo "  [FAIL] $*"; ERRORS=$((ERRORS + 1)); }
 # 1. Critical binaries — every pipeline script needs bash, git, jq and curl; the sync and the
 #    conformance tooling need rsync. rg is recommended (the contracts suggest it for searches)
 #    but no script calls it, so its absence is a warning, not a failure.
-echo "[1/8] Checking Critical System Tooling..."
+echo "[1/9] Checking Critical System Tooling..."
 for tool in bash git rsync jq curl; do
   if command -v "$tool" >/dev/null 2>&1; then
     ok "Binary found: $tool"
@@ -66,7 +66,7 @@ fi
 
 # 2. A GitHub route — a token in the environment, or a logged-in `gh` CLI (lib/gh.sh takes
 #    either, in that order). Neither is a WARN; one is enough.
-echo "[2/8] Checking GitHub CLI & Authentication..."
+echo "[2/9] Checking GitHub CLI & Authentication..."
 if command -v gh >/dev/null 2>&1; then
   ok "Binary found: gh (GitHub CLI)"
 else
@@ -81,7 +81,7 @@ else
 fi
 
 # 3. The project manifest and the variables it says this repo needs.
-echo "[3/8] Checking Project Manifest & Required Environment (.icm/project.json)..."
+echo "[3/9] Checking Project Manifest & Required Environment (.icm/project.json)..."
 if [ -f ".icm/project.json" ]; then
   if command -v jq >/dev/null 2>&1 && jq -e . .icm/project.json >/dev/null 2>&1; then
     ok ".icm/project.json parses"
@@ -114,7 +114,7 @@ fi
 
 # 4. The folder shape the pipeline promises. No profile line is read — every repo carries the one
 #    pipeline, and `complexity` (step 3) is the only weight.
-echo "[4/8] Checking Local ICM Directory Integrity..."
+echo "[4/9] Checking Local ICM Directory Integrity..."
 if [ -d ".icm" ]; then
   ok "Local .icm directory present"
   for sub in stages lanes _shared scripts; do
@@ -136,7 +136,7 @@ else
 fi
 
 # 5. Executable bits on the scripts a stage invokes. lib/ is sourced and excluded on purpose.
-echo "[5/8] Checking Script Execution Permissions..."
+echo "[5/9] Checking Script Execution Permissions..."
 if [ -d ".icm/scripts" ]; then
   NON_EXEC="$(find .icm/scripts -maxdepth 1 -name '*.sh' ! -executable 2>/dev/null | sort || true)"
   if [ -n "$NON_EXEC" ]; then
@@ -154,7 +154,7 @@ if [ -d ".icm/scripts" ]; then
 fi
 
 # 6. The deploy block, and whether the Vercel route works. Absent is a fact, not a fault.
-echo "[6/8] Checking Deploy Block & Vercel Route (.icm/project.json → deploy)..."
+echo "[6/9] Checking Deploy Block & Vercel Route (.icm/project.json → deploy)..."
 if [ -f ".icm/project.json" ] && jq -e '(.deploy.projects // []) | length > 0' .icm/project.json >/dev/null 2>&1; then
   n_pj="$(jq -r '.deploy.projects | length' .icm/project.json)"
   tok_var="$(jq -r '.deploy.token_env // "VERCEL_TOKEN"' .icm/project.json)"
@@ -174,7 +174,7 @@ fi
 
 # 7. The reporting block — which kinds map to which channels, and whether their variables are
 #    set here. A channel with no variable is a WARN: report.sh prints SKIPPED and exits 0.
-echo "[7/8] Checking Reporting Channels (.icm/project.json → reporting)..."
+echo "[7/9] Checking Reporting Channels (.icm/project.json → reporting)..."
 if [ -f ".icm/project.json" ]; then
   for kind in announce alert economics; do
     chans="$(jq -r "(.reporting[\"$kind\"] // (if \"$kind\" == \"announce\" and (.reporting == null) then [\"github-release\"] else [] end)) | join(\" \")" .icm/project.json 2>/dev/null)"
@@ -201,11 +201,42 @@ if [ -f ".icm/project.json" ]; then
 fi
 
 # 8. A UTF-8 locale — the contracts and the decision regexes carry non-ASCII punctuation.
-echo "[8/8] Checking System Locale & Encoding..."
+echo "[8/9] Checking System Locale & Encoding..."
 if [[ "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" =~ UTF-8|utf8|UTF8 ]]; then
   ok "UTF-8 locale in effect (${LC_ALL:-${LC_CTYPE:-$LANG}})"
 else
   warn "No UTF-8 locale in effect (LANG='${LANG:-unset}') — any UTF-8 locale is fine, e.g. C.UTF-8"
+fi
+
+# 9. The security utilities — optional, reported, never required. security-check.sh scans with
+#    gitleaks when it is here and with its built-in patterns when it is not; its dependency audit
+#    needs the tool the lockfile implies (the repo's own package manager, or cargo-audit /
+#    pip-audit as extra installs). health-check.sh pings with curl (step 1) whatever endpoint
+#    the manifest declares.
+echo "[9/9] Checking Security Utilities (security-check.sh, health-check.sh)..."
+if command -v gitleaks >/dev/null 2>&1; then
+  ok "Binary found: gitleaks — security-check.sh scans the diff with it$( [ -f .gitleaks.toml ] && echo ' (.gitleaks.toml honoured)')"
+else
+  info "gitleaks not found — security-check.sh falls back to its built-in patterns (install: brew install gitleaks, or https://github.com/gitleaks/gitleaks#installing)"
+fi
+lock_seen=0
+audit_tool() { # <lockfile> <tool> <how it is checked> <install hint>
+  [ -f "$1" ] || return 0
+  lock_seen=1
+  if eval "$3" >/dev/null 2>&1; then ok "$1 present and $2 available — security-check.sh audits with it"
+  else warn "$1 present but $2 not available — security-check.sh SKIPs the dependency audit ($4)"; fi
+}
+audit_tool pnpm-lock.yaml    pnpm        'command -v pnpm'        "the repo's package manager"
+audit_tool package-lock.json npm         'command -v npm'         "the repo's package manager"
+audit_tool yarn.lock         yarn        'command -v yarn'        "the repo's package manager"
+audit_tool Cargo.lock        cargo-audit 'cargo audit --version'  'cargo install cargo-audit'
+audit_tool requirements.txt  pip-audit   'command -v pip-audit'   'pipx install pip-audit'
+audit_tool poetry.lock       pip-audit   'command -v pip-audit'   'pipx install pip-audit'
+[ "$lock_seen" -eq 1 ] || info "no lockfile at the repo root — security-check.sh has no dependency audit to run here"
+if [ -f ".icm/project.json" ]; then
+  n_he="$(jq -r '[ (.health_endpoint // empty | if type == "array" then .[] else . end), ((.deploy.projects // [])[]? | .health_endpoint // empty) ] | map(select(. != "")) | unique | length' .icm/project.json 2>/dev/null || echo 0)"
+  if [ "${n_he:-0}" -gt 0 ]; then ok "health_endpoint: $n_he declared — health-check.sh reads them after the merge"
+  else info "no health_endpoint in .icm/project.json — health-check.sh reports SKIP after the merge (setup.sh asks for it)"; fi
 fi
 
 echo "-------------------------------------------------"

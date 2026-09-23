@@ -92,6 +92,14 @@ everything except the source files you actually edit. Record overruns on a one-l
    operator where the value must exist; the value is never yours. Release re-asks the same call
    as stop class 3, so a gap left here is a gap that stops the merge.
 
+   Then the diff itself, scanned: `.icm/scripts/security-check.sh <slug>` → `RESULT: CLEAN` (or
+   `SKIP`). `FINDINGS n` names a secret this branch **adds** (`file:line` and the rule — never
+   the value) or a high/critical advisory in a lockfile this branch changed, and appends the
+   same lines to `.icm/runs/<slug>/03_build/output/error.log`. A secret is removed from the
+   diff **and rotated by the operator** — say so in `## Notes for Release`; an advisory is
+   bumped here when the bump is in-ticket, else recorded there with its reason. Release re-runs
+   the same call as stop class 2, so a finding left here is a finding that stops the merge.
+
    ```bash
    .icm/scripts/ci-status.sh <slug>
    ```
@@ -146,7 +154,8 @@ lists, intermediate results — lands under `.icm/runs/<slug>/03_build/`, on the
 `claude/<slug>` and in a working tree no other live run is using.
 
 - Code on the run's branch, small conventional commits (`feat: <slug> — <what>`).
-- A settled `GREEN` from `ci-status.sh` on the pushed head; `env.sh audit --changed` → `OK`.
+- A settled `GREEN` from `ci-status.sh` on the pushed head; `env.sh audit --changed` → `OK`;
+  `security-check.sh <slug>` → `CLEAN` (or `SKIP`).
 - `.icm/runs/<slug>/usage.md` with the `build start` and `build end` lines.
 - The PR flipped from draft to open, satisfied acceptance criteria ticked.
 - `.icm/runs/<slug>/03_build/output/notes.md`:

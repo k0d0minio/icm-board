@@ -101,11 +101,14 @@ the source, settles the scope in session and cuts the intake batch in one sittin
 6. **A run ends at the merge, and the merge is what closes it out.** Release (and every lane)
    runs `close-out.sh` on the branch as its last commit — the archive move rides in the run's own
    PR, so the squash publishes it. Release then merges, reads production once
-   (`deploy-status.sh`) and announces through the repo's reporting hook (`report.sh announce`,
-   or `deferred to CI` — `_shared/project-rules.md` → Reporting); a lane **stops** after its
-   last push and hands the PR to the operator to merge from GitHub. Nothing watches production
-   afterwards: a fault is `report.sh alert` (a red CI job where no channel is mapped), and the
-   recovery is the human-invoked `hotfix` lane, prepared by `rollback.sh`.
+   (`deploy-status.sh` for the platform's word, then `health-check.sh` for the application's —
+   one bounded read each) and announces through the repo's reporting hook (`report.sh
+   announce`, or `deferred to CI` — `_shared/project-rules.md` → Reporting); a lane **stops**
+   after its last push and hands the PR to the operator to merge from GitHub. Nothing watches
+   production afterwards: a fault is `report.sh alert` (a red CI job where no channel is
+   mapped — `health-check.sh` makes that call itself when its read fails, and parks one
+   bug-lane stub it never commits), and the recovery is the human-invoked `hotfix` lane,
+   prepared by `rollback.sh`.
 7. **Every stage and lane brackets itself with two usage lines** —
    `usage-snapshot.sh <slug> <stage> start` as the first act after the preamble and `… end` as
    the last before the stop. `SKIP` is a fine answer; the line is never a gate.

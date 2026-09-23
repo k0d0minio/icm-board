@@ -1,8 +1,9 @@
 # deliver/conformance — check, populate, review
 
-Entered by `/icm-check`. Work from the Apps root. Sustentus is exempt throughout (its
-`.icm/` is authoritative). Never commit or push anything — leave created files
-uncommitted for Jamie to review per repo.
+Entered by `/icm-check`. Work from the Apps root. Sustentus is exempt from the walk (its
+`.icm/` is authoritative; `icm-check.sh --repo` measures it only when asked) — its
+template-owned files are still synced on Jamie's word, like any repo's (step 2). Never
+commit or push anything — leave created files uncommitted for Jamie to review per repo.
 
 ## Inputs
 

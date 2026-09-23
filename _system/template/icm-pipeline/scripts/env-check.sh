@@ -104,8 +104,9 @@ if [ -f ".icm/project.json" ]; then
     stamp="$(jq -r '.migrations.stamp // empty' .icm/project.json)"
     case "$stamp" in
       millis|seconds) ok "migrations.stamp: $stamp" ;;
+      epoch)          ok "migrations.stamp: epoch (<13 digits>-<name>.$(jq -r '.migrations.extension // "sql"' .icm/project.json) for this branch's own migrations)" ;;
       "")             info "no \"migrations.stamp\" — read as \"millis\" (V<17 digits>__<name>.sql for this branch's own migrations)" ;;
-      *)              warn ".icm/project.json migrations.stamp is \"$stamp\" (expected \"millis\" or \"seconds\" — read as \"millis\")" ;;
+      *)              warn ".icm/project.json migrations.stamp is \"$stamp\" (expected \"millis\", \"seconds\" or \"epoch\" — read as \"millis\")" ;;
     esac
     iso="$(jq -r '.database.isolation // empty' .icm/project.json)"
     nk="$(jq -r '.database.neon.api_key_env // "NEON_API_KEY"' .icm/project.json)"

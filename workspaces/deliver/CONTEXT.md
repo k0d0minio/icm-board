@@ -35,6 +35,9 @@ in a new client repo — that is the only doorway between a deal and the machine
 in deliver reads a deal folder except that first run's imported documents, and nothing
 in sell/start touches a repo's tickets.
 
-**Sustentus is exempt** from all three stages — its `.icm/` owns its own semantics (and
-is the source the estate pipeline template was extracted from). The board still reads
-it; nothing here ever writes to it.
+**Sustentus is exempt from all three stages** — its `.icm/` is the source the estate
+pipeline template was extracted from, its `.claude/` and intake baseline are its own, and
+`/icm-check` never measures it unasked. The one thing that does reach it is what reaches
+every pipeline repo: its **template-owned** files are synced by `icm-sync.sh --apply` on
+Jamie's word, through a PR in sustentus (D20; [conformance](stages/conformance/CONTEXT.md)
+step 2).

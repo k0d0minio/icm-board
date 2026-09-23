@@ -100,8 +100,9 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
                                     (haiku · sonnet · opus/fable; advisor for Scope and
                                     Define, executor for Build and the lanes, validator
                                     for a lint fix); check-migrations.sh enforces the UTC
-                                    millisecond stamp (V<17>__name.sql) and names new
-                                    files (--new); db-branch.sh binds a run to its own
+                                    millisecond stamp (V<17>__name.sql — or the epoch form
+                                    <13>-name.<ext> a MongoDB runner writes, D34) and names
+                                    new files (--new); db-branch.sh binds a run to its own
                                     schema or container; security-check.sh is the
                                     pre-commit zero-trust gate (gitleaks + npm audit, a
                                     built-in fallback, a redacted trace in the run's

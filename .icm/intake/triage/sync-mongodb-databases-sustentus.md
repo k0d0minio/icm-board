@@ -47,7 +47,9 @@ After icm-board's D35 PR merges, in this order — each its own step, Jamie's me
   (the full-history round trip; `agentic-dashboard` is the one live run). It is known UNPROVEN
   in advance: 6 `down`s throw. What it measures is where it stops and whether the re-applied
   `up` is idempotent. Afterwards, `db-branch.sh agentic-dashboard down`.
-- The template findings are parked as `triage/db-branch-prove-runner-semantics`.
+- The template findings are parked as `triage/db-branch-prove-runner-semantics`. Its seed order and stamp order
+  are fixed in the template (migrate → seed; `--single` walks past an interleaved stamp); the
+  throwing-`down` question is parked as `triage/db-branch-prove-declared-irreversible`.
 - 2026-09-23, later: #1143 merged (`a51f3b9a0`). D36 put non-production on its own M0
   (`sustentus-staging`) and makes each `preview_<branch>` as a copy of `sustentus-preview`;
   sustentus#1146 carries that. Step 5 now waits on the operator cutover (the session checklist,

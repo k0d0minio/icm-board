@@ -4,7 +4,7 @@ name: MongoDB cleanup
 # ONCE by /setup into a repo whose `.icm/project.json` reads `database.provider: "mongodb"` with
 # `database.mongodb.previews: "branch"`, never by the estate walk. With per-branch previews on, a
 # PR's preview reads `preview_<branch>` on the repo's cluster (lib/db-name.mjs derives the name;
-# the repo's preview-migrate workflow seeds and migrates it). Nothing else drops that database when
+# the repo's preview-migrate workflow migrates and seeds it). Nothing else drops that database when
 # the PR closes, so this job does — and the run's own `run_<slug>` beside it, where db-branch.sh
 # made one and the session never ran `down`. It names nothing else: never production_name or
 # preview_name (lib/mongo.mjs refuses both by name, whatever their shape), never the UAT database

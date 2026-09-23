@@ -12,7 +12,7 @@
 #   shared       database.mongodb.preview_name — the preview database every preview used before
 #                D35, and still uses while MONGODB_PREVIEW_PER_BRANCH is unset. Never dropped or reset.
 #   previews     `preview_<branch>` (lib/db-name.mjs) where mongodb.previews is `branch`: the app
-#                derives the name at runtime, the repo's preview-migrate workflow seeds and migrates
+#                derives the name at runtime, the repo's preview-migrate workflow migrates and seeds
 #                it on each PR push, the reference mongodb-cleanup.yaml drops it when the PR closes.
 #   UAT          `preview_<uat.branch>`, where uat is declared: the same derivation, a long-lived
 #                branch. `reset-uat --apply` drops it and re-makes it with the repo's seed and
@@ -110,14 +110,14 @@ if [ "$(database_provider)" = mongodb ]; then
     echo "One-time setup the operator completes by hand (this script does none of it):"
     [ -n "${!url_env:-}" ] && echo "  [OK]   \$$url_env is set in this shell" || echo "  [TODO] export $url_env (the NON-production cluster's URI — never production's credentials; never in git) on the machines that drive the pipeline"
     { [ -n "$prod" ] && [ -n "$shared" ] && [ "$prod" != "$shared" ]; } && echo "  [OK]   production_name and preview_name declared, and different" || echo "  [TODO] declare database.mongodb.production_name and preview_name in .icm/project.json (/setup) — every drop refuses them by name"
-    { [ -n "$(mongo_seed_command)" ] && [ -n "$(mongo_migrate_command)" ]; } && echo "  [OK]   seed_command and migrate_command declared" || echo "  [TODO] declare database.mongodb.seed_command and migrate_command (the repo's own; the migrate command takes up [<name>] and down <name>)"
+    { [ -n "$(mongo_seed_command)" ] && [ -n "$(mongo_migrate_command)" ]; } && echo "  [OK]   seed_command and migrate_command declared" || echo "  [TODO] declare database.mongodb.seed_command and migrate_command (the repo's own; the migrate command takes up [<name>] [--single] and down <name> [--single])"
     echo "  [INFO] the database user behind \$$url_env creates and drops run_* and preview_* databases: it needs readWrite on them and the dropDatabase action (Atlas: readWriteAnyDatabase + dbAdminAnyDatabase) — without dropDatabase, lib/mongo.mjs drops every collection instead"
     echo "  [INFO] no role can fence $prod off from a user that creates databases by prefix: keep production on a cluster of its own, behind a user limited to it, and point \$$url_env, the Preview target and the preview CI secret at the non-production cluster (D36) — here production then reads absent, by design. A Vercel storage integration's one variable spans every environment: set the two URIs by hand instead"
     echo "  [INFO] cluster caps (database.mongodb.limits): $(mongo_limit_databases) databases · $(mongo_limit_collections) collections (0 = uncapped; the shared Atlas tiers cap both — every run and preview database counts)"
     if [ "$previews" = branch ]; then
       echo "  [INFO] the app reads VERCEL_ENV and VERCEL_GIT_COMMIT_REF at runtime — Vercel exposes its system variables by default (there is no project toggle any more); nothing to switch on"
       echo "  [TODO] the app reads its database name through lib/db-name.mjs → databaseName(process.env, \"$(mongo_name_env)\") — the one line in its connection code (a chore; record it in project-rules.md)"
-      echo "  [TODO] the repo's preview-migrate workflow makes and migrates preview_<branch> on each PR push instead of the shared database:  $(mongo_name_env)=\"\$(node .icm/scripts/lib/db-name.mjs preview \"\$HEAD_REF\")\"  then the seed command and \`<migrate_command> up\`; its concurrency keys on the PR (one database per branch — no global queue). Where the seed creates no tenant or login, the preview opens on nothing: make the database on first push as a copy of $shared instead (mongodump | mongorestore --nsFrom/--nsTo on the one cluster — D36), and migrate $shared on each merge so it stays at main's shape"
+      echo "  [TODO] the repo's preview-migrate workflow makes and migrates preview_<branch> on each PR push instead of the shared database:  $(mongo_name_env)=\"\$(node .icm/scripts/lib/db-name.mjs preview \"\$HEAD_REF\")\"  then \`<migrate_command> up\` and the seed command; its concurrency keys on the PR (one database per branch — no global queue). Where the seed creates no tenant or login, the preview opens on nothing: make the database on first push as a copy of $shared instead (mongodump | mongorestore --nsFrom/--nsTo on the one cluster — D36), and migrate $shared on each merge so it stays at main's shape"
       echo "  [TODO] the preview smoke check waits for that job — a preview's first request otherwise meets an empty database"
       if [ -f .github/workflows/mongodb-cleanup.yaml ] || [ -f .github/workflows/mongodb-cleanup.yml ]; then echo "  [OK]   .github/workflows/mongodb-cleanup.yaml present — drops preview_<branch> and run_<slug> when a PR closes"
       else echo "  [TODO] seed the reference cleanup workflow (setup.sh --fix --template <path>, or copy github-pipeline/workflows/mongodb-cleanup.yaml) — nothing else drops a closed PR's database"; fi
@@ -151,7 +151,7 @@ if [ "$(database_provider)" = mongodb ]; then
     echo "production: ${prod:-<undeclared>} — $ps$( [ "$ps" = absent ] && echo " on this cluster (on its own cluster, as D36 prefers)") · never dropped or reset"
     echo "shared:     ${shared:-<undeclared>} — $ss · the preview database while MONGODB_PREVIEW_PER_BRANCH is unset"
     us="n/a"
-    if [ -n "$uat_db" ]; then us="not yet"; has "$uat_db" && us="present"; echo "uat:        $uat_db — $us (reset-uat --apply re-seeds and re-migrates it)"; fi
+    if [ -n "$uat_db" ]; then us="not yet"; has "$uat_db" && us="present"; echo "uat:        $uat_db — $us (reset-uat --apply re-migrates and re-seeds it)"; fi
     np=0; nr=0
     while IFS= read -r n; do
       [ -n "$n" ] || continue
@@ -171,13 +171,13 @@ if [ "$(database_provider)" = mongodb ]; then
     [ -n "$uat_db" ] || { echo "no UAT database: uat.branch is not declared, or database.mongodb.previews is not branch — nothing to reset"; echo "RESULT: SKIP"; exit 0; }
     { [ -n "$(mongo_seed_command)" ] && [ -n "$(mongo_migrate_command)" ]; } || die "database.mongodb.seed_command and migrate_command must both be declared"
     if [ "$apply" -eq 0 ]; then
-      echo "would: drop $uat_db and re-make it with the repo's seed command and \`migrate up\` — the client's test data is gone, the shape is the UAT branch's migrations on a seeded database (nothing is copied from production)"
+      echo "would: drop $uat_db and re-make it with \`migrate up\` and the repo's seed command — the client's test data is gone, the shape is the UAT branch's migrations on a seeded database (nothing is copied from production)"
       echo "RESULT: DRY-RUN"; exit 0
     fi
     mongo drop "$uat_db" --uat || exit 1
-    ( export "$(mongo_name_env)=$uat_db"; bash -c "$(mongo_seed_command)" && bash -c "$(mongo_migrate_command) up" ) 2>&1 | sed -E 's#mongodb(\+srv)?://[^[:space:]"]*#mongodb://<redacted>#g'
-    [ "${PIPESTATUS[0]}" -eq 0 ] || die "$uat_db dropped but the seed or migrate command failed — re-run reset-uat --apply"
-    echo "reset: $uat_db re-seeded and migrated up"
+    ( export "$(mongo_name_env)=$uat_db"; bash -c "$(mongo_migrate_command) up" && bash -c "$(mongo_seed_command)" ) 2>&1 | sed -E 's#mongodb(\+srv)?://[^[:space:]"]*#mongodb://<redacted>#g'
+    [ "${PIPESTATUS[0]}" -eq 0 ] || die "$uat_db dropped but the migrate or seed command failed — re-run reset-uat --apply"
+    echo "reset: $uat_db migrated up and re-seeded"
     echo "RESULT: RESET"; exit 0 ;;
   prune)
     n=0; would=()

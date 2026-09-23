@@ -18,6 +18,10 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 - **The client contact** — who is told what shipped, and by which variable: <`REPORT_EMAIL_TO`
   in the repo's environment names them; never an address in this file>. <Or: no client-facing
   report — the operator relays.>
+- **UAT sign-off** — <none: runs ship to production on the merge | `uat` in `.icm/project.json`
+  names the branch and the one fixed address; the client contact who signs a batch off there,
+  and how they say so (an email, a call); the operator records it with
+  `promote-uat.sh approve --by` (`.icm/uat/CONTEXT.md`); any one-time setup act still owed>.
 
 ## Knowledge
 

@@ -13,6 +13,13 @@ in which case its release workflow calls it and you record `deferred to CI`), an
 What a channel is — a GitHub Release by default, Slack, email — is the repo's own
 (`.icm/project.json` → reporting; `_shared/project-rules.md` → Reporting), never yours.
 
+**Where the repo declares a UAT environment** (`.icm/project.json` → `uat`;
+`.icm/uat/CONTEXT.md`), the PR you merge targets the UAT branch, not `main`: the squash puts the
+run in front of the client at the one fixed UAT address, `close-out.sh` adds it to the batch, and
+production comes later — one promotion PR for the whole batch, opened by `promote-uat.sh approve`
+on the client's sign-off and merged by the operator. Everything in this stage is the same up to
+step 8; step 9 reads UAT instead of production and announces nothing (the promotion announces).
+
 **What may stop the merge — nothing else may:**
 
 1. A **blocking CI failure** (`RESULT: RED`, or a `PENDING` that will not settle).
@@ -148,14 +155,15 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    record `announce: none`.
 7. **Bring `main` in, then push the record — in two pushes, in this order.**
 
-   **(a) Merge `origin/main` into the run branch** — a merge commit, never a rebase:
+   **(a) Merge the base branch into the run branch** — a merge commit, never a rebase:
 
    ```bash
-   git fetch origin main && git merge --no-edit origin/main
+   git fetch origin && git merge --no-edit origin/main     # every repo
+   git merge --no-edit origin/<uat-branch>                  # UAT repos only — the branch this PR targets (.icm/uat/CONTEXT.md)
    ```
 
-   This is what lets the close-out's sibling-run check see runs archived on `main` since the
-   branch was cut — without it, an epic whose last sibling merged yesterday looks unfinished and
+   This is what lets the close-out's sibling-run check see runs archived on the base branch since
+   the branch was cut — without it, an epic whose last sibling merged yesterday looks unfinished and
    stays in `.icm/intake/`. Resolve conflicts if there are any; **a conflict inside
    `.icm/runs/<slug>/` itself is a STOP** — someone else wrote to this run, and you do not guess
    which record is true.
@@ -215,7 +223,9 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    (`run-pack.sh --sync-rules`, appends only — the next run in this repo starts with them), then
    `git mv`s `.icm/runs/<slug>/` into the runs archive (`runs_archive` in `.icm/project.json`;
    `.icm/runs/_done/` by default) — and the intake epic with it, if this stub was the last one it
-   had left unshipped — and commits that on the branch.
+   had left unshipped — and commits that on the branch. On a UAT repo it also appends the slug to
+   `.icm/uat/batch.json` in the same commit — the batch the client signs off as a whole
+   (`.icm/uat/CONTEXT.md`).
    `RESULT: CLOSED` → push. `RESULT: STOP` → read the reason and fix it; do not merge a run you
    could not close out. The move is the last thing written because the record it archives has to
    be complete first, and it travels alone so the push carries **only the move** — the rename
@@ -237,7 +247,10 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    takes: `- production: READY on <sha> — web dpl_… (prev dpl_…) · docs dpl_…`, or
    `ERROR <project> — see the hotfix lane`, or `PENDING` after the bound, or
    `not declared (no deploy block)`. An `ERROR` un-merges nothing and starts nothing: it is a
-   line in the record and the operator's call to open `/pipeline hotfix`.
+   line in the record and the operator's call to open `/pipeline hotfix`. **On a UAT repo** the
+   PR merged into the UAT branch, so read that instead — `.icm/scripts/deploy-status.sh --sha
+   <merge-sha> --uat` — which prints `- uat: READY on <sha> — web dpl_… · <the fixed UAT
+   address>`; production is untouched and unread until the batch is promoted.
 
    Then the application's own word, once: `.icm/scripts/health-check.sh --sha <merge-sha>` —
    one GET per endpoint the repo declares (`health_endpoint` in `.icm/project.json`, or per
@@ -249,9 +262,12 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    did **not** commit. A `FAIL` un-merges nothing and starts nothing either: name the stub in
    the report, and the operator opens `/pipeline hotfix` — or commits the stub for the bug lane
    — with the recovery `rollback.sh` prepares. Never re-run it in a loop; one bounded read is
-   the whole of the pipeline's post-release health check.
+   the whole of the pipeline's post-release health check. **On a UAT repo, skip it here** —
+   production did not change; `promote-uat.sh sync` names the read after the promotion.
 
-   **(b) Announce.** Unless the record says `announce: none`: where `reporting.announce_from` is
+   **(b) Announce.** On a UAT repo, do not: record `announce: deferred to promotion` — the client
+   is told once, when the batch reaches production (`.icm/uat/CONTEXT.md`). Otherwise, unless the
+   record says `announce: none`: where `reporting.announce_from` is
    `session` (the default), call the repo's hook —
    `.icm/scripts/report.sh announce "<summary>" --slug <slug> --sha <merge-sha> --url <pr-url>
    [--audience internal]` — the summary being the changelog page's one-liner where there is one,
@@ -266,7 +282,8 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    cannot take a post-merge line without a second PR, and there is no second PR). Then tell the
    operator: what merged (SHA), production's state and health, what announced where, what was
    parked in triage (by stub name — the health stub, if one was written, is uncommitted and
-   waits for them), and that the run is archived. Last act:
+   waits for them), and that the run is archived — on a UAT repo, that it is now on the UAT
+   address and `promote-uat.sh status` shows the batch. Last act:
    `.icm/scripts/usage-snapshot.sh <slug> release end`.
 
 ## Outputs
@@ -286,7 +303,7 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 - parked: <triage stub filename(s) | none>
 - migrations: <ok | skip — none of this run's own | re-stamped <n> after main (check-migrations.sh --apply)>
 - learned: <n rule(s) appended to _shared/project-rules.md | none | skip — no error.log>
-- docs: <pages updated | no docs impact> · announce: <public | internal | none | deferred to CI>
+- docs: <pages updated | no docs impact> · announce: <public | internal | none | deferred to CI | deferred to promotion>
 ```
 
 Plus `.icm/runs/<slug>/usage.md` gaining the `release start` and `release end` lines (the file
@@ -325,8 +342,9 @@ all in the one PR.
   (`_shared/project-rules.md` → Announcing) — and once merged, nothing can carry the move into
   that PR. There is no recovery PR; the run's own PR is the only vehicle.
 - After the merge you touched nothing but the PR body's spec link, made one read of production
-  (`deploy-status.sh`), one health read (`health-check.sh` — its stub, if it wrote one, left
-  uncommitted and named in the report) and one call to `report.sh announce` (or recorded
-  `deferred to CI`), and reverted nothing by your own decision — a revert is the hotfix lane's,
+  — or of UAT, on a UAT repo — (`deploy-status.sh`), one health read (`health-check.sh` — its stub,
+  if it wrote one, left uncommitted and named in the report; skipped on a UAT repo until the
+  promotion) and one call to `report.sh announce` (or recorded `deferred to CI` / `deferred to
+  promotion`), and reverted nothing by your own decision — a revert is the hotfix lane's,
   prepared by `rollback.sh` and merged by the operator.
 - Both usage lines are in `usage.md` — `release start` as the first act, `release end` as the last.

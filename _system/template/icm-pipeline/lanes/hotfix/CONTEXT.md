@@ -14,7 +14,10 @@ non-draft so the **full gate and the product-app previews run at once**; that fi
 builds everything, and on an incident that cost is accepted (`_shared/ci.md` → the first ready
 push). The slug is `hotfix-<what>`, the label `type:hotfix`, and `notes.md` names the incident
 and the recovery. Fix-forward stays the default; a revert is *available*, prepared by
-`rollback.sh`, and still the operator's merge.
+`rollback.sh`, and still the operator's merge. **It bypasses UAT:** where the repo declares a UAT
+environment every other PR targets the UAT branch, but a hotfix targets `main` — production is
+wrong now — and `.icm/scripts/promote-uat.sh sync` afterwards carries the fix into UAT
+(`.icm/uat/CONTEXT.md`).
 
 ## Inputs (read only these)
 

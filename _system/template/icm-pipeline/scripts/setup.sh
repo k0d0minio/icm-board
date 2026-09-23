@@ -20,7 +20,10 @@
 #                  reported with the exact lines to add (D17/D19: per repo, by hand; never written).
 #    3. project.json  name, complexity, required_checks, personas, deploy, reporting, migrations
 #                  (stamp/tool/out_of_order), database (isolation), security, support,
-#                  health_endpoint — missing or still at the stub's value is a line with the question.
+#                  health_endpoint, uat — missing or still at the stub's value is a line with
+#                  the question; a declared UAT environment is checked (url, batch.json, the
+#                  branch on origin) and `--fix` seeds the empty batch.json; undeclared is one
+#                  info line, never a gap.
 #    4. Environment   env-check.sh (route + binaries) and env.sh audit (names only).
 #    5. Tickets    validate-intake.sh over every live epic and triage/; triage-report.sh against
 #                  the cap; a loose TODO.md/BACKLOG.md at the root.
@@ -220,6 +223,20 @@ if [ -f .icm/project.json ]; then
   esac
   [ -n "$(security_audit_command)" ] && ok "security.audit_command: $(security_audit_command)" || info "security.audit_command empty — security-check.sh audits npm/pnpm/yarn lockfiles it finds; set it for another ecosystem (pip-audit, cargo audit)"
   ok "support: tier $(support_tier)$( [ -n "$(support_failsafe)" ] && echo " · fail-safe $(support_failsafe)") · sentry via \$$(support_sentry_env)"
+  if uat_declared; then
+    ub="$(uat_branch)"; uu="$(uat_url)"
+    if [ -n "$uu" ]; then ok "uat: branch $ub → $uu (every run merges into $ub; production by promotion — .icm/uat/CONTEXT.md)"
+    else fail "uat.branch is '$ub' but uat.url is empty — the one fixed address the client opens (a domain assigned to the branch in Vercel, or the branch alias)"; fi
+    if [ -f .icm/uat/batch.json ]; then
+      jq -e . .icm/uat/batch.json >/dev/null 2>&1 && ok ".icm/uat/batch.json present ($(jq -r '(.stubs // []) | length' .icm/uat/batch.json) stub(s) in the batch on this checkout)" || fail ".icm/uat/batch.json is not valid JSON — fix it by hand"
+    elif [ "$FIX" -eq 1 ]; then
+      mkdir -p .icm/uat; jq -n '{stubs: [], client_approved: false, approved_by: "", approved_on: "", approved_head: "", approved_note: "", promotions: []}' > .icm/uat/batch.json; fixed "created .icm/uat/batch.json (empty batch)"
+    else fail ".icm/uat/batch.json missing — .icm/scripts/promote-uat.sh init writes it (or --fix)"; fi
+    if git ls-remote --exit-code --heads origin "$ub" >/dev/null 2>&1; then ok "branch $ub exists on origin"
+    else warn "branch $ub not found on origin (or origin unreachable) — create it once from main: git push origin main:$ub; then protect it like main and assign the domain to it in Vercel (promote-uat.sh init lists the steps)"; fi
+  else
+    info "uat: not declared — every run merges into main and ships on the merge; declare uat.branch + uat.url (/setup asks) for a persistent client UAT environment (.icm/uat/CONTEXT.md)"
+  fi
   if [ -n "$(health_endpoints | head -n1)" ]; then ok "health_endpoint: $(health_endpoints | paste -sd', ' -) — health-check.sh reads it once after the merge"
   elif project_has '.deploy.projects'; then warn "health_endpoint empty while deploy is declared — which URL on each production project answers 200 when it is up (e.g. https://<production_url>/api/health)? Until it is set, health-check.sh reports SKIP after every merge and nobody is told production is down"
   else info "health_endpoint empty — health-check.sh reports SKIP after the merge; set it with the deploy block (which URL answers 200 when production is up?)"; fi
@@ -313,7 +330,8 @@ for wf in release labels; do
   else info "$wf workflow absent and project-rules.md does not say so — /setup seeds the reference one (announce_from: ci) or records the absence"; fi
 done
 if [ -f .github/labels.yml ]; then
-  for l in type:hotfix type:handover; do grep -q "$l" .github/labels.yml && ok "$l in .github/labels.yml" || warn "$l missing from .github/labels.yml — add it (and create the label once in GitHub) before the lane's first PR"; done
+  lane_labels="type:hotfix type:handover"; uat_declared && lane_labels="$lane_labels type:promote"
+  for l in $lane_labels; do grep -q "$l" .github/labels.yml && ok "$l in .github/labels.yml" || warn "$l missing from .github/labels.yml — add it (and create the label once in GitHub) before the lane's first PR"; done
 else info "no .github/labels.yml — the label vocabulary is not documented here (new-run.sh dies if a type:<lane> label does not exist in GitHub)"; fi
 
 # --- 11. support -------------------------------------------------------------------------------------------------------

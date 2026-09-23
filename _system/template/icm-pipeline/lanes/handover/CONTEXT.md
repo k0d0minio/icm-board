@@ -43,7 +43,9 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    .icm/scripts/new-run.sh <slug> --lane handover --summary "Handover: <what the client now owns and runs>"
    ```
 
-   Draft, `type:handover`, Summary with a `- slug:` line, Steps to test — no checklist.
+   Draft, `type:handover`, Summary with a `- slug:` line, Steps to test — no checklist. (On a UAT
+   repo the PR targets the UAT branch like every lane and reaches `main` with the batch's
+   promotion — `.icm/uat/CONTEXT.md`; a handover normally follows the last promotion.)
 7. **The gate, then settle**: `.icm/scripts/security-check.sh <slug> --branch --audit` →
    `OK` (a handover that ships a known-high dependency or a pasted key is not a handover), the
    cheap tier, `close-out.sh <slug>` → `CLOSED`, push, `ci-status.sh` → `GREEN`.

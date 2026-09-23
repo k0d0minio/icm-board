@@ -32,6 +32,7 @@ T lanes/knowledge/CONTEXT.md
 T lanes/hotfix/CONTEXT.md
 T lanes/handover/CONTEXT.md
 T intake/CONTEXT.md
+T uat/CONTEXT.md
 T _shared/github.md
 T _shared/ci.md
 T _shared/stage-preamble.md
@@ -69,6 +70,8 @@ T scripts/health-check.sh
 T scripts/usage-snapshot.sh
 T scripts/env.sh
 T scripts/setup.sh
+T scripts/client-status.sh
+T scripts/promote-uat.sh
 T scripts/list-skills.sh
 T scripts/db-branch.sh
 T scripts/security-check.sh
@@ -87,6 +90,7 @@ T scripts/retrospective.sh
 T raw/README.md
 T raw/_processed/.gitkeep
 T processed/.gitkeep
+T output/.gitkeep
 P project.json
 P _shared/project-rules.md
 P _shared/knowledge-map.md

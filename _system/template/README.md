@@ -60,6 +60,10 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
   lanes/{bug,tweak,chore,knowledge}/  lanes/hotfix/ (human-invoked, opens READY)
   lanes/handover/ (the deal's last lane)                                              (T)
   intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
+  uat/CONTEXT.md                 ← OPTIONAL in effect, always seeded: the persistent client
+                                    UAT environment — one branch, one address, the batch the
+                                    client signs off, the promotion (D31). Inert until /setup
+                                    declares `uat` in project.json                     (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
   _shared/run-pack/{project,plan,tasks,decisions,status,handoff,FAILURE}.md
                                  ← the canonical file pack run-pack.sh seeds into every
@@ -80,12 +84,15 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
                                     and where process-raw.sh writes the extracted text —
                                     recordings transcribed locally (ffmpeg + whisper.cpp),
                                     never committed                                    (T)
+  output/.gitkeep                ← where client-status.sh writes client-status-latest.md
+                                    (the client's view; committing it is the repo's call)  (T)
   scripts/lib/{gh,changed-files,project,vercel}.sh  scripts/lib/model-prices.json     (T)
   scripts/{resolve-run,validate-spec,validate-intake,validate-decisions,new-run,
            project-body,project-labels,ci-status,close-out,triage-report,env-check,
            select-model,check-migrations,process-raw,
            deploy-status,rollback,usage-snapshot,env,setup,retrospective,
-           list-skills,db-branch,security-check,run-pack,health-check}.sh             (T)
+           list-skills,db-branch,security-check,run-pack,health-check,
+           client-status,promote-uat}.sh                                              (T)
                                     select-model.sh routes complexity × stage → tier
                                     (haiku · sonnet · opus/fable; advisor for Scope and
                                     Define, executor for Build and the lanes, validator

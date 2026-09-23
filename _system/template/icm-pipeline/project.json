@@ -16,6 +16,8 @@
     "projects": []
   },
 
+  "uat": { "branch": "", "url": "" },
+
   "reporting": {
     "announce_from": "session",
     "announce": ["github-release"],

@@ -154,6 +154,15 @@ disable, is the repo's own (`_shared/project-rules.md` → The factory); a branc
 pattern still previews everything, so a new branch convention has to be added to each quiet
 project's file.
 
+**The UAT branch, where the repo declares one, is a preview deployment with a fixed address**
+(`.icm/project.json` → `uat`; `.icm/uat/CONTEXT.md`). A squash into it is a push like any other:
+Vercel builds the affected product projects for that commit, and the domain the operator assigned
+to the branch (or the branch alias) always serves the branch's newest READY deployment — which is
+what keeps the client's address constant while the batch under it changes. It runs on the
+**preview** environment's variables unless the project attaches a custom environment to the
+branch. It is not a PR preview and carries no PR status: Release reads it once, after the merge,
+with `deploy-status.sh --sha <merge-sha> --uat`, and production is read only after the promotion.
+
 **An absent status is not a skipped one, and neither is a pass you may quote.** Two different
 things read as "not built":
 

@@ -17,8 +17,16 @@
 #
 # Read-only in the strong sense: GET only, the CLI never run, nothing written but stdout.
 #
+# --uat — where the repo declares a UAT environment (.icm/project.json → uat; .icm/uat/CONTEXT.md)
+# and the run merged into the UAT branch, Release reads THAT deployment once instead of production:
+# the newest deployment of the merge commit whose git ref is the UAT branch, for each product
+# project (quiet projects do not deploy on a working branch and are skipped, named). The record
+# line is `- uat: READY on <sha> — <project> dpl_… · <uat.url>`; no previous-deployment id is
+# looked up (there is nothing to roll back — a broken UAT build is a bug lane into the UAT branch,
+# and the address keeps serving the last READY deployment). Production is not read.
+#
 # Usage:
-#   .icm/scripts/deploy-status.sh <slug> [--timeout <seconds>] [--interval <seconds>] [--no-wait]
+#   .icm/scripts/deploy-status.sh <slug> [--timeout <seconds>] [--interval <seconds>] [--no-wait] [--uat]
 #   .icm/scripts/deploy-status.sh --sha <merge-sha> [...]
 #   (<slug> resolves the merge SHA from the run's PR: run.md → `- pr:` → the PR's merge_commit_sha,
 #    or its head SHA when it has not merged yet; --sha bypasses GitHub entirely.)
@@ -37,18 +45,19 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 die() { echo "error: $*" >&2; exit 1; }
 
-slug=""; sha=""; timeout=600; interval=20; wait=1
+slug=""; sha=""; timeout=600; interval=20; wait=1; uat=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --sha)      sha="${2:-}"; shift 2 ;;
     --timeout)  timeout="${2:-}"; shift 2 ;;
     --interval) interval="${2:-}"; shift 2 ;;
     --no-wait)  wait=0; shift ;;
+    --uat)      uat=1; shift ;;
     --*)        die "unknown flag: $1" ;;
     *)          [ -z "$slug" ] && slug="$1" || die "unexpected argument: $1"; shift ;;
   esac
 done
-[ -n "$slug" ] || [ -n "$sha" ] || die "usage: deploy-status.sh <slug> | --sha <merge-sha> [--timeout s] [--interval s] [--no-wait]"
+[ -n "$slug" ] || [ -n "$sha" ] || die "usage: deploy-status.sh <slug> | --sha <merge-sha> [--timeout s] [--interval s] [--no-wait] [--uat]"
 case "$timeout"  in ''|*[!0-9]*) die "--timeout must be a whole number of seconds" ;; esac
 case "$interval" in ''|*[!0-9]*) die "--interval must be a whole number of seconds" ;; esac
 [ "$interval" -ge 5 ] || die "--interval must be at least 5 seconds"
@@ -58,11 +67,16 @@ source "$here/lib/project.sh"
 # shellcheck source=lib/vercel.sh
 source "$here/lib/vercel.sh"
 
+label="production"; ub=""; uat_suffix=""
+if [ "$uat" -eq 1 ]; then
+  uat_declared || die "--uat needs a UAT environment declared in .icm/project.json (uat.branch) — /setup declares one; without one Release reads production"
+  label="uat"; ub="$(uat_branch)"; [ -z "$(uat_url)" ] || uat_suffix=" · $(uat_url)"
+fi
 if ! vercel_declared; then
-  echo "production: not declared (no deploy block)"
+  echo "$label: not declared (no deploy block)"
   echo "RESULT: SKIP"; exit 0
 fi
-vercel_require "reading production"
+vercel_require "reading $label"
 
 # --- resolve the SHA from the run's PR when a slug was given --------------------------------------------
 
@@ -90,10 +104,21 @@ verdict="READY"; errored=""; lines=()
 for pj in "${projects[@]}"; do
   name="$(printf '%s' "$pj" | jq -r '.name')"
   class="$(printf '%s' "$pj" | jq -r '.class // "product"')"
+  if [ "$uat" -eq 1 ] && [ "$class" = "quiet" ]; then
+    lines+=("$name ($class): skipped — a quiet project builds on the default branch only, never on the UAT branch")
+    continue
+  fi
   state=""; dpl_id=""; dpl_url=""; created=""
   while :; do
-    deps="$(vercel_deployments "$name" --target production --sha "$sha" --limit 5)"
-    dpl="$(printf '%s' "$deps" | jq -c 'sort_by(-.created) | first // empty')"
+    if [ "$uat" -eq 1 ]; then
+      # Any target: the UAT branch deploys as a preview deployment (or a custom environment). The
+      # branch's own deployment of this SHA first; the newest of the SHA otherwise.
+      deps="$(vercel_deployments "$name" --sha "$sha" --limit 10)"
+      dpl="$(printf '%s' "$deps" | jq -c --arg b "$ub" '([.[] | select((.meta.githubCommitRef // "") == $b)] | sort_by(-.created) | first) // (sort_by(-.created) | first) // empty')"
+    else
+      deps="$(vercel_deployments "$name" --target production --sha "$sha" --limit 5)"
+      dpl="$(printf '%s' "$deps" | jq -c 'sort_by(-.created) | first // empty')"
+    fi
     if [ -n "$dpl" ]; then
       state="$(printf '%s' "$dpl" | jq -r '.state // .readyState // "UNKNOWN"')"
       dpl_id="$(printf '%s' "$dpl" | jq -r '.uid // .id')"
@@ -109,7 +134,7 @@ for pj in "${projects[@]}"; do
   # The previous READY production deployment — newest created before this one — the rollback
   # candidate rollback.sh names. Read once, never acted on here.
   prev_id=""
-  if [ -n "$dpl_id" ]; then
+  if [ -n "$dpl_id" ] && [ "$uat" -eq 0 ]; then
     prev_id="$(vercel_deployments "$name" --target production --limit 20 \
       | jq -r --arg id "$dpl_id" --argjson c "${created:-0}" \
           '[.[] | select((.uid // .id) != $id and ((.state // .readyState) == "READY") and (.created < $c))] | sort_by(-.created) | first | (.uid // .id) // empty')"
@@ -117,8 +142,10 @@ for pj in "${projects[@]}"; do
 
   case "$state" in
     READY)          lines+=("$name ($class): READY — https://${dpl_url} — ${dpl_id}${prev_id:+ (prev ${prev_id})}") ;;
-    ERROR|CANCELED) lines+=("$name ($class): $state — ${dpl_id}${prev_id:+ (prev ${prev_id})} — see the hotfix lane (rollback.sh --sha $sha --vercel names the recovery)"); errored="${errored:+$errored }$name"; verdict="ERROR" ;;
-    "")             lines+=("$name ($class): no production deployment of ${sha:0:7} yet (not created, or filtered by an ignore step)"); [ "$verdict" = "ERROR" ] || verdict="PENDING" ;;
+    ERROR|CANCELED) if [ "$uat" -eq 1 ]; then lines+=("$name ($class): $state — ${dpl_id} — the UAT address keeps its last READY deployment; fix it through a bug lane into the UAT branch")
+                    else lines+=("$name ($class): $state — ${dpl_id}${prev_id:+ (prev ${prev_id})} — see the hotfix lane (rollback.sh --sha $sha --vercel names the recovery)"); fi
+                    errored="${errored:+$errored }$name"; verdict="ERROR" ;;
+    "")             lines+=("$name ($class): no $label deployment of ${sha:0:7} yet (not created, or filtered by an ignore step)"); [ "$verdict" = "ERROR" ] || verdict="PENDING" ;;
     *)              lines+=("$name ($class): $state — ${dpl_id} (unsettled)"); [ "$verdict" = "ERROR" ] || verdict="PENDING" ;;
   esac
 done
@@ -126,7 +153,7 @@ done
 printf '%s\n' "${lines[@]}"
 # The one line Release copies into its record.
 record="$(printf '%s\n' "${lines[@]}" | awk -F' — ' '{ split($1, a, " "); printf "%s%s %s", (NR>1 ? " · " : ""), a[1], $2 }' )"
-echo "- production: $verdict on ${sha:0:7} — $record"
+echo "- $label: $verdict on ${sha:0:7} — $record$uat_suffix"
 
 case "$verdict" in
   READY)   echo "RESULT: READY"; exit 0 ;;

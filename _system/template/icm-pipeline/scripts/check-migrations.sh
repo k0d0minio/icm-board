@@ -86,7 +86,9 @@ command -v jq >/dev/null 2>&1 || die "jq not found"
 # shellcheck source=lib/project.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib/project.sh"
 
-base="origin/main"; apply=0; paths=(); new_name=""
+# The base is the branch this run merges into: origin/main, or the UAT branch where the repo
+# declares one (lib/project.sh → pipeline_base_branch; .icm/uat/CONTEXT.md). --base overrides.
+base=""; apply=0; paths=(); new_name=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --base)    base="${2:-}"; [ -n "$base" ] || die "--base needs a ref"; shift 2 ;;
@@ -99,6 +101,7 @@ while [ $# -gt 0 ]; do
 done
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not a git repository"
+[ -n "$base" ] || base="origin/$(pipeline_base_branch)"
 git rev-parse --verify --quiet "${base}^{commit}" >/dev/null \
   || die "base ref '$base' does not resolve — run 'git fetch origin' first, or pass --base <ref>"
 

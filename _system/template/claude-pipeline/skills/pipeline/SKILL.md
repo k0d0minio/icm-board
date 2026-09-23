@@ -130,8 +130,10 @@ its contract; `status` and `uat` are script verbs, not stages.
    call itself when its read fails, and parks one bug-lane stub it never commits), and the
    recovery is the human-invoked `hotfix` lane, prepared by `rollback.sh`.
 7. **Every stage and lane brackets itself with two usage lines** —
-   `usage-snapshot.sh <slug> <stage> start` as the first act after the preamble and `… end` as
-   the last before the stop. `SKIP` is a fine answer; the line is never a gate.
+   `usage-snapshot.sh <slug> <stage> start` as the first act after the preamble and `… end` just
+   before `close-out.sh` where the stage has one (Release, every lane — the archive commit carries
+   the line; nothing written after the close-out reaches the PR), else as the last act before the
+   stop. `SKIP` is a fine answer; the line is never a gate.
 8. **Every stage leaves the run resumable.** `status.md` (phase · step · ci · blocked · updated)
    and `handoff.md` (next steps, blockers, do-nots) are rewritten at every stop, including a
    STOP mid-way; a RED or a blocked gate is an `error.log` entry (`retrospective.sh` reads it),

@@ -34,6 +34,6 @@ the build.
 
 Shared Layer 3: [`_system/knowledge/`](../../_system/knowledge/) (terms · stack) ·
 [CLIENTS.md](../../_system/contracts/CLIENTS.md) (the flags: `work_started_at`,
-`github_repo`, `stripe_customer_id`, `deal_slug`, `support_minor`) ·
+`github_repo`, `stripe_customer_id`, `support_minor`) ·
 [TICKETS.md](../../_system/contracts/TICKETS.md) (what kickoff's findings become) ·
 [PIPELINE.md](../../_system/contracts/PIPELINE.md) (what `/setup` fills in the repo).

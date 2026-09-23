@@ -9,7 +9,7 @@
 # this script NEVER uploads (the Drive step is the stage's, through the connector, D25) and
 # NEVER commits. pandoc is never installed by a script: absent, it reports SKIP with the hint.
 #
-# Usage: _system/scripts/render-deal.sh <client>/<engagement> <NN-artefact>   (e.g. alix-hahusseau/berceo-platform 04-proposal)
+# Usage: _system/scripts/render-deal.sh <client>/<engagement> <NN-artefact>   (e.g. berceo/berceo-platform 04-proposal)
 # Verdict (stdout, last line):
 #   RESULT: RENDERED <path>   exit 0
 #   RESULT: SKIP (pandoc not found — install it: brew install pandoc | apt install pandoc)   exit 0

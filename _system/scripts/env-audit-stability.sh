@@ -95,6 +95,7 @@ check "no env value reaches the output" '! grep -q MOCK_SECRET_VALUE <<<"$out"'
 
 out="$(audit "$p_hidden")"
 check "a project the token cannot see is one [UNKNOWN] row" '[ "$(grep -c "\[UNKNOWN\] Vercel/p8" <<<"$out")" = 1 ] && ! grep -q "missing on Vercel/p8" <<<"$out"'
+# shellcheck disable=SC2034  # read inside check's eval string
 chk="$(VERCEL_API_URL="http://127.0.0.1:$p_hidden" bash .icm/scripts/lib/vercel.sh --check 2>/dev/null)"
 check "vercel.sh --check pages every project and names the mismatch" 'grep -q "7 project(s) visible" <<<"$chk" && grep -q "8 declared, 7 visible" <<<"$chk" && grep -q "RESULT: MISMATCH 1" <<<"$chk"'
 

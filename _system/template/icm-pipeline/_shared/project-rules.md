@@ -39,6 +39,16 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   cloud environment panel. <Anything unusual about where a key must exist.>
 - **Local feedback scripts** — `scripts/format.sh` and `scripts/lint.sh` run <formatter / linter>
   over changed files only; CI stays the verdict. <Or: not wired — the stubs report SKIP.>
+- **The security gate** — `scripts/security-check.sh` runs before every commit in Build and
+  before every lane's push (template-owned; the one local check that is a gate). Wired as this
+  repo's git pre-commit hook: <`.husky/pre-commit` → `.icm/scripts/security-check.sh` | not
+  wired — the stages call it>. gitleaks: <installed on every machine that commits | absent —
+  the built-in patterns are the floor>. `security.audit_command` in `.icm/project.json` for a
+  non-npm ecosystem: <…>.
+- **The run's database** — `database` in `.icm/project.json`: <`schema` — one Postgres schema
+  per run on `$DATABASE_URL` | `container` — one local Postgres per run | `none` — no database,
+  or migrations are applied by the preview and CI only>. Migrations: <the declared stamp form
+  (`millis` default), the tool, and whether out-of-order is configured in the tool's own file>.
 - **Archive** — `runs_archive` / `intake_archive` in `.icm/project.json`. <Where they are served
   from, if anywhere; the default `_done/` folders need no note.>
 
@@ -63,15 +73,21 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 
 ## Capability skills the stages may call
 
-<The one-job skills under `.claude/skills/` a stage names — e.g. a docs skill for the
-knowledge lane, a smoke-test skill for Release. "None" is a fine answer; the contracts say what to
-do when a named skill is absent.>
+- **Pipeline capability skills** — `.icm/skills/<name>/SKILL.md` (three-tier, loaded on a
+  trigger; `.icm/skills/README.md`). Seeded and template-owned: `security-audit`,
+  `database-migration`, `preview-deploy`. This repo's own additions: <name · what for | none>.
+- **Repo skills** — <the one-job skills under `.claude/skills/` a stage names — e.g. a docs
+  skill for the knowledge lane, a smoke-test skill for Release. "None" is a fine answer; the
+  contracts say what to do when a named skill is absent.>
 
 ## Learned rules
 
-*The constraints earlier runs paid for — appended by `.icm/scripts/retrospective.sh --apply` at
-Release and at the end of every lane, one per error class a run fixed and flagged (`- rule:` in
-its `error.log`) or fixed again after an earlier run already had (the archive's `error.log`s).
+*The constraints earlier runs paid for, appended before each close-out by two writers with one
+shape: `.icm/scripts/retrospective.sh --apply` (at Release and at the end of every lane — one
+line per error class a run fixed and flagged with `- rule:` in its `error.log`, or fixed again
+after an earlier run already had, counted across the archive's `error.log`s) and
+`.icm/scripts/run-pack.sh --sync-rules` (called by `close-out.sh` — the `## Learned rules` a run
+wrote in its `FAILURE.md`: what no tool logged — a wrong assumption, a STOP, a skipped step).
 Each line carries the run it was learned in. Build and the lanes read this section before their
 first edit, with the same standing as the code rules. Edit or delete lines freely — this file is
 the repo's own, never synced — and delete a line that reads as a slip rather than a constraint.*

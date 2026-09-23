@@ -20,9 +20,12 @@ icm-board estate; `intake/README.md` here is the self-contained micro-copy.*
   docs/                 ← ad hoc reports, client words, runbooks
 ```
 
-This folder also carries the pipeline — `project.json`, `stages/`, `lanes/`, `runs/`,
-`_shared/`, `scripts/`, and `raw/` + `processed/` for material a client sends — each
-seeded file documents itself, and `.claude/skills/pipeline/SKILL.md` routes between them.
+This folder also carries the pipeline — `project.json`, `stages/`, `lanes/`, `runs/`
+(every live run with its seven canonical files: project, plan, tasks, decisions, status,
+handoff, FAILURE — `scripts/run-pack.sh`), `_shared/`, `scripts/`, `skills/` (three-tier
+capability skills a stage loads on a trigger — `skills/README.md`), and `raw/` +
+`processed/` for material a client sends — each seeded file documents itself, and
+`.claude/skills/pipeline/SKILL.md` routes between them.
 
 ## The rules that travel with this folder
 

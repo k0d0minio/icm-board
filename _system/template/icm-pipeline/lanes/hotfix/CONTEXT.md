@@ -45,7 +45,10 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    - `vercel rollback dpl_…` — production must be back **now**: `rollback.sh --sha <sha>
      --vercel` prints the previous READY deployment and the exact CLI/REST call. **The operator
      runs it**; the lane records the id and still ships the code fix or revert behind it.
-3. **Write `notes.md`** (template below) and, for fix-forward, open the lane PR:
+3. **Write `notes.md`** (template below) and, for fix-forward, open the lane PR — after the
+   zero-trust gate, since the script commits and pushes: `.icm/scripts/security-check.sh <slug>
+   --branch` → `RESULT: OK` (`BLOCKED` is a STOP; `.icm/skills/security-audit/SKILL.md`). An
+   incident is exactly when a key gets pasted into a fix.
 
    ```bash
    .icm/scripts/new-run.sh <slug> --lane hotfix --summary "<what was broken → what's true now>"

@@ -41,8 +41,11 @@ overruns on a one-line `Context budget:` note in `spec.md`.
 ## Process
 
 1. **Resolve the slug — then the first act of every stage:**
-   `.icm/scripts/usage-snapshot.sh <slug> define start` (`SKIP` is fine, never a stop). A stub's
-   `feature-slug` is the slug; pre-seed the spec from it
+   `.icm/scripts/usage-snapshot.sh <slug> define start` (`SKIP` is fine, never a stop). Define
+   is the **advisor** pass: `.icm/scripts/select-model.sh <epic>/<slug> --stage 02_define`
+   prints `opus` (`fable` for a research stub) — the model that writes the plan Build executes;
+   if this session is on a lower tier, say so in one line and carry on (the operator decides).
+   A stub's `feature-slug` is the slug; pre-seed the spec from it
    (`personas`, Problem, Proposed change, Acceptance criteria, Out of scope, the
    initiative/objective link — all carry over; `depends-on`/`sequence` are context, not spec
    fields). Define never invents a slug: a plain request with no stub behind it is new content
@@ -67,9 +70,16 @@ overruns on a one-line `Context budget:` note in `spec.md`.
    ```
 
    It commits the run + pushes, opens the draft PR (body projected from `spec.md`), writes/extends
-   `run.md`, projects labels, and `git mv`s the consumed stub into `_done/`. Pass `--stub`
-   whenever the spec came from one. Skip the script **only** for explicitly throwaway work — then
-   write `run.md` by hand. (Underlying calls: `_shared/github.md`.)
+   `run.md`, seeds the run's canonical file pack (`run-pack.sh --init`: `tasks.md` carries the
+   acceptance criteria as its definition of done, `decisions.md` the scope's `D-n` rows,
+   `project.md` the pointers), projects labels, and `git mv`s the consumed stub into `_done/`.
+   Pass `--stub` whenever the spec came from one. Skip the script **only** for explicitly
+   throwaway work — then write `run.md` by hand. (Underlying calls: `_shared/github.md`.)
+   **Then the advisor's plan:** write `plan.md` — the change in passes, one layer each, the order
+   they land, what "done" looks like per pass — from the spec and the `touches:` paths; Build
+   executes it and rewrites it when reality disagrees. Fill any `none` the seed left in
+   `project.md`, set `status.md` (`phase: define`), write `handoff.md` ("tick Spec approved, then
+   `build <slug>`"), commit and push those with the run.
    **Branch check first:** the script opens the PR from the _current_ branch. The front commits
    straight to `main`, so start from a fresh branch off `origin/main` before running the script —
    never a branch whose PR has already merged.
@@ -140,8 +150,9 @@ creates (or the harness-named one it records), never `main`, never another run's
 ```
 
 Plus `run.md` (extended with `branch:` + `pr:` if the front already created it), `usage.md` with
-the `define start`/`end` lines, the run committed and pushed, and a **draft PR** whose body and
-labels are projected from `spec.md`.
+the `define start`/`end` lines, the canonical file pack (`plan.md` written — the advisor's
+passes; `tasks.md`, `decisions.md`, `project.md` seeded; `status.md` and `handoff.md` set), the
+run committed and pushed, and a **draft PR** whose body and labels are projected from `spec.md`.
 
 ## Verify (before handing off)
 
@@ -149,5 +160,6 @@ labels are projected from `spec.md`.
 - `touches:` names real paths.
 - The draft PR exists, its body links to `spec.md` (no embedded copy), both gate boxes present and
   unticked, labels match the spec header; `run.md` records branch + PR.
-- The run is committed and pushed — resumable from any device.
+- The run is committed and pushed — resumable from any device: `run-pack.sh <slug> --check` →
+  `OK`, `plan.md` has real passes, `handoff.md` says what the operator does next.
 - You stopped for human review — you did not start building.

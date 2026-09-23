@@ -54,7 +54,14 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
    - "`deploy`: which Vercel project(s) does this repo deploy as, on which team, under which
      token *name*? Is `web` the product project and `docs` quiet?"
    - "`required_checks`: which check-run names must be green before a merge?" · "`personas`?"
-   - "`migrations`: where do they live, and are they reversible?"
+   - "`migrations`: where do they live, are they reversible, which tool applies them (flyway /
+     prisma / drizzle / sql), and does that tool accept out-of-order stamps? New ones are named
+     `V<17 digits>__<name>.sql` (`stamp: millis`) unless you keep the legacy `seconds` form."
+   - "`database`: does this repo have a database? `schema` (one Postgres schema per run on the
+     variable `url_env` names) or `container` (one local Postgres per run) gives every run its
+     own; `none` for a repo without one."
+   - "`security.audit_command`: an npm/pnpm/yarn lockfile is audited automatically — another
+     ecosystem needs its command (pip-audit, cargo audit), or leave it empty."
    - "`support`: `none`, `basic` or `retainer`? Where is the fail-safe page? Which variable
      carries the Sentry DSN?"
    - "`alert` maps to no channel — the red CI job is the alert. Keep that, and record it?"

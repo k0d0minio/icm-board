@@ -17,7 +17,13 @@ What a channel is — a GitHub Release by default, Slack, email — is the repo'
 
 1. A **blocking CI failure** (`RESULT: RED`, or a `PENDING` that will not settle).
 2. A **security-critical finding introduced by this diff** — an exploitable defect: auth bypass,
-   leaked secret, tenant-scoping hole.
+   leaked secret, tenant-scoping hole. **Measured first** by `security-check.sh <slug> --branch
+   --audit` (step 4): a secret in what this branch added, or a high/critical advisory in the
+   repo's lockfile (the audit runs on every Release read, whether or not this branch touched the
+   dependency), is `BLOCKED n` with the redacted trace in `03_build/output/error.log`; the
+   review passes cover what a pattern cannot. The one waiver is the operator's: a pre-existing
+   advisory that cannot be bumped on this branch, recorded in the `## Release` record and
+   re-read with `--branch --no-audit`.
 3. A **deploy-breaking config finding** — measured, not eyeballed: `env.sh audit --changed`
    reports `GAPS` (a key this branch added is missing from a surface it is scoped to); a
    migration without a working `down` **in a repo that declares `migrations.reversible: true`**
@@ -106,6 +112,11 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
      dependency this branch introduced), read before the diff is. `BLOCKED n` is stop class 2 with
      the redacted trace in `error.log`: follow `.icm/skills/security-audit/SKILL.md` → On BLOCKED
      and send back to Build. A `[WARN]` that gitleaks is absent goes in the record, not under it.
+     The audit runs on every Release read, whether or not this branch touched the dependency —
+     the repo ships what its lockfile pins. A pre-existing advisory that cannot be bumped on
+     this branch is the **operator's** call: a chore lane first, or their waiver — `audit
+     waived — <advisory>, <why>` in the record's `security` slot — and the re-read is
+     `security-check.sh <slug> --branch --no-audit`. The waiver is theirs, never yours.
    - **Code review — always, in-session.** Run **`/code-review`** at the spec's complexity
      (`trivial → low`, `standard → medium`, `complex → high`). There is no CI review job; this
      pass is the review.
@@ -228,6 +239,18 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    `not declared (no deploy block)`. An `ERROR` un-merges nothing and starts nothing: it is a
    line in the record and the operator's call to open `/pipeline hotfix`.
 
+   Then the application's own word, once: `.icm/scripts/health-check.sh --sha <merge-sha>` —
+   one GET per endpoint the repo declares (`health_endpoint` in `.icm/project.json`, or per
+   project under `deploy.projects[]`), expecting 200, three attempts with backoff. It prints the
+   one `- health:` line the stop message takes: `OK`, `SKIP — no health endpoint declared`, or
+   `FAIL <endpoint>` — on which it has already called `report.sh alert` (the repo's channels;
+   `SKIPPED` where none is mapped) and parked **one triage stub**
+   (`.icm/intake/triage/health-check-<date>-<sha>.md`, `lane: bug`, `complexity: high`) that it
+   did **not** commit. A `FAIL` un-merges nothing and starts nothing either: name the stub in
+   the report, and the operator opens `/pipeline hotfix` — or commits the stub for the bug lane
+   — with the recovery `rollback.sh` prepares. Never re-run it in a loop; one bounded read is
+   the whole of the pipeline's post-release health check.
+
    **(b) Announce.** Unless the record says `announce: none`: where `reporting.announce_from` is
    `session` (the default), call the repo's hook —
    `.icm/scripts/report.sh announce "<summary>" --slug <slug> --sha <merge-sha> --url <pr-url>
@@ -238,11 +261,12 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
    `announce: deferred to CI` and let the repo's release workflow make the same call. **Never
    wait or poll for that workflow.**
 
-   **(c) The record is already merged — say it in the report instead.** The `- production:` line
-   and the announce outcome go in your stop message (the record on `main` cannot take a
-   post-merge line without a second PR, and there is no second PR). Then tell the operator:
-   what merged (SHA), production's state, what announced where, what was parked in triage (by
-   stub name), and that the run is archived. Last act:
+   **(c) The record is already merged — say it in the report instead.** The `- production:` and
+   `- health:` lines and the announce outcome go in your stop message (the record on `main`
+   cannot take a post-merge line without a second PR, and there is no second PR). Then tell the
+   operator: what merged (SHA), production's state and health, what announced where, what was
+   parked in triage (by stub name — the health stub, if one was written, is uncommitted and
+   waits for them), and that the run is archived. Last act:
    `.icm/scripts/usage-snapshot.sh <slug> release end`.
 
 ## Outputs
@@ -258,7 +282,7 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 
 - gate: Ready to merge ticked — merge authorised
 - ci: GREEN on <sha> (ci-status.sh, after the last push)
-- reviews: code <effort> · security <security-check.sh --branch: OK | BLOCKED → sent back> <+ /security-review — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
+- reviews: code <effort> · security <security-check.sh --branch --audit: OK | BLOCKED → sent back | audit waived — <advisory>, <why> (the operator)> <+ /security-review — result | n/a> · readiness <env.sh audit --changed: OK | n/a>
 - parked: <triage stub filename(s) | none>
 - migrations: <ok | skip — none of this run's own | re-stamped <n> after main (check-migrations.sh --apply)>
 - learned: <n rule(s) appended to _shared/project-rules.md | none | skip — no error.log>
@@ -266,8 +290,8 @@ Appended to `.icm/runs/<slug>/03_build/output/notes.md`:
 ```
 
 Plus `.icm/runs/<slug>/usage.md` gaining the `release start` and `release end` lines (the file
-travels with the archive). The post-merge `- production:` line and the announce outcome are
-reported in the stop message (step 9c).
+travels with the archive). The post-merge `- production:` and `- health:` lines and the announce
+outcome are reported in the stop message (step 9c).
 
 Plus the changelog page, where the repo has one (unless `announce: none`), and any docs edits —
 all in the one PR.
@@ -280,7 +304,8 @@ all in the one PR.
   established after your last push, never inherited, never read off a Vercel event or the
   `Vercel Preview Comments` check. Merged once; never on RED, never on PENDING.
 - `security-check.sh <slug> --branch --audit` read `OK` on the branch that merged; a `BLOCKED`
-  was never merged around.
+  was never merged around. An audit waiver, where there is one, is in the record in the
+  operator's words, not yours.
 - `check-migrations.sh` read `OK` or `SKIP` on the head that merged — after the merge of `main`,
   and after any re-stamp it asked for. A `STALE` was fixed on the branch, never merged past.
 - `retrospective.sh` ran on the live run folder **before** the close-out moved it; what it
@@ -300,7 +325,8 @@ all in the one PR.
   (`_shared/project-rules.md` → Announcing) — and once merged, nothing can carry the move into
   that PR. There is no recovery PR; the run's own PR is the only vehicle.
 - After the merge you touched nothing but the PR body's spec link, made one read of production
-  (`deploy-status.sh`) and one call to `report.sh announce` (or recorded `deferred to CI`), and
-  reverted nothing by your own decision — a revert is the hotfix lane's, prepared by
-  `rollback.sh` and merged by the operator.
+  (`deploy-status.sh`), one health read (`health-check.sh` — its stub, if it wrote one, left
+  uncommitted and named in the report) and one call to `report.sh announce` (or recorded
+  `deferred to CI`), and reverted nothing by your own decision — a revert is the hotfix lane's,
+  prepared by `rollback.sh` and merged by the operator.
 - Both usage lines are in `usage.md` — `release start` as the first act, `release end` as the last.

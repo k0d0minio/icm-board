@@ -2,7 +2,9 @@
 
 Invoked via `/pipeline hotfix "<what is wrong in production>"` — **by a human, always**: from a
 `- production: ERROR` line in a Release record, a Vercel deployment-failed email, or a client
-report. No alert carries a command into this lane and nothing parks a stub for it. Everything
+report. No alert carries a command into this lane and nothing parks a stub for it (a failed
+`health-check.sh` parks a **bug**-lane stub that names this lane as the operator's option — it
+never opens it). Everything
 that is not named below is the **bug lane** (`lanes/bug/CONTEXT.md`): no story, no scope, no
 spec, no gate checkbox; one invocation, one PR; the operator merges from GitHub; the agent never
 merges. If the incident needs a product decision, STOP and route to `/pipeline scope`.
@@ -19,6 +21,8 @@ and the recovery. Fix-forward stays the default; a revert is *available*, prepar
 - The report: what is wrong, since when, who saw it — and the Release record's
   `- production:` line and deployment ids where the incident came from one.
 - `.icm/scripts/deploy-status.sh --sha <merge-sha>` — production as it is now, once.
+- `.icm/scripts/health-check.sh --sha <merge-sha>` — whether it answers, once; the stub it
+  parked at Release, if any, is the report's first line.
 - `.icm/scripts/rollback.sh --sha <merge-sha> --vercel [--revert]` — the two recoveries, prepared.
 - The repo's code rules — the file `_shared/conventions.md` points at — and the subtree
   `AGENTS.md` files, where the repo has them.

@@ -49,6 +49,9 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   per run on `$DATABASE_URL` | `container` — one local Postgres per run | `none` — no database,
   or migrations are applied by the preview and CI only>. Migrations: <the declared stamp form
   (`millis` default), the tool, and whether out-of-order is configured in the tool's own file>.
+- **Health endpoint** — `health_endpoint` in `.icm/project.json` (or per project under
+  `deploy.projects[]`): <the URL that answers 200 when production is up; `health-check.sh`
+  reads it once after the merge>. <Or: none declared — the read reports SKIP.>
 - **Archive** — `runs_archive` / `intake_archive` in `.icm/project.json`. <Where they are served
   from, if anywhere; the default `_done/` folders need no note.>
 

@@ -53,6 +53,12 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
      variables carry it?" (names only — never ask for a value)
    - "`deploy`: which Vercel project(s) does this repo deploy as, on which team, under which
      token *name*? Is `web` the product project and `docs` quiet?"
+   - "`health_endpoint`: which URL answers `200` when production is up — one for the repo, or
+     one per deploy project when they differ (`https://<production_url>/api/health`, or the
+     fail-safe page itself)? `health-check.sh` reads it once after every merge; until it is set
+     the read is `SKIP` and nobody is told production is down." Ask it whenever the report
+     carries the `health_endpoint empty` line — it is a `[WARN]` for as long as the repo
+     deploys somewhere and has no endpoint, so a repo that skipped it is asked again next run.
    - "`required_checks`: which check-run names must be green before a merge?" · "`personas`?"
    - "`migrations`: where do they live, are they reversible, which tool applies them (flyway /
      prisma / drizzle / sql), and does that tool accept out-of-order stamps? New ones are named
@@ -68,7 +74,9 @@ is icm-board's checkout (`~/Apps/_system/template`); `ICM_TEMPLATE` in the shell
    Every question has an escape hatch: "don't know" leaves the stub value and the report line.
 
 4. **Write the project-owned files** from the answers — `.icm/project.json` (valid JSON;
-   `jq -e .` before saving), `_shared/project-rules.md` (every section a sentence or "none" — `## Learned rules` stays as
+   `jq -e .` before saving; the health endpoint goes to top-level `health_endpoint` — a string,
+   or an array — or to `deploy.projects[].health_endpoint` when each project has its own, and
+   `project-rules.md` → The factory names it), `_shared/project-rules.md` (every section a sentence or "none" — `## Learned rules` stays as
    seeded; `retrospective.sh` fills it at Release),
    `_shared/knowledge-map.md` where the repo has a docs tree, `scripts/format.sh` / `lint.sh` on
    the repo's own tools or left as `SKIP` stubs, `runs/README.md`. Nothing else: `T` files are

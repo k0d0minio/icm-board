@@ -65,6 +65,7 @@ T scripts/check-migrations.sh
 T scripts/process-raw.sh
 T scripts/deploy-status.sh
 T scripts/rollback.sh
+T scripts/health-check.sh
 T scripts/usage-snapshot.sh
 T scripts/env.sh
 T scripts/setup.sh

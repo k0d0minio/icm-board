@@ -44,6 +44,10 @@ created.
   first) or the repo behind the template. Show the diff with
   `_system/scripts/icm-sync.sh --dry-run <repo>`; only on Jamie's word run `--apply`,
   then the repo's own PR carries the change. Project-owned files are never synced (D20).
+  A **template change request** a repo's session handed back (D33 — a
+  `found-by: template-change` stub in that repo's `triage/`, its `## Prompt` the request) is
+  the same move from the other end: change the template first, ship it on a `claude/` PR
+  here, then sync; the repo's stub retires in its sync commit with a `- superseded-by:` line.
 
 **3. Review each repo's `.claude` and Layer 0.** For every non-exempt repo listed,
 assess how well its Claude setup serves *that* project — the estate deliberately does

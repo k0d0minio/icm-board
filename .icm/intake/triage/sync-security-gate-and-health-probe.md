@@ -26,7 +26,7 @@ Progress — 2026-09-23: **remi-ai done** (template `e5c30ae`, 62 T files, `repo
 `notify.sh` removed, Slack mapped by name for announce + alert, deploy block for the six
 `remi21` projects, health endpoints on the two custom domains, committed straight to its
 `main`). Its `/setup` reads `GAPS 1` — the missed close-out of run `patient-home-today`, a fault
-of that Release, not of the sync. **Sustentus and the rest: pending.**
+of that Release, not of the sync. **berceo done** (k0d0minio/berceo#15 → #17, endpoint `www.berceo.be`) and **agorasim done** (k0d0minio/agorasim#112 → #113, endpoint `agorasim.pt`) in their own PRs; all three re-synced 2026-09-23 with the D33 template-change guard. **Sustentus and the rest: pending.**
 
 ## Prompt
 

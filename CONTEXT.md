@@ -19,6 +19,7 @@ far as the task needs.*
 | Adopt / analyse / ticket a repo | `/project <repo>` | [`deliver/project`](workspaces/deliver/stages/project/CONTEXT.md) |
 | Plan the day · wrap the session | `/day [wrap]` | [`deliver/day`](workspaces/deliver/stages/day/CONTEXT.md) |
 | Check the estate's structure | `/icm-check` | [`deliver/conformance`](workspaces/deliver/stages/conformance/CONTEXT.md) |
+| Change the pipeline template — including a **template change request** a client repo's session handed back | a PR on a `claude/` branch touching `_system/template/`, then `icm-sync.sh --apply` per repo | [`PIPELINE.md` § File-level ownership](_system/contracts/PIPELINE.md) · [`template-change.md`](_system/template/icm-pipeline/_shared/template-change.md) |
 
 Where a deal already exists, `/client` reads its `DEAL.md`, takes the stage from the
 highest `NN-` artefact in the live engagement, and lands on the right row itself — the

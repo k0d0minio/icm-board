@@ -65,6 +65,9 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every rep
                                     client signs off, the promotion (D31). Inert until /setup
                                     declares `uat` in project.json                     (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
+  _shared/template-change.md     ← the guard: a T file (or a canonical .claude/ asset) asked
+                                    to change IN a repo is a template change request — a prompt
+                                    for icm-board parked as a triage stub, never an edit there (T)
   _shared/run-pack/{project,plan,tasks,decisions,status,handoff,FAILURE}.md
                                  ← the canonical file pack run-pack.sh seeds into every
                                     run: context card, passes, DoD queue, D-n ledger,
@@ -204,3 +207,13 @@ Rules:
   edit; the fix never retro-syncs existing files. Pipeline template-owned edits
   propagate by a human running `icm-sync.sh` per repo — the drift report says which
   repos are behind.
+- **The change is made here, wherever it was asked for** (decision D33). A session in a
+  repo that is asked to change a template-owned file — or a canonical `.claude/` asset —
+  makes no edit: it writes a **template change request** in the shape
+  `icm-pipeline/_shared/template-change.md` gives (the file by template path, today's
+  lines, the change, the evidence, the repo), parks it as a `found-by: template-change`
+  triage stub in that repo, and carries on under the file as it is. The prompt lands in an
+  icm-board session, the change ships on a `claude/` PR here, `icm-sync.sh --apply` (or the
+  by-hand copy, for a `.claude/` asset) brings it back, and the stub retires in that commit.
+  The operator's spoken "patch it here now" is the only override, and the request is
+  written even then.

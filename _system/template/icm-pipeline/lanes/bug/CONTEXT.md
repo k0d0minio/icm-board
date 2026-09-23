@@ -28,7 +28,9 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 
 1. **Pick a slug** — then the first act of every lane: `.icm/scripts/usage-snapshot.sh <slug> bug start` (`SKIP` is fine, never a stop). Pick it (`fix-<what>`, kebab-case) and **reproduce first**. State the observed vs
    expected behaviour in one line each. Can't reproduce → STOP and report what you tried; don't
-   fix blind.
+   fix blind. A request whose subject is a **template-owned file** — a `T` line of `.icm/MANIFEST`, or a
+   canonical `.claude/` asset — is not lane work: STOP before the slug, write the template change
+   request (`_shared/template-change.md`), park it, open no run.
 2. **Fix the cause, not the symptom** — minimal diff, no drive-by refactors. Prefer the matching
    capability skill where the repo ships one (`_shared/project-rules.md` → Capability skills) —
    most "bugs" here are a known trap one of them already documents. Check the fix against the

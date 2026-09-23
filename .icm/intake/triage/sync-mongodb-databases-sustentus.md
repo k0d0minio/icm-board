@@ -61,6 +61,14 @@ After icm-board's D35 PR merges, in this order — each its own step, Jamie's me
   Vercel projects. **Left:** the first real ready PR proves the path — the copy step on a runner,
   the preview on `preview_<branch>`, the smoke waiting, `MongoDB cleanup` on close. Then close
   this stub.
+- 2026-09-23, night: the first real ready PR ran (sustentus/sustentus#1150,
+  `claude/sentry-web-instrumentation`) and the copy step failed — `preview_<branch>` for that
+  branch is 42 bytes, and Atlas's shared/free tier (what `sustentus-staging` is) caps database
+  names at 38, not MongoDB's dedicated-tier 63 that `db-name.mjs` assumed. Parked as
+  `triage/mongo-preview-db-name-atlas-shared-tier-cap` (P1 bug, blocks this stub). **Still open:**
+  once that's fixed and synced, re-run #1150 (or the next ready PR) to get the first clean pass
+  through the copy, the preview migrate, the smoke wait and `MongoDB cleanup` on close — only
+  then close this stub.
 
 ## Prompt
 

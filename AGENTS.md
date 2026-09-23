@@ -79,7 +79,7 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
   `.icm/intake/` — never a loose `TODO.md`. **Here**, ticket-only commits go straight to
   `main`; everything else through a PR on a `claude/` branch. **In a client repo**, ticket
   state goes through a ticket PR into its ticket base branch (`uat` where declared, else
-  `main`), merged at once by the session that opened it (D37) — icm-board is exempt only
+  `main`), merged at once by the session that opened it (D38) — icm-board is exempt only
   because it has no UAT branch and nothing to drift.
 - **This repo is held to its own baseline**, and to its own workspace grammar. A rule it
   exempts itself from is a rule it should delete.

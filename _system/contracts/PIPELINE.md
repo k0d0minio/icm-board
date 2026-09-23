@@ -150,7 +150,7 @@ question sheet and nothing is answered out of band — settles what can be settl
 `01_scope/output/scope.md` (the source plus an addendum: assumptions, the **`D-n`
 decisions table**, out of scope, and what is **Open for Define**), cuts the intake epic
 from *that*, and lands it all on the repo's **ticket base branch** through one **ticket PR**
-it merges at once (D37; the canonical `pr-conventions` skill → The ticket PR). A front opens
+it merges at once (D38; the canonical `pr-conventions` skill → The ticket PR). A front opens
 no feature PR. A repo whose work
 arrives already agreed never invokes it and has no gap; work with a stub goes to
 `/pipeline new`.
@@ -204,7 +204,7 @@ merges; nothing promotes on its own. The branch and address live in `project.jso
 state in `batch.json` (one home per fact, D24). [`template/icm-pipeline/uat/CONTEXT.md`](../template/icm-pipeline/uat/CONTEXT.md)
 owns the rule.
 
-**Ticket state lives on the ticket base branch (decision D37).** The same
+**Ticket state lives on the ticket base branch (decision D38).** The same
 `pipeline_base_branch` is the one home of a repo's `.icm/intake/`: the UAT branch where one is
 declared, else `main`. Every reader — the dashboard, the board scripts, `client-status.sh`'s
 queue — reads it there; every writer reaches it through a PR — the run's own PR inside a run,

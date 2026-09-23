@@ -46,7 +46,7 @@ repo announcing from CI a merged ticket PR would reach the client as a release.
 ## Prompt
 
 In icm-board (`~/Apps`), carry out stub 2 of the `ticket-base-branch` epic: read
-`.icm/intake/ticket-base-branch/breakdown.md` and `template-ticket-scripts.md`, and the D37 entry
+`.icm/intake/ticket-base-branch/breakdown.md` and `template-ticket-scripts.md`, and the D38 entry
 in `.icm/project.md` that stub 1 recorded. Change the template's scripts, hooks and workflows under
 `_system/template/` (and icm-board's own `.claude/hooks/wrap-reminder.sh`) so they read and guard
 each repo's ticket base branch (`lib/project.sh → pipeline_base_branch`) instead of assuming

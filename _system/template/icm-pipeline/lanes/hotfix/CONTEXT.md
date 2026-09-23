@@ -18,7 +18,7 @@ and the recovery. Fix-forward stays the default; a revert is *available*, prepar
 environment every other PR targets the UAT branch, but a hotfix targets `main` — production is
 wrong now — and `.icm/scripts/promote-uat.sh sync` afterwards carries the fix into UAT
 (`.icm/uat/CONTEXT.md`). That `sync` is **required**: the close-out rides this PR into `main`, but
-the repo's ticket base branch is the UAT branch (D37), so until `sync` runs the board still shows
+the repo's ticket base branch is the UAT branch (D38), so until `sync` runs the board still shows
 what this run retired as open.
 
 ## Inputs (read only these)

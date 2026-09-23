@@ -15,7 +15,7 @@ working knowledge.
   never a direct push. Stubs a run parks or consumes ride that run's own PR instead.
 - **icm-board alone is exempt:** it has no UAT branch and nothing to drift, so its ticket
   commits (`Plan:` / `Wrap:`, `today.md`) and `Deal:` commits go straight to its `main`.
-  The exemption is icm-board's only — no other repo takes it (D37).
+  The exemption is icm-board's only — no other repo takes it (D38).
 - Never rewrite history on a shared branch; never force-push `main`.
 
 ## The ticket PR — the one PR an agent merges

@@ -87,7 +87,7 @@ this ritual. Say so and move on.
 
 **5. Ship — merging is publishing.** The board reads each repo's **ticket base branch** —
 `uat` where its `.icm/project.json` declares one, else `main` (`.icm/scripts/lib/project.sh →
-pipeline_base_branch`; D37) — so a stub exists once it lands there. Per changed client repo:
+pipeline_base_branch`; D38) — so a stub exists once it lands there. Per changed client repo:
 **one ticket PR** into that branch, merged at once — the shape and the merge rule are the
 repo's `pr-conventions` skill → The ticket PR (branch `claude/tickets-<topic>-<YYYYMMDD>`,
 title `Plan: <one line>` or `Wrap: <one line>`, label `type:tickets`, path guard

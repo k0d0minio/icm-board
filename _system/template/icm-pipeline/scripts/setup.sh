@@ -38,8 +38,9 @@
 #   10. Workflows  the reference release.yaml / labels.yaml present, or declared absent in
 #                  _shared/project-rules.md; neon-cleanup.yaml where a Neon project branches per
 #                  preview, mongodb-cleanup.yaml where a MongoDB repo has a database per preview
-#                  (`--fix` seeds either from --template); type:hotfix and type:handover (and
-#                  type:promote on a UAT repo) in .github/labels.yml.
+#                  (`--fix` seeds either from --template); type:hotfix, type:handover and
+#                  type:tickets (the ticket PR's label, D38 — and type:promote on a UAT repo) in
+#                  .github/labels.yml.
 #   11. Support    tier none → nothing; micro → `micro: no support line`; basic|retainer → the
 #                  fail-safe page exists, the Sentry key is declared [production], alert maps to
 #                  a channel or project-rules.md records the red-job default.
@@ -393,9 +394,13 @@ if [ "$(database_provider)" = mongodb ] && [ "$(mongo_previews)" = branch ]; the
   else warn "mongodb-cleanup workflow absent — nothing drops a closed PR's preview_<branch> database; setup.sh --fix --template <path> seeds the reference one, or record the absence in project-rules.md → Reporting → Workflows"; fi
 fi
 if [ -f .github/labels.yml ]; then
-  lane_labels="type:hotfix type:handover"; uat_declared && lane_labels="$lane_labels type:promote"
-  for l in $lane_labels; do grep -q "$l" .github/labels.yml && ok "$l in .github/labels.yml" || warn "$l missing from .github/labels.yml — add it (and create the label once in GitHub) before the lane's first PR"; done
-else info "no .github/labels.yml — the label vocabulary is not documented here (new-run.sh dies if a type:<lane> label does not exist in GitHub)"; fi
+  lane_labels="type:hotfix type:handover type:tickets"; uat_declared && lane_labels="$lane_labels type:promote"
+  for l in $lane_labels; do
+    if grep -q "$l" .github/labels.yml; then ok "$l in .github/labels.yml"
+    elif [ "$l" = "type:tickets" ]; then warn "type:tickets missing from .github/labels.yml — the ticket PR's label (D38; the pr-conventions skill → The ticket PR): add it, and create it once in GitHub (the operator's act), before the first ticket PR"
+    else warn "$l missing from .github/labels.yml — add it (and create the label once in GitHub) before the lane's first PR"; fi
+  done
+else info "no .github/labels.yml — the label vocabulary is not documented here (new-run.sh dies if a type:<lane> label does not exist in GitHub; a ticket PR needs type:tickets created once in GitHub — D38)"; fi
 
 # --- 11. support -------------------------------------------------------------------------------------------------------
 echo "[11/11] Support — what the deal promised after handover"

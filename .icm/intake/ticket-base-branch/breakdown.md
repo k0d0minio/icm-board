@@ -28,7 +28,7 @@ On a repo that declares `uat` (D31), a ticket is **born on one branch and dies o
 Result: a finished stub reads as open until promotion, can be picked into `today.md`, and can be
 run twice.
 
-**The decision (next free D-number — D37 when this was cut).** Each client repo's ticket state has
+**The decision (next free D-number — D37 when this was cut; registered as D38, since #64 took D37 for the Mongo name cap).** Each client repo's ticket state has
 **one home: its ticket base branch** — `uat.branch` where `.icm/project.json` declares one, else
 `main`. That is exactly what `lib/project.sh → pipeline_base_branch` already answers, so it is
 reused, not duplicated (one home per fact, D24). Every writer reaches it **through a PR**; every

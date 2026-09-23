@@ -13,15 +13,17 @@ rungs: the admin dashboard (`app.jamienisbet.com`), read live during the sweep.*
 
 | Folder | Row | Ladder | Adopted at | Artifacts folded in |
 |---|---|---|---|---|
-| [`rui-matias`](../../workspaces/deals/rui-matias/DEAL.md) | Rui Matias · Kau | `talking` | `01_intake` | none — none exist |
-| [`alix-hahusseau`](../../workspaces/deals/alix-hahusseau/DEAL.md) | Alix Hahusseau · Berceo | `talking` | `01_intake` | none |
-| [`dragon`](../../workspaces/deals/dragon/DEAL.md) | Dragon · Private chef | `talking` | `01_intake` | none |
-| [`billy-carlson`](../../workspaces/deals/billy-carlson/DEAL.md) | Billy Carlson · Vinecliff | `talking` | `01_intake` | none |
-| [`alex-valexo`](../../workspaces/deals/alex-valexo/DEAL.md) | Alex Valexo · Alfredo | `lost` | `01_intake` | none |
+| [`rui-matias`](../../workspaces/deals/kau-american-bbq/DEAL.md) | Rui Matias · Kau | `talking` | `01_intake` | none — none exist |
+| [`alix-hahusseau`](../../workspaces/deals/berceo/DEAL.md) | Alix Hahusseau · Berceo | `talking` | `01_intake` | none |
+| `dragon` | Dragon · Private chef | `talking` | `01_intake` | none |
+| [`billy-carlson`](../../workspaces/deals/vinecliff/DEAL.md) | Billy Carlson · Vinecliff | `talking` | `01_intake` | none |
+| `alex-valexo` | Alex Valexo · Alfredo | `lost` | `01_intake` | none |
 | [`casey-hebbel`](../../workspaces/deals/casey-hebbel/DEAL.md) | Casey Hebbel · Broadway | `talking` | `03_quote` | 20 questionnaire answers → `02-discovery-notes.md` |
-| [`karen`](../../workspaces/deals/karen/DEAL.md) | Karen · Barzinho | `lost` | `04_proposal` | proposal, counter-analysis, structure memo, confirmed facts, diligence questions |
-| [`jerome`](../../workspaces/deals/jerome/DEAL.md) | Jerome · Le Pavillon Vert | `lost` | `04_proposal` | `proposal.pdf` referenced, not copied |
-| [`magali`](../../workspaces/deals/magali/DEAL.md) | Magali · CollabImmo | `client` | `01_intake` | none — follow-on only |
+| `karen` | Karen · Barzinho | `lost` | `04_proposal` | proposal, counter-analysis, structure memo, confirmed facts, diligence questions |
+| `jerome` | Jerome · Le Pavillon Vert | `lost` | `04_proposal` | `proposal.pdf` referenced, not copied |
+| `magali` | Magali · CollabImmo | `client` | `01_intake` | none — follow-on only |
+
+*Links updated 2026-09-23: `rui-matias`, `alix-hahusseau` and `billy-carlson` now point at the folders renamed to their repo slugs (`kau-american-bbq`, `berceo`, `vinecliff`); `dragon`, `alex-valexo`, `karen`, `jerome` and `magali` are unlinked — those folders were removed as one-off relationships (main's `Deal:` commits of that day). The rows are the 2026-08-26 reading and are otherwise untouched.*
 
 **Jamie's decision on the five bare `talking` rows:** adopt at `01_intake`, not
 `02_discovery`. They have gone quiet 8–14 days with no artifacts and no terms, so the

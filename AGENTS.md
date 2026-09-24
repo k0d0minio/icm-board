@@ -89,8 +89,8 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
   deletions (D20). Nothing a repo runs ever reads icm-board (D23).
 - **CI is the source of truth.** Never run `build`/`lint`/`typecheck` locally; push and
   read the checks.
-- **Sustentus is exempt** from the estate baseline — its `.icm/` is authoritative (it
-  still has a deal folder here, like every relationship); its **template-owned** pipeline
-  files are synced like any repo's, on Jamie's word (D20). Gates everywhere are human
-  checkboxes: read, never tick.
+- **No repo is exempt** (D44). Sustentus is where the pipeline started, but the template
+  is now the one source: sustentus is measured, synced and hygiene-checked like any repo,
+  through a PR there (its `main` is ruleset-guarded), and nothing may break its code or
+  workflow on the way. Gates everywhere are human checkboxes: read, never tick.
 - **No secrets in git, ever.** Env vars only; flag any plaintext credential found.

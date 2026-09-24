@@ -1,8 +1,8 @@
 # deliver/day — keep the board honest, then decide what's next
 
-Entered by `/day [wrap]`. Work from the Apps root. Sustentus is exempt from
-reconciliation (its `.icm/` plans itself) but its stubs and runs **do** appear on the
-board and may be picked for `today.md`.
+Entered by `/day [wrap]`. Work from the Apps root. Sustentus is reconciled like any repo
+(D44): its stubs and runs appear on the board, may be picked for `today.md`, and are
+hygiene-checked.
 
 **Two modes, one ritual.** Bare `/day` plans — reconcile, then write tomorrow's
 `today.md`. `/day wrap` closes out — reconcile, then bank what happened and cut what's

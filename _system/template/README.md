@@ -13,9 +13,8 @@ Consumed by `_system/scripts/icm-check.sh`:
    `AGENTS.md` (epic `opencode-sidecar`). Migrating a repo's Layer 0 is Jamie's act; the
    fix never performs the move.
 
-Sustentus is exempt from the estate walk (its `.icm/` is authoritative — it is the source
-this template was extracted from, decision D12); `icm-check.sh --repo` measures it
-voluntarily. The pipeline tracks that source: it was re-founded on sustentus's
+The pipeline was extracted from sustentus (decision D12); since D44 the template is the one
+source and sustentus is measured like any repo. The pipeline was re-founded on sustentus's
 current four-stage shape (Scope → Define → Build → Release, no substage) on 2026-09-18,
 generalised rather than parameterised, and split at file level into **template-owned**
 and **project-owned** files (decision D20, `icm-pipeline/MANIFEST`). Template-owned files
@@ -42,9 +41,13 @@ claude/                          → copied to <repo>/.claude/        (every liv
   settings.json                  ← clean policy: schema + secrets deny-list + hook wiring
   hooks/
     session-start.sh             ← the repo's own board greets every session
+    install-deps.sh              ← async: installs deps so Husky's pre-commit exists (D44)
+    route-request.sh             ← UserPromptSubmit: routes a bare stage form to /pipeline
+    route-request.test.sh        ← its fixture test — run by hand, never a hook or a check
     wrap-reminder.sh             ← Stop hook: unpushed .icm changes block the stop once
     vercel-env-hydrate.sh        ← cloud sessions pull their .env.local from Vercel
-                                   (kodominio repos only — see below)
+  agents/
+    auditor.md                   ← read-only executor the audit skills fork into
   skills/
     ticket-craft/SKILL.md        ← the intake contract as working knowledge
     pr-conventions/SKILL.md     ← branches, commits, CI-is-truth, no secrets
@@ -143,12 +146,13 @@ Layer 0 itself — `AGENTS.md`, or a legacy full `CLAUDE.md` — is **never temp
 Each repo writes its own identity and routing; an empty one would read as established
 intent. Only the importer is canonical, because it is identical everywhere.
 
-`vercel-env-hydrate.sh` is the one asset with a **team boundary**: it hydrates a cloud
-session's environment from the Vercel team a repo deploys under, and sustentus and remi21
-are separated boundaries (epic `vercel-env-system`), so `icm-check` seeds it into the
-kodominio estate and offers it to those two rather than pushing it. It is also the one
-hook `settings.json` does not register — `session-start.sh` invokes it when it is there,
-which is why the estate's hand-owned settings files need no edit to gain it.
+`vercel-env-hydrate.sh` hydrates a cloud session's environment from the Vercel team a repo
+deploys under, keyed on plain `VERCEL_TOKEN` — each Claude Code cloud environment carries its
+own team's token, so one file serves every team. The 2026-09-02 boundary ruling that kept it
+out of sustentus and remi-ai is retired (D44). It is the one hook `settings.json` does not
+register — `session-start.sh` invokes it when it is there. `install-deps.sh` and
+`route-request.sh` are canonical in every repo and inert where they have nothing to do: no
+Husky `prepare` script, no `/pipeline` skill.
 
 Rules:
 

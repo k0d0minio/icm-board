@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ticket-hygiene.sh — report ticket drift across the estate (read-only, never fixes).
 #
-# For every repo with .icm/intake/ (sustentus exempt — it lints itself), reports:
+# For every repo with .icm/intake/ (sustentus included — decision D44), reports:
 #
 #   board drift
 #     possibly-done      open stub whose slug (or a legacy ticket's ID) appears in a
@@ -41,8 +41,6 @@ APPS_ROOT="${1:-}"
 [[ -n "$APPS_ROOT" ]] || APPS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 [[ -d "$APPS_ROOT" ]] || { echo "Not a directory: $APPS_ROOT" >&2; exit 2; }
 
-EXEMPT=("sustentus")
-
 # shellcheck source=lib/ticket-base.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib/ticket-base.sh"
 TB_TMP="$(mktemp -d)"; trap 'rm -rf "$TB_TMP"' EXIT
@@ -68,11 +66,6 @@ dash_field() {
 }
 
 for repo in "${repos[@]}"; do
-  base="$(basename "$repo")"
-  skip=0
-  for e in "${EXEMPT[@]}"; do [[ "$base" == "$e" ]] && skip=1; done
-  (( skip )) && continue
-
   view="$(ticket_view "$repo" "$APPS_ROOT")"
   intake="$view/.icm/intake"
   [[ -d "$intake" ]] || continue

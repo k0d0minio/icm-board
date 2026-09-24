@@ -5,7 +5,7 @@
 - priority: P1
 - size: S
 - depends-on: none
-- sequence: 2 of 4
+- sequence: 2 of 5
 - sources: D39 §1, §8 · the dependency map (D39 log row): `_system/scripts/lib/ticket-base.sh:20-56`,
   `tickets-board.sh:13-16,93`, `ticket-hygiene.sh:26-28,78-85,205`, `.claude/hooks/wrap-reminder.sh:38-60`,
   `.claude/skills/pr-conventions`, `.claude/skills/ticket-craft`, `workspaces/deliver/stages/day/CONTEXT.md:23-36,96-110,124`,

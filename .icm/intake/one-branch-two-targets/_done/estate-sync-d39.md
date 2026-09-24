@@ -5,7 +5,7 @@
 - priority: P2
 - size: M
 - depends-on: template-two-targets, board-reads-main
-- sequence: 4 of 4
+- sequence: 4 of 5
 - sources: D39 · `.icm/template-version` on remi-ai, sustentus, vinecliff, jamienisbet all at
   `de444cd` (2026-09-24) · none of the four declares `uat`
 

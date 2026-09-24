@@ -59,6 +59,10 @@ against production on the push).
    first. The first real promotion on berceo is the proof of the whole route.
 4. `estate-sync-d39` — the four other pipeline repos take the template; nothing else changes for
    them. Sustentus on Jamie's word.
+5. `uat-database-resource` — added 2026-09-24 from berceo's cutover (D41): the UAT database is a
+   second Marketplace database, not a branch of production's; the template learns a production
+   and a non-production Neon project. Independent of agorasim's cutover, which runs by hand
+   meanwhile.
 
 Not in this epic: serviflow (Railway; set aside by Jamie, 2026-09-24); offering UAT to repos that
 do not declare it today (a `/setup` conversation per repo, later).

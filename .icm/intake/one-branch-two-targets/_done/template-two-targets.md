@@ -5,7 +5,7 @@
 - priority: P1
 - size: XL
 - depends-on: none
-- sequence: 1 of 4
+- sequence: 1 of 5
 - sources: D39 (`.icm/project.md`) · the dependency map in D39's log row (file:line for every
   UAT read) · Vercel docs: *Promoting Deployments*, *Environments*, *Deploying from CLI* (`vercel
   deploy --target`, `vercel promote`), REST `POST /v10/projects/{id}/promote/{deploymentId}`,

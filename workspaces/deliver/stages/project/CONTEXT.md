@@ -8,8 +8,9 @@ Every run after asks whether the intent still holds and reconciles the tickets t
 answer. There is no separate onboarding, discovery or sprint-planning command — this is
 all three, and running it twice in a row is harmless.
 
-**Sustentus is exempt** — its `.icm/` owns its own semantics. Refuse unless Jamie names
-it explicitly, and then honour its contracts, not this one.
+Sustentus is a repo like any other here (D44). Its project-owned files are its own, as
+every repo's are; nothing this stage does may break its code or workflow, and its `main`
+is ruleset-guarded, so what lands there goes through a PR.
 
 ## Inputs
 

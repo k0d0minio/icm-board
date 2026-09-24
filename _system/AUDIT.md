@@ -51,7 +51,7 @@ the run log dates it.
    `_system/template/claude/`, seeded + drift-reported, repo wins.
 2. ~~**Pipeline upstream**~~ — answered 2026-08-28 (decision D12, `.icm/project.md`):
    Gen-3 **is** a template product, extracted from sustentus into `_system/template/`
-   as tiered profiles (`contracts/PIPELINE.md`). Sustentus stays exempt as the source;
+   as tiered profiles (`contracts/PIPELINE.md`). Sustentus stayed exempt as the source until D44 (2026-09-24);
    remi-ai's zero-run `pipeline/` is superseded — its keep-or-retire call happens in
    its migration (`estate-migration/migrate-remi-ai`).
 3. ~~**Hook strategy**~~ — decided 2026-08-26 (see Done): same canonical library; seeded

@@ -2,9 +2,9 @@
 # icm-check.sh — verify (and with --fix, populate) the estate-wide .icm/.claude baseline.
 #
 # Discovers git repos the same way pull-all.sh does — the root repo itself (icm-board,
-# .git at the Apps root) plus every repo up to 2 levels below Apps/ — skips sustentus
-# (its .icm/ carries its own pipeline semantics; it is the source the template was
-# extracted from), and checks each repo against _system/template/:
+# .git at the Apps root) plus every repo up to 2 levels below Apps/ — every one of them,
+# sustentus included (decision D44: the template is the one source, and no repo is exempt) —
+# and checks each repo against _system/template/:
 #
 #   .icm/CONTEXT.md          the repo's .icm map
 #   .icm/intake/README.md    micro-copy of the intake contract (epics + stubs + triage)
@@ -14,8 +14,9 @@
 #   .claude/settings.json    clean policy baseline — the repo's own file, except that its
 #                            permissions.deny must carry every template entry and exactly
 #                            the template's .env rules (drift-reported, never rewritten)
-#   .claude/hooks/*          canonical estate hooks (session-start, wrap-reminder, and —
-#                            kodominio repos only — vercel-env-hydrate)
+#   .claude/hooks/*          canonical estate hooks (session-start, install-deps,
+#                            vercel-env-hydrate, route-request + its test, wrap-reminder)
+#   .claude/agents/auditor.md the read-only executor the audit skills fork into
 #   .claude/skills/*         canonical estate skills (ticket-craft, pr-conventions)
 #   AGENTS.md                reported only — never templated (each repo writes its own)
 #   CLAUDE.md                the one-line `@AGENTS.md` importer — seeded, but only into
@@ -46,8 +47,7 @@
 # call — this script still never overwrites). `P` entries are project-owned — required,
 # seeded once from the template's stub when missing, never compared afterwards.
 #
-# --repo <path> measures exactly one repo, exempt or not: the way to read sustentus against
-# the template it is the source of, without lifting the exemption for the estate walk.
+# --repo <path> measures exactly one repo.
 #
 # --fix creates ONLY what is missing, from the template; existing files are never
 # touched — with exactly one exception, decision D18: it merges the template's own
@@ -98,26 +98,19 @@ if [[ -n "$ONE_REPO" ]]; then
   ONE_REPO="$(cd "$ONE_REPO" && pwd)"
 fi
 
-EXEMPT=("sustentus")
-
 # Canonical Claude assets (template/claude/…): seeded when missing, drift-reported when
 # a repo's copy diverges — never overwritten. Paths relative to <repo>/.claude/.
 CANONICAL=(
   "hooks/session-start.sh"
+  "hooks/install-deps.sh"
+  "hooks/vercel-env-hydrate.sh"
+  "hooks/route-request.sh"
+  "hooks/route-request.test.sh"
   "hooks/wrap-reminder.sh"
+  "agents/auditor.md"
   "skills/ticket-craft/SKILL.md"
   "skills/pr-conventions/SKILL.md"
 )
-
-# Canonical assets that stop at a team boundary. `vercel-env-hydrate.sh` hydrates a cloud
-# session's environment from the Vercel team the repo deploys under, and sustentus and
-# remi21 are separated boundaries (epic vercel-env-system, Jamie's ruling 2026-09-02):
-# what their repos carry is decided in their repos, so the hook is offered there rather
-# than seeded. sustentus is already exempt outright; remi-ai is named here instead of
-# added to EXEMPT because it still takes every other part of the baseline. Nothing breaks
-# in a repo that goes without it — `session-start.sh` only calls the file if it is there.
-CANONICAL_KODOMINIO=( "hooks/vercel-env-hydrate.sh" )
-SEPARATE_TEAM=("remi-ai")
 
 # The pipeline (template/icm-pipeline/…): paths relative to <repo>/.icm/, read from the
 # MANIFEST — `T` template-owned (drift-reported), `P` project-owned (seeded once). One list
@@ -161,7 +154,7 @@ mapfile -t repos < <(
 # holds the baseline, so it is measured against it — a rule this repo exempts itself
 # from is a rule it should delete (CLAUDE.md, standing rules).
 [[ -e "$APPS_ROOT/.git" ]] && repos=("$APPS_ROOT" "${repos[@]}")
-# --repo: exactly one repo, measured voluntarily — the exemption list does not apply.
+# --repo: exactly one repo.
 [[ -n "$ONE_REPO" ]] && repos=("$ONE_REPO")
 
 total=0; conformant=0; fixed=0; warnings=0; gaps=0
@@ -171,22 +164,11 @@ for repo in "${repos[@]}"; do
   base="$(basename "$repo")"
   [[ "$repo" == "$APPS_ROOT" ]] && name="$base"
 
-  skip=0
-  for e in "${EXEMPT[@]}"; do [[ "$base" == "$e" ]] && skip=1; done
-  [[ -n "$ONE_REPO" ]] && skip=0
-  if (( skip )); then
-    echo "${dim}${name} — exempt${off}"
-    continue
-  fi
-
   total=$((total + 1))
   missing=(); warns=(); actions=(); repo_fixed=0
 
   # The canonical Claude assets this particular repo should carry.
   assets=("${CANONICAL[@]}")
-  separate=0
-  for t in "${SEPARATE_TEAM[@]}"; do [[ "$base" == "$t" ]] && separate=1; done
-  (( separate )) || assets+=("${CANONICAL_KODOMINIO[@]}")
 
   # Has this repo's Layer 0 moved to AGENTS.md yet? Everything new-shape hangs off this
   # one fact, so an un-migrated repo is measured exactly as it was before the move.
@@ -436,9 +418,10 @@ for repo in "${repos[@]}"; do
   # byte-for-byte.)
   #
   # `vercel-env-hydrate.sh` is deliberately absent from the loop: it rides
-  # session-start.sh, which invokes it, so registering that one registers both.
+  # session-start.sh, which invokes it, so registering that one registers both. So is
+  # route-request.test.sh — a fixture test run by hand, never a hook.
   if [[ -f "$repo/.claude/settings.json" ]]; then
-    for hook in session-start.sh wrap-reminder.sh; do
+    for hook in session-start.sh install-deps.sh route-request.sh wrap-reminder.sh; do
       [[ -f "$repo/.claude/hooks/$hook" ]] || continue
       grep -q "$hook" "$repo/.claude/settings.json" 2>/dev/null && continue
       merged=0

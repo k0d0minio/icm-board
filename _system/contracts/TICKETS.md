@@ -39,9 +39,8 @@ Tickets are never created or edited from the dashboard.
   resolves stubs by filename.
 - Nothing lives loose in `intake/` — a one-off is a triage stub; related work is an epic,
   however small (a single-stub epic is fine).
-- **Sustentus is exempt** — its `.icm/` is authoritative (it is the *source* of this
-  model). The board reads it natively; the conformance and hygiene tooling leaves it
-  alone.
+- **No repo is exempt** (D44). Sustentus, where this model started, is read by the board and
+  checked by the conformance and hygiene tooling like any repo.
 
 ## Stub format
 

@@ -38,8 +38,8 @@
 #
 # Config from the environment, never a .env file:
 #   ESTATE_OWNER   GitHub account that owns the estate (default: k0d0minio)
-#   ESTATE_EXEMPT  space-separated repo names to skip (default: sustentus — which in
-#                  practice lives under its own org and so never appears here anyway)
+#   ESTATE_EXEMPT  space-separated repo names to skip (default: none — decision D44; sustentus
+#                  lives under its own org, so this owner's listing never includes it)
 #   GH_TOKEN       read-only token. In Actions supply a PAT (ticket ICM-005): the
 #                  built-in GITHUB_TOKEN can only see the repo it runs in.
 #
@@ -62,7 +62,7 @@ command -v gh >/dev/null 2>&1 || { echo "gh (GitHub CLI) is required" >&2; exit 
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 2; }
 
 OWNER="${ESTATE_OWNER:-k0d0minio}"
-read -r -a EXEMPT <<<"${ESTATE_EXEMPT:-sustentus}"
+read -r -a EXEMPT <<<"${ESTATE_EXEMPT:-}"
 
 bold=$'\033[1m'; dim=$'\033[2m'; red=$'\033[31m'; green=$'\033[32m'; yellow=$'\033[33m'; off=$'\033[0m'
 [[ -t 1 ]] || { bold=; dim=; red=; green=; yellow=; off=; }

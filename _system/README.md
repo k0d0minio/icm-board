@@ -163,11 +163,9 @@ Converged conventions. Where these conflict with a repo's own contracts, **the r
   session, parked in that repo as a `found-by: template-change` triage stub — never an
   edit there. The change ships here on a PR and the sync carries it back (D33;
   `template/icm-pipeline/_shared/template-change.md`).
-- **Sustentus is exempt from the estate walk, not from the sync.** Its `.icm/` is the
-  source the estate pipeline was extracted from
-  ([contracts/PIPELINE.md](contracts/PIPELINE.md)): `icm-check.sh` never measures it
-  unasked (`--repo` does, voluntarily), and its `.claude/` and intake baseline are its own.
-  Its **template-owned** pipeline files are the estate's like any repo's (D20, "sustentus
-  included"): `icm-sync.sh --apply projects/sustentus` brings them up to the template on
-  Jamie's word, through a PR there, and a change it needs is a template change request
-  like anywhere else (D33).
+- **No repo is exempt — sustentus included (D44).** The pipeline was extracted from
+  sustentus ([contracts/PIPELINE.md](contracts/PIPELINE.md)), but the template has moved past
+  it and is the one source. `icm-check.sh`, `ticket-hygiene.sh` and the sync treat it like any
+  repo; its project-owned files are its own, a change it needs is a template change request
+  (D33), and what lands there goes through a PR (its `main` is ruleset-guarded) without
+  breaking its code or workflow.

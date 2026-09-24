@@ -208,7 +208,13 @@ Rules:
   from here — invoked by a human, dry-run by default, moving nothing outside the
   manifest, deleting nothing (a retired file is reported for `git rm`). Canonical
   `.claude/` assets and every `P` file keep the old rule: reported, never repaired
-  (decision D20).
+  (decision D20). **`--apply` also refuses to stamp a template commit `origin/main` never
+  held** — icm-board's own checkout must have its `HEAD` on `origin/main`, or the sync is
+  reporting a template state that could still change before it merges, and a repo's
+  `setup.sh` "current?" answer or a `git log main` lookup of the stamp would fail. The
+  lab/testing override is `--apply --from-branch <repo>` (no value — the branch already
+  checked out is what gets used), which writes `branch: <name>` beside the commit in
+  `.icm/template-version` so the stamp says what it is. A dry run only warns.
 - **No substitutions.** Nothing in the template is templated per repo: identity is the
   `epic/slug` path (no prefixes), and the pipeline scripts derive the GitHub repo from
   `origin` (override with `GITHUB_REPO`). A copy is exact, which is what makes the drift

@@ -302,15 +302,18 @@ overruns on a one-line `Context budget:` note in the `## Release` record.
 
    **(c) The record is already merged — the stop report carries the rest.** The `- production:`
    and `- health:` lines and the announce outcome go in the report (the record on `main` cannot
-   take a post-merge line without a second PR, and there is no second PR); what was parked is
-   already the record's `- parked:` line and is not repeated. Report per
+   take a post-merge line without a second PR, and there is no second PR). Report per
    `.icm/_shared/output.md`:
 
    ```
-   release <slug> merged <sha> — production <state> (uat <state> on a UAT repo), health <verdict>, announce <outcome> · CI GREEN · <PR URL>
+   **release <slug> merged** <sha> · CI GREEN · <PR link>
+
+   - production <state> (uat <state> on a UAT repo) · health <verdict> · announce <outcome>
+   - <what the reviews found and where it went — the parked triage stubs by name, or "nothing parked">
+
    Operator:
-   - [ ] <on health FAIL or production ERROR> open /pipeline hotfix — or commit the uncommitted health stub <stub name> for the bug lane
-   - [ ] <on a UAT repo> check the batch on the UAT address (promote.sh status), and record the client's word with promote approve when they give it
+   1. <on health FAIL or production ERROR> open /pipeline hotfix — or commit the uncommitted health stub <stub name> for the bug lane
+   2. <on a UAT repo> check the batch on the UAT address (promote.sh status), and record the client's word with promote approve when they give it
    ```
 
    The usage `end` line was written before the close-out in step 7; nothing else is written

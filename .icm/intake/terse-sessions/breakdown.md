@@ -53,6 +53,10 @@ Unverified: <skipped, unproven, assumed>   ← only when non-empty
 
 No recap of what changed — the PR body and `notes.md` carry it.
 
+> Revised 2026-09-24, during stub 2 and before any sync: this shape read as too bare. The
+> doctrine now governs the chat only, gate checkboxes stay in the PR body, the stop report adds
+> 2–5 bullets of what matters, and `Operator:` is a numbered list — `_shared/output.md`, D40.
+
 ## Build order
 
 1. `output-doctrine` — `_shared/output.md` (T), its MANIFEST line, decision D40 in

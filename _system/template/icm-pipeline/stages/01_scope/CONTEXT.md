@@ -162,14 +162,17 @@ order` agreeing with the stubs). What it cannot judge, you still must: each stub
 8. **Stop.** The usage line — `.icm/scripts/usage-snapshot.sh <slug> scope end` — is taken just
    before step 7's commit, so it rides that commit with the rest (it is inside the run folder
    the path guard allows).
-   Report per `.icm/_shared/output.md` — the stub count, their order and the `## Open for Define`
-   list are in `breakdown.md` and `scope.md`, not repeated in chat:
+   Report per `.icm/_shared/output.md`:
 
    ```
-   scope <slug> landed — <n> stubs · CI n/a (direct commit to main) · <commit link>
+   **scope <slug> landed** — <n> stubs · CI n/a (direct commit to main) · <commit link>
+
+   - <the stubs in build order, one line each>
+   - <the ## Open for Define list, or "nothing open">
+
    Operator:
-   - [ ] review story.md, scope.md and breakdown.md on main: <the three main links>
-   - [ ] happy → run /pipeline new (walks the batch into Define); not happy → delete the run and intake folders and re-run Scope
+   1. review story.md, scope.md and breakdown.md on main: <the three main links>
+   2. happy → run /pipeline new (walks the batch into Define); not happy → delete the run and intake folders and re-run Scope
    ```
 
    A scope they are not happy with is deleted (the run folder and the intake folder, in a direct

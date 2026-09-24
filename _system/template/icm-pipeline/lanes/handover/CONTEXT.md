@@ -59,16 +59,19 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    path outside the repo to find it.
 9. **STOP.** (The usage `end` line was written before the close-out.) Report per
    `.icm/_shared/output.md` — the transfers still owed and the money line are human acts that
-   never land in git, so they are `Operator:` items; the record's location, where it was
-   written, rides the outcome line:
+   never land in git, so they are `Operator:` items:
 
    ```
-   handover <slug> ready[ — record at <deal-folder path>/08-handover.md] · CI GREEN · <PR URL>
+   **handover <slug> ready** · CI GREEN · <PR link>
+
+   - support <tier> · setup.sh <verdict> · record <at <deal-folder path>/08-handover.md | not written — no deal folder on disk>
+   - <any env key or account the audit could not document>
+
    Operator:
-   - [ ] <per transfer still owed> <the account> — <the transfer>, owner <who>
-   - [ ] <the money line>
-   - [ ] <where the deal folder was not on disk> write 08-handover.md into the deal folder (icm-board workspaces/deals/<client>/<engagement>/) from notes.md
-   - [ ] smoke-test, then squash-merge the PR from GitHub
+   1. <per transfer still owed> <the account> — <the transfer>, owner <who>
+   2. <the money line>
+   3. <where the deal folder was not on disk> write 08-handover.md into the deal folder (icm-board workspaces/deals/<client>/<engagement>/) from notes.md
+   4. smoke-test, then squash-merge the PR from GitHub
    ```
 
 ## Outputs

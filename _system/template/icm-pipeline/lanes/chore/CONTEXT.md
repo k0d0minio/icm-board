@@ -84,10 +84,14 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
 5. **STOP.** Report per `.icm/_shared/output.md`:
 
    ```
-   chore <slug> ready · CI GREEN · <PR URL>
+   **chore <slug> ready** · CI GREEN · <PR link>
+
+   - <what changed, and the invariant held>
+   - <anything parked in triage, or a surprise the operator should know>
+
    Operator:
-   - [ ] <if a product app built> smoke the previews: <the URLs ci-status.sh printed>
-   - [ ] squash-merge the PR from GitHub
+   1. <if a product app built> smoke the previews: <the URLs ci-status.sh printed>
+   2. squash-merge the PR from GitHub
    ```
 
    You do not merge lane PRs and you do not re-invoke the lane — the operator's merge click is
@@ -98,7 +102,7 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    just before the close-out (above); nothing is written now. If you
    parked a finding in `.icm/intake/triage/` on the way and the folder now holds more than 60
    active stubs (`ls .icm/intake/triage/*.md | wc -l`; `intake/CONTEXT.md` → Triage → cap), add
-   `- [ ] run triage report — triage/ holds N active stubs (cap 60)` to `Operator:`.
+   `run triage report — triage/ holds N active stubs (cap 60)` to `Operator:`.
 
 ## Outputs
 

@@ -98,9 +98,12 @@ open the rest of the docs tree "for consistency"; the map plus one page is the w
    and push on `RED`, then **stop** and report per `.icm/_shared/output.md`:
 
    ```
-   knowledge <slug> ready · CI GREEN · <PR URL>
+   **knowledge <slug> ready** · CI GREEN · <PR link>
+
+   - <the page and what changed on it, in a line>
+
    Operator:
-   - [ ] merge the PR from GitHub
+   1. merge the PR from GitHub
    ```
 
    The merge is theirs, from GitHub. **On a UAT repo** the page reaches UAT on the merge and

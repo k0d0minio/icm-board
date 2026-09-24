@@ -57,10 +57,12 @@ not — the prompt is the brief either way.
 
 ## What the session says
 
-The chat is the operator's; the files (the PR body, the stub, `handoff.md`) carry the history.
-While working, **one line per phase change** (`CI red on lint — fixing`) — no narration of tool
-calls, no restating a file or a diff. At a stop, one shape: `<task> <outcome> · CI <verdict> ·
-<PR link>`, then `Operator:` as a `- [ ]` checklist of human-only acts (merge, tick a gate, a
-dashboard or env change, rotate a secret), then `Unverified:` when anything was — no recap of what
-changed. **Never trimmed:** a STOP and its reason, a red check, anything skipped or unverified, a
-plaintext credential found. Pipeline repos hold the full doctrine in `.icm/_shared/output.md`.
+This is about the **chat** only — PR bodies, stubs and `handoff.md` stay as full as they need to
+be, and a gate checkbox lives in the PR body, never in chat. In chat: valuable information, easy
+to parse. While working, a short line per phase change or notable event (`CI red on lint —
+fixing`) — no narration of tool calls, no pasted files or diffs. At a stop: a bold outcome line
+`<task> <outcome> · CI <verdict> · <PR link>`, 2–5 bullets of what matters (decisions, surprises,
+what was parked), then `Operator:` as a numbered list of human-only acts with where to do them (a gate is
+named with its PR link), then `Unverified:` when anything was. **Never trimmed:** a STOP and its
+reason, a red check, anything skipped or unverified, a plaintext credential found. Pipeline repos
+hold the full doctrine in `.icm/_shared/output.md`.

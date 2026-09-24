@@ -68,7 +68,7 @@ everything except the source files you actually edit. Record overruns on a one-l
    `.icm/intake/CONTEXT.md`) and move on; never absorb it into this diff. **Cap notice:** if the
    folder then holds more than 60 active stubs (`ls .icm/intake/triage/*.md | wc -l`;
    `intake/CONTEXT.md` → Triage → cap), the stop report carries it as an `Operator:` item —
-   `- [ ] run triage report — triage/ holds N active stubs (cap 60)`.
+   `run triage report — triage/ holds N active stubs (cap 60)`.
    The finding is still parked either way.
    - **Tests ride along, scoped by the spec.** When the diff touches pure logic that already has
      unit tests, update them in the same commit — a knowingly-red suite never gets pushed as
@@ -194,10 +194,14 @@ everything except the source files you actually edit. Record overruns on a one-l
     `.icm/_shared/output.md`:
 
     ```
-    build <slug> done · CI GREEN (full gate) · <PR URL>
+    **build <slug> done** · CI GREEN (full gate) · <PR link>
+
+    - <what was built, in a line>
+    - <anything that differs from the spec, a criterion met in an unexpected way, what was parked>
+
     Operator:
-    - [ ] smoke the previews: <the URLs ci-status.sh listed>
-    - [ ] tick Ready to merge on the PR, then run /pipeline release <slug>
+    1. smoke the previews: <the URLs ci-status.sh listed>
+    2. tick **Ready to merge** in the body of <PR link>, then run /pipeline release <slug>
     ```
 
     The tick attests the manual testing, so nothing after it re-asks. A Build that STOPs mid-way

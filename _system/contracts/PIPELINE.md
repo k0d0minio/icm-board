@@ -52,10 +52,6 @@ Two rows survive from the first, tiered design because they still describe real 
     handover/                ← the deal's last lane: accounts, env, setup.sh OK, the record (T)
     knowledge/               ← one docs page, one docs-only PR, no run                     (T)
   intake/CONTEXT.md          ← the breakdown/stub formats, triage, the archive rules       (T)
-  uat/CONTEXT.md             ← optional in effect: the persistent client UAT environment —
-                                one branch, one address, the batch, the sign-off, the promotion (T)
-  uat/batch.json             ← the batch on the UAT branch: stubs, the sign-off, the promotions log
-                                (state — written by close-out.sh and promote-uat.sh, never seeded)
   runs/<slug>/               ← one folder per run: run.md + usage.md + the canonical file
                                 pack (project, plan, tasks, decisions, status, handoff,
                                 FAILURE) + stage outputs                                    (Layer 4)
@@ -85,7 +81,7 @@ Two rows survive from the first, tiered design because they still describe real 
     env-check.sh select-model.sh check-migrations.sh process-raw.sh
     deploy-status.sh rollback.sh usage-snapshot.sh env.sh setup.sh retrospective.sh
     list-skills.sh db-branch.sh db-env.sh security-check.sh run-pack.sh health-check.sh
-    client-status.sh promote-uat.sh                                                        (T)
+    client-status.sh promote.sh                                                            (T)
     format.sh lint.sh validate-knowledge-map.sh report.sh                                 (P)
 .claude/skills/pipeline/SKILL.md   ← the /pipeline router (one skill, many stages)
 .claude/skills/setup/SKILL.md      ← /setup: the report, the questions, the P files
@@ -149,9 +145,8 @@ written after a call, a chat thread. It records the source verbatim, interrogate
 question sheet and nothing is answered out of band — settles what can be settled into
 `01_scope/output/scope.md` (the source plus an addendum: assumptions, the **`D-n`
 decisions table**, out of scope, and what is **Open for Define**), cuts the intake epic
-from *that*, and lands it all on the repo's **ticket base branch** through one **ticket PR**
-it merges at once (D38; the canonical `pr-conventions` skill → The ticket PR). A front opens
-no feature PR. A repo whose work
+from *that*, and lands it all on `main` in one **direct commit** (D39 (8); the canonical
+`pr-conventions` skill). A front opens no PR. A repo whose work
 arrives already agreed never invokes it and has no gap; work with a stub goes to
 `/pipeline new`.
 
@@ -186,40 +181,44 @@ first in the build order), Build merges `origin/main` before its ready flip, and
 `new-run.sh` warns on an overlap with a live run. The migration check in Release is the one
 place parallel runs can still collide without git noticing.
 
-**A client UAT environment is optional and persistent (decision D31).** Nothing is seeded on:
-`/setup` alone declares `uat: {branch, url}` in a repo's `project.json`, and until it does every
-run merges into `main` and ships on the merge. Once declared, every run's PR — spine and lane —
-targets the long-lived UAT branch instead (`lib/project.sh → pipeline_base_branch`; a hotfix still
-targets `main`, production being wrong now), the squash puts the run on the client's **one fixed
-address** (a domain assigned to the branch in Vercel — never an environment or a URL per batch),
-`close-out.sh` appends the slug to `.icm/uat/batch.json` on that branch, Release reads the UAT
-deployment once (`deploy-status.sh --uat`) and announces nothing. Production is one promotion PR
-per batch: the client tests the batch as a whole and says yes; the operator records that word —
-`promote-uat.sh approve --by "<who>"`, the operator's act, never an agent's inference (the agency
-brief's rule 1 stands: no client-facing gate) — which cuts a promotion branch from the UAT branch,
-brings `main` in, writes the sign-off into `batch.json`, and opens a ready `type:promote` lane PR
-into `main` through `new-run.sh`; the operator merges it from GitHub; `promote-uat.sh sync` then
-brings `main` back into the UAT branch, resets the batch and announces the release. No script
-merges; nothing promotes on its own. The branch and address live in `project.json`, the batch's
-state in `batch.json` (one home per fact, D24). [`template/icm-pipeline/uat/CONTEXT.md`](../template/icm-pipeline/uat/CONTEXT.md)
-owns the rule.
+**One branch, two deployment targets (decision D39).** `main` is the only long-lived branch in
+every repo: every run, lane, hotfix, knowledge change and ticket commit targets it. A client UAT
+environment is optional and is a **deployment target, not a branch**: `/setup` alone declares
+`uat: {target, url}` in a repo's `project.json` (both or neither; the seeded stub is empty) —
+`target` the slug of a Vercel **custom environment** on each product project (Pro, one per
+project; where a team cannot create one, `/setup` refuses the declaration), deployed from `main`
+on every merge with its own variables and a **named** database (`database.neon.uat_branch` /
+`database.mongodb.uat_name`), `url` the domain attached to it — the client's one fixed address.
+Undeclared, every merge is the production release, as it always was. Declared, the operator turns
+off **Auto-assign Custom Production Domains**, so every merge builds a **Staged** production
+deployment; Release reads the UAT deployment once (`deploy-status.sh --uat`) and announces nothing.
+**The batch is `git log <last published release>..origin/main`** — no file, no reset. The client
+tests it and says yes; the operator records that word — `promote.sh approve --by "<who>"`, the
+operator's act, never an agent's inference (the agency brief's rule 1 stands: no client-facing
+gate) — which **drafts** a GitHub Release at the signed-off SHA; **the operator publishes it on
+GitHub**, and the reference `release.yaml`, on `release: published`, finds the staged production
+deployment of that SHA (missing → fail before anything else), runs the repo's production
+migration (the reference `db-migrate.yml`, called — on a UAT repo its `push: main` migrates
+nothing), promotes the staged deployment (never a rebuild; already Current → a no-op), reads
+production once and announces (reusing the Release's tag). No script publishes or promotes;
+nothing promotes on its own; a Release is never unpublished (rollback is Vercel's). **A hotfix
+promotes everything before it**: a run not fit for production does not merge, or merges dark.
+The operator's Vercel acts are listed by `promote.sh init` and never performed by a script.
+The retired branch model fails `setup.sh` outright (a `uat.branch` key, a `.icm/uat/batch.json`).
+[`template/icm-pipeline/_shared/promotion.md`](../template/icm-pipeline/_shared/promotion.md)
+owns the rule; it replaces D31's UAT branch, batch file, promotion PR and `sync`.
 
-**Ticket state lives on the ticket base branch (decision D38).** The same
-`pipeline_base_branch` is the one home of a repo's `.icm/intake/`: the UAT branch where one is
-declared, else `main`. Every reader — the dashboard, the board scripts, `client-status.sh`'s
-queue — reads it there; every writer reaches it through a PR — the run's own PR inside a run,
-a **ticket PR** outside one (Scope's front included), merged at once by the session that
-opened it after its path guard held (`.icm/intake/**`, plus `.icm/runs/<slug>/**` for Scope),
-`--admin` where a ruleset requires checks. It is the one PR an agent merges. Hotfix and the
-knowledge lane still merge into `main`, so on a UAT repo `promote-uat.sh sync` is required
-after both. icm-board is exempt and commits its own tickets straight to `main`. This amends
-D31, and reverses the front's old direct push to `main`: a stub is now born on the branch
-where its run's close-out retires it.
+**Ticket state lives on `main` (D39 (8)).** `.icm/intake/` has one home in every repo, UAT or
+not: `main`. Every reader — the dashboard, the board scripts, `client-status.sh`'s queue — reads
+it there; every writer reaches it either through the run's own PR inside a run, or by a **direct
+commit to `main`** outside one (Scope's front included, under its path guard). No ticket PR, no
+`--admin`, no ticket base branch; a ruleset that requires checks on `main` keeps the operator's
+identity on its bypass list. This supersedes D38 and restores the front's direct push.
 
 **The client's status report is everywhere, and needs no UAT.** `client-status.sh` (template-
 owned) compiles `.icm/output/client-status-latest.md` from the pipeline's own records — what
-shipped to production and when (the archive on `origin/main`), what is on UAT (the batch on the
-UAT branch, where one exists), what is in progress (stubs spun out and not merged; the open PRs'
+shipped to production and when (the archive on `origin/main` — at the last published Release,
+on a UAT repo), what is on UAT (archived on `origin/main` since that Release, where UAT exists), what is in progress (stubs spun out and not merged; the open PRs'
 stages when a GitHub route exists), what is queued (the epics in build order) — in the work
 items' own titles, never a slug or a SHA. `/pipeline status` runs it; nothing sends it.
 
@@ -245,7 +244,7 @@ Anchored so parsing never depends on wording:
 - Nothing self-advances across a gate: after each stage, say what's done and which
   `/pipeline <next>` comes when the human is ready.
 - **The front's gate has no checkbox** — there is no feature PR yet. The operator reviews
-  `scope.md` and the cut on the ticket base branch and runs `new` when happy; nothing downstream is cut
+  `scope.md` and the cut on `main` and runs `new` when happy; nothing downstream is cut
   from a scope the operator did not settle.
 
 ## Scripts — the deterministic factory
@@ -263,30 +262,30 @@ for every key.
 | `validate-spec.sh <slug\|path>` | spec structure: header fields, five sections, criteria-are-checkboxes | `OK` 0 · `INVALID` 2 |
 | `validate-intake.sh <epic\|path>` | the cut's bookkeeping: sequences contiguous, depends-on ordered, build order agrees; triage stubs lane-tagged | `OK` 0 · `SKIP` 0 · `INVALID` 2 |
 | `validate-decisions.sh <slug\|path>` | every `\| D-n \|` row of the scope's Decisions table appears in `spec.md` and `notes.md` (the front's own, or the front of the epic behind the stub); a file not yet written is "not yet", never a failure | `OK` 0 · `SKIP` 0 · `MISSING n` 2 |
-| `new-run.sh <slug> --summary "…" [--stub …] [--lane …] [--ready] [--base <branch>]` | commit run (+ the canonical file pack, `run-pack.sh --init`) → consume stub → push → open the one PR (draft on the spine and in bug/tweak/chore/handover; **ready** for a hotfix, a promotion, or with `--ready`) into the pipeline's base branch — `main`, or the UAT branch where one is declared (a hotfix stays on `main`; on a UAT repo it brings `origin/main` into the run branch first) —, body from `project-body.sh`; labels `type:<lane>`; **warns** `[WARN] overlaps <slug> on <path>` when this run's `touches:` shares a surface with a live run (D26) — never refuses | `CREATED` 0 |
+| `new-run.sh <slug> --summary "…" [--stub …] [--lane …] [--ready] [--base <branch>]` | commit run (+ the canonical file pack, `run-pack.sh --init`) → consume stub → push → open the one PR (draft on the spine and in bug/tweak/chore/handover; **ready** for a hotfix, or with `--ready`) into `main` — the one base (D39) —, body from `project-body.sh`; labels `type:<lane>`; **warns** `[WARN] overlaps <slug> on <path>` when this run's `touches:` shares a surface with a live run (D26) — never refuses | `CREATED` 0 |
 | `project-body.sh <slug> [--apply]` | the one implementation of the spine PR body, projected from `spec.md`; `--apply` PATCHes it in place and resets both gate anchors | `APPLIED` 0 |
 | `project-labels.sh <slug> --stage <…\|auto>` | project `type`/`stage`/`complexity` from the spec header onto the run's PR (PUT replaces the whole set) — spine runs only | `APPLIED` 0 |
 | `ci-status.sh <slug> \| --pr <n>` | block until CI settles; reads check runs **and** commit statuses, dedupes by newest attempt, re-reads the head each pass; required names from `required_checks`, a conditional smoke from `smoke_check` | `GREEN` 0 · `RED` 3 · `PENDING` 4 |
-| `close-out.sh <slug>` | copy the run's learned rules into `_shared/project-rules.md` (`run-pack.sh --sync-rules`), then archive the run (and the finished epic, and the front behind it) into `runs_archive` / `intake_archive`, committed **on the run's branch** — refuses `main`, refuses a PR closed unmerged; a dropped stub counts as settled; on a UAT repo, appends the slug to `.icm/uat/batch.json` in the same commit when the PR targets the UAT branch | `CLOSED` 0 · `STOP` 3 |
+| `close-out.sh <slug>` | copy the run's learned rules into `_shared/project-rules.md` (`run-pack.sh --sync-rules`), then archive the run (and the finished epic, and the front behind it) into `runs_archive` / `intake_archive`, committed **on the run's branch** — refuses `main`, refuses a PR closed unmerged; a dropped stub counts as settled | `CLOSED` 0 · `STOP` 3 |
 | `triage-report.sh` | the parking lane's counts by lane / source / area / age, near-duplicates, against the cap | `OK` 0 |
 | `env-check.sh [--fix]` | pre-flight: binaries (gitleaks recommended), a GitHub route, `required_env`, `complexity`, `migrations.stamp`, `database.isolation` and its engine, the folder shape (skills parse, run-pack templates present), executable bits (repaired only with `--fix`), a UTF-8 locale, the lockfile's audit tool and a declared `health_endpoint` (reported, never required) | `PASS` 0 · `FAIL` 1 |
 | `select-model.sh <epic/slug \| stub \| path \| --complexity <w>> [--stage <s>]` | complexity × stage → tier → alias: three tiers (`haiku` fast · `sonnet` balanced · `opus`/`fable` frontier) and three roles — Scope/Define the **advisor** (tier 3), Build/Release/lanes/subagents the **executor** (tier 2, `opus` on `high`), a lint or format fix the **validator** (`haiku`); without `--stage` the complexity mapping alone; an explicit `recommended-model` wins for the work, never for a validator. Prints the alias, the tier, the role and `flags: --model <alias>`. **A recommendation; launches nothing** | `MODEL <alias>` 0 · `INVALID` 2 |
 | `check-migrations.sh [--apply]` · `--new <name> [--apply]` | Build step 10 and Release step 7, after `main` is merged in: are this run's migrations still newer than `main`'s, and in the declared form? Three forms read (`V<17 digits>__name.sql`, the UTC millisecond default; `<14 digits>_name.sql`, legacy `migrations.stamp: seconds`; `<13 digits>-name.<ext>`, the epoch-millisecond form a MongoDB runner such as ts-migrate-mongoose writes — `migrations.stamp: epoch` with `migrations.extension`, D34); only this branch's own are judged. `--apply` re-stamps every local one in order (STALE) or renames into the form (MISNAMED) — renames, never commits, never touches a migration `main` has. `--new` names the next migration after everything that exists; prints the tool's out-of-order setting (`migrations.tool`, `migrations.out_of_order`) | `OK` 0 · `SKIP` 0 · `STALE n` 2 · `MISNAMED n` 2 · `RESTAMPED n` 0 · `RENAMED n` 0 · `NAMED <f>` 0 · `CREATED <f>` 0 |
 | `list-skills.sh [--json \| --bare] [--check]` | the Level-1 registry of `.icm/skills/*/SKILL.md` — one line per skill from its front matter (`name`, `description`, `triggers`), for the session-start hook and a stage's Inputs; `--check` validates the three keys, a body, the folder name, a ≤80-token Level 1. Loads nothing | `OK n` 0 · `INVALID n` 2 |
 | `db-branch.sh <slug> [status\|up\|env\|down\|prove] [--base ref]` | one database per run, named after the slug: a Neon branch `run/<slug>` (a child of the production branch, 7-day expiry — `database.isolation: neon`, through `lib/neon.sh`), a MongoDB database `run_<slug>` on the repo's one cluster (`isolation: database`, `provider: mongodb`, through `lib/mongo.mjs` and the repo's own driver — `up` runs the repo's `migrate_command up` then `seed_command`, D35), a Postgres schema `run_<slug>` on the variable `database.url_env` names, or a local container `icm-db-<slug>`; `up` records a `- db:` pointer (the variable's NAME) in `run.md`, `env` prints the exports to eval (stdout is only the exports), `down` drops only what `up` made. `prove` (MongoDB, Build step 10 and Release step 7): on a fresh, unseeded `run_<slug>` migrated through exactly the base's migrations (one at a time, `up <name> --single`, past a stamp of this branch's own — the runner follows the stamp), this branch's own migrations up → down → up, collection list and index specs compared — `down` must restore them (`migrations.reversible: true`), the second `up` reproduce the first, and an `up` after the runner forgets them (a re-stamp, replayed) change nothing; out of stamp order the round trip reverts this branch's own one at a time (`down <name> --single`), never a base migration; the seed runs after `PROVEN`. Adopts a live run, never creates one; `none` isolation → SKIP | `BOUND` 0 · `ABSENT` 0 · `ENV` 0 · `RELEASED` 0 · `PROVEN` 0 · `UNPROVEN n` 2 · `SKIP` 0 |
-| `db-env.sh [status\|init\|reset-uat\|prune] [--apply] [--days n]` | the environments' databases on a Neon repo (`database.provider: neon`): `status` reads the project once — production (protected or not), the UAT branch (`preview/<uat>`, the Vercel integration's own, present or not yet), `preview/*` (count), `run/*` (each with its expiry and whether its run is live), every other branch by name, and the product project's build command where a Vercel token is in reach; `init` prints the operator's one-time acts (the key and where it lives, the integration's Preview-branching toggle, the migrate step in the build, protecting production, the cleanup workflow) and which are done; `reset-uat --apply` resets the UAT branch from production (refuses children, never production); `prune --apply` deletes `run/*` whose run is gone or expired and `preview/*` whose git branch is gone. Dry-run by default; production is never written; no name the pipeline did not give is touched (D32). On a MongoDB repo (`provider: mongodb`, D35) the same verbs on the one cluster: `status` lists production, the shared preview database, the UAT database (`preview_<uat>`), `preview_*` and `run_*` (each live or not) and every other database by name, against the cluster's caps; `init` lists the database user's rights, Vercel's system variables, the app's one connection line through `lib/db-name.mjs`, the preview-migrate workflow and the smoke check waiting on it, `mongodb-cleanup.yaml`, and last the flag `MONGODB_PREVIEW_PER_BRANCH=1`; `reset-uat --apply` drops the UAT database and re-makes it with the repo's migrate and seed commands (nothing copied from production); `prune --apply` drops `run_*` whose run is archived and `preview_*` whose branch is gone — never `production_name`, `preview_name` or the UAT database | `NEON …` 0 · `MONGODB …` 0 · `INIT` 0 · `DRY-RUN` 0 · `RESET` 0 · `PRUNED n` 0 · `UNCHANGED` 0 · `SKIP` 0 |
+| `db-env.sh [status\|init\|reset-uat\|prune] [--apply] [--days n]` | the environments' databases on a Neon repo (`database.provider: neon`): `status` reads the project once — production (protected or not), the UAT branch (the named `database.neon.uat_branch`, the operator's, present or not yet), `preview/*` (count), `run/*` (each with its expiry and whether its run is live), every other branch by name, and the product project's build command where a Vercel token is in reach; `init` prints the operator's one-time acts (the key and where it lives, the integration's Preview-branching toggle, the migrate step in the build, protecting production, the cleanup workflow) and which are done; `reset-uat --apply` resets the UAT branch from production (refuses children, never production); `prune --apply` deletes `run/*` whose run is gone or expired and `preview/*` whose git branch is gone. Dry-run by default; production is never written; no name the pipeline did not give is touched (D32). On a MongoDB repo (`provider: mongodb`, D35) the same verbs on the one cluster: `status` lists production, the shared preview database, the UAT database (`database.mongodb.uat_name`), `preview_*` and `run_*` (each live or not) and every other database by name, against the cluster's caps; `init` lists the database user's rights, Vercel's system variables, the app's one connection line through `lib/db-name.mjs`, the preview-migrate workflow and the smoke check waiting on it, `mongodb-cleanup.yaml`, and last the flag `MONGODB_PREVIEW_PER_BRANCH=1`; `reset-uat --apply` drops the UAT database and re-makes it with the repo's migrate and seed commands (nothing copied from production); `prune --apply` drops `run_*` whose run is archived and `preview_*` whose branch is gone — never `production_name`, `preview_name` or the UAT database | `NEON …` 0 · `MONGODB …` 0 · `INIT` 0 · `DRY-RUN` 0 · `RESET` 0 · `PRUNED n` 0 · `UNCHANGED` 0 · `SKIP` 0 |
 | `security-check.sh [<slug>] [--staged\|--branch\|--all] [--audit\|--no-audit] [--strict]` | the zero-trust gate before a commit (Build) or a push (every lane): `gitleaks` over the staged change / the branch / the tree (`gitleaks protect --staged --redact`; a built-in pattern scan as the fallback, said aloud), a real `.env*` in the change set, and `npm\|pnpm\|yarn audit --audit-level=high` (or `security.audit_command`) when a manifest moved or the scope is wider; every finding redacted, the trace appended to the run's `03_build/output/error.log` (a lane: `lane/output/`), exit 1 aborts the commit. Never edits, never rotates, never `--no-verify` | `OK` 0 · `SKIP` 0 · `BLOCKED n` 1 · `FAIL` 1 |
 | `run-pack.sh <slug> [--check\|--init\|--sync-rules]` | the canonical file pack for session continuity — `project.md`, `plan.md`, `tasks.md` (DoD from the spec's criteria), `decisions.md` (the scope's `D-n` rows), `status.md`, `handoff.md`, `FAILURE.md` — seeded from `_shared/run-pack/` by `new-run.sh` (never overwritten); `--sync-rules` copies `FAILURE.md` → Learned rules into `_shared/project-rules.md` (append-only, deduplicated, in `retrospective.sh`'s shape — the two writers split one section: error.log's errors there, what no tool logged here), called by `close-out.sh` | `OK` 0 · `MISSING n` 2 · `SEEDED n` 0 · `SYNCED n` 0 |
 | `retrospective.sh <slug\|path> [--apply] [--min n]` | Release step 7 and every lane's last act before the close-out: the run's `error.log` (what a stage fixed, entry by entry, with its `- resolved:` / `- rule:` lines) → a signature per entry (`TS2532`, an ESLint rule id, an errno, an exception class, `security-check/<rule id>` for the gate's own entries — the class, never the instance), counted across the archive's `error.log`s; an entry flagged `- rule:`, or one whose signature recurs (`--min`, default 2) and carries a resolution, is a candidate; a signature already in `project-rules.md` is skipped. Reports; `--apply` appends each candidate under `## Learned rules` in the project-owned `_shared/project-rules.md` with its provenance — **never commits, never judges** (the rule is the session's words at the moment of the fix; a slip is deleted by hand before the commit) | `SKIP` 0 · `NONE` 0 · `CANDIDATES n` 0 · `APPENDED n` 0 |
 | `process-raw.sh [--dry-run]` | `.icm/raw/` → `.icm/processed/`: extract text with **local** tools only (email, chat export, PDF, deck, image; **audio and video** through ffmpeg + whisper.cpp — `SKIP` with the install hints when either is absent, the recording never uploaded and never committed), log `manifest.json` (extractor, model, language for a transcription), archive the original to `raw/_processed/`, park one triage **pointer** stub per asset — it never scopes, cuts or sequences | `PROCESSED n` 0 · `DRY-RUN n` 0 · `EMPTY` 0 |
-| `deploy-status.sh <slug> \| --sha <sha> [--uat]` | Release step 9, **once**: the merge commit's production deployment per `deploy.projects[]`, waited for (bounded), with the previous READY id — the `- production:` line; a deployment the project's Ignored Build Step canceled is `SKIPPED` (production stays on the previous READY, named), never ERROR; `--uat` reads the UAT branch's deployment instead (product projects only) — the `- uat:` line with the fixed address | `READY` 0 · `ERROR <p>` 3 · `PENDING` 4 · `SKIP` 0 (every project skipped by its ignore step, or no deploy block) |
+| `deploy-status.sh <slug> \| --sha <sha> [--uat]` | Release step 9, **once**: the merge commit's production deployment per `deploy.projects[]`, waited for (bounded), with the previous READY id — the `- production:` line; a deployment the project's Ignored Build Step canceled is `SKIPPED` (production stays on the previous READY, named), never ERROR; `--uat` reads the UAT custom environment's deployment of the SHA instead (product projects only) — the `- uat:` line with the fixed address | `READY` 0 · `ERROR <p>` 3 · `PENDING` 4 · `SKIP` 0 (every project skipped by its ignore step, or no deploy block) |
 | `rollback.sh <slug> \| --sha <sha> [--revert] [--vercel]` | **prepares** a recovery: a `claude/hotfix-revert-<slug>` branch + the hotfix PR (through `new-run.sh`), and/or the previous READY deployment with the exact CLI/REST rollback call — printed, never called; warns when the merge carried a migration and `migrations.reversible` is false | `PREPARED …` 0 · `DRY-RUN` 0 · `SKIP` 0 |
 | `health-check.sh [--sha <sha>] [--url <u>]…` | Release step 9(a), after `deploy-status.sh`, **once**: one GET per `health_endpoint` in `project.json` (top-level, or per deploy project), 200 expected, three attempts with exponential backoff — the `- health:` line. A failure calls `report.sh alert` (the repo's channels) and parks **one** `lane: bug` · `complexity: high` triage stub per merge SHA — written, never committed; rolls nothing back, opens no lane | `OK` 0 · `FAIL <endpoint>` 3 · `SKIP` 0 · `DRY-RUN` 0 |
 | `usage-snapshot.sh <slug> <stage> start\|end` · `--report <slug>` | appends one cumulative `- usage:` line to the run's `usage.md` from the harness's own store (Claude Code transcript · OpenCode SQLite), priced in-repo from `lib/model-prices.json`; `end` is called just before `close-out.sh` so the archive commit carries it, and an `end` after the close-out lands in the archived copy, never a recreated live folder; never estimates, never blocks | `RECORDED` 0 · `SKIP (<why>)` 0 · `REPORT` 0 |
 | `env.sh audit\|init\|pull\|push-notes\|add\|doc` | the repo's env across five surfaces, driven by the deploy block: names only; `add` takes the value **on stdin only** and never prints it; `--changed` is Build's pre-push check and Release's stop class 3 | `OK` · `GAPS n` · `SEEDED n` · `PULLED n` · `PUSHED n` · `ADDED …` · `SKIP` · `DOC` |
 | `setup.sh [--fix] [--template <path\|url>] [--report]` | the eleven-section report behind `/setup`: baseline (from the repo's own `.icm/MANIFEST`), formatter exposure, `project.json`, environment, tickets, raw, runs, knowledge, reporting, workflows, support; `--fix` seeds what is missing from an explicit source, never overwrites; no default source | `OK` 0 · `GAPS n` 0 |
-| `client-status.sh [--out <path>] [--stdout] [--all] [--limit n] [--today d] [--no-fetch] [--no-github]` | the client's view: delivered to production (the archive on `origin/main`, dated by git), ready on UAT (the batch on the UAT branch, where declared), in progress (spun-out stubs not merged; PR stages with a GitHub route), queued (epics in build order) — titles only, plain words; writes `.icm/output/client-status-latest.md`; chores and `internal` hidden unless `--all`; sends nothing | `WRITTEN <path> — …` 0 |
-| `promote-uat.sh status\|init\|approve --by "<who>"\|sync` | the UAT batch (UAT repos only; `SKIP` elsewhere): `status` reads it and cross-checks git; `init` writes the empty `batch.json` and lists the operator's one-time acts; `approve` — **the operator's act** — records the client's sign-off, cuts the promotion branch, opens the ready `type:promote` PR into `main` through `new-run.sh`, closes out, stops; `sync` — after the promotion merged — brings `main` into the UAT branch, resets the batch, announces (session repos). Never merges | `UAT n · …` · `INIT`/`UNCHANGED` · `OPENED #n` · `SYNCED k`/`UP-TO-DATE` · `STOP` 3 · `SKIP` 0 |
+| `client-status.sh [--out <path>] [--stdout] [--all] [--limit n] [--today d] [--no-fetch] [--no-github]` | the client's view: delivered to production (the archive on `origin/main`, dated by git), ready on UAT (archived on `origin/main` since the last published Release, where declared), in progress (spun-out stubs not merged; PR stages with a GitHub route), queued (epics in build order) — titles only, plain words; writes `.icm/output/client-status-latest.md`; chores and `internal` hidden unless `--all`; sends nothing | `WRITTEN <path> — …` 0 |
+| `promote.sh status\|init\|approve --by "<who>" [--note] [--sha] [--announce]` | the UAT batch and the client's word (UAT repos only; `SKIP` elsewhere): `status` — the last published Release, the batch since it (runs and PRs), the staged production deployment of `main`'s head (Staged or Current), the UAT deployment, any draft; `init` — the operator's one-time checklist, marked where readable, performed never; `approve` — **the operator's act** — drafts a GitHub Release `<prefix><date>-promote-<sha7>` at the signed-off SHA (refuses a SHA off `main` or already released, an open draft, an existing tag). **Never publishes, never promotes** | `BATCH n · …` 0 · `INIT` 0 · `DRAFTED <tag>` 0 · `DRY-RUN` 0 · `STOP` 3 · `SKIP` 0 |
 | `format.sh` · `lint.sh` (P) | changed-files-only **feedback** before a push — never the verdict, never the full sweep (D21) | `OK` · `SKIP` · … |
 | `validate-knowledge-map.sh` (P) | every page the knowledge map names resolves under `docs_path` | `OK` 0 · `SKIP` 0 · `INVALID` 2 |
 | `report.sh <announce\|alert\|economics> "<summary>"` (P) | the reporting hook: the kind's channels from `project.json` (`github-release` by default — idempotent by tag; `slack`; `email`); `SKIPPED <channel>: <VAR> unset` names the fix; `--dry-run` prints the payloads; **exit 0 always** | `SENT …` · `SKIPPED (…)` · `DRY-RUN …` — all 0 |

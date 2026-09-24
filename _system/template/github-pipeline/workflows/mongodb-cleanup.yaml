@@ -8,7 +8,7 @@ name: MongoDB cleanup
 # the PR closes, so this job does — and the run's own `run_<slug>` beside it, where db-branch.sh
 # made one and the session never ran `down`. It names nothing else: never production_name or
 # preview_name (lib/mongo.mjs refuses both by name, whatever their shape), never the UAT database
-# — the UAT git branch has no PR that closes, and a PR INTO it closes the head branch's only.
+# (`database.mongodb.uat_name`, D39 — lib/mongo.mjs refuses it too, unless reset-uat says --uat).
 #
 # One home per fact: the names come from `.icm/project.json`, the derivation from lib/db-name.mjs,
 # the guards from lib/mongo.mjs — the same files every pipeline script reads. The cluster URI is
@@ -56,16 +56,15 @@ jobs:
             echo "provider=$(jq -r '.database.provider // ""' "$f")"
             echo "previews=$(jq -r '.database.mongodb.previews // ""' "$f")"
             echo "url_env=$(jq -r '.database.url_env // "MONGODB_URI"' "$f")"
-            echo "uat_branch=$(jq -r '.uat.branch // ""' "$f")"
           } >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
-        if: steps.cfg.outputs.provider == 'mongodb' && github.head_ref != steps.cfg.outputs.uat_branch
+        if: steps.cfg.outputs.provider == 'mongodb'
         with:
           node-version: 24
 
       - name: Drop preview_<branch> and run_<slug> when they exist
-        if: steps.cfg.outputs.provider == 'mongodb' && github.head_ref != steps.cfg.outputs.uat_branch
+        if: steps.cfg.outputs.provider == 'mongodb'
         env:
           URI_VALUE: ${{ secrets[steps.cfg.outputs.url_env] }}
           URL_ENV: ${{ steps.cfg.outputs.url_env }}

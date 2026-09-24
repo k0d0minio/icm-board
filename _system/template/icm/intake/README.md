@@ -15,9 +15,8 @@
 > `- priority: P0|P1|P2` line; external blockage an optional `- blocked: <reason>` line.
 > Each stub's `## Prompt` must stand alone pasted into a fresh agent session at the
 > repo root — it is the brief Define reads. The admin dashboard's Tickets board reads
-> this folder from the repo's ticket base branch (the UAT branch where
-> `.icm/project.json` declares one, else `main`) — a stub exists once its ticket PR
-> merges there (`pr-conventions` → The ticket PR) — and sends the pick-up verb (`/pipeline new <epic>/<slug>`, or
+> this folder from `main` — a stub exists once its direct commit lands there
+> (`pr-conventions`) — and sends the pick-up verb (`/pipeline new <epic>/<slug>`, or
 > the lane verb for a triage stub) where this repo carries the `/pipeline` router, the
 > `## Prompt` body where it does not.
 

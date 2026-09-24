@@ -16,7 +16,7 @@
     "projects": []
   },
 
-  "uat": { "branch": "", "url": "" },
+  "uat": { "target": "", "url": "" },
 
   "reporting": {
     "announce_from": "session",
@@ -38,7 +38,7 @@
     "neon": { "project_id": "", "api_key_env": "NEON_API_KEY", "production_branch": "main", "previews": "none", "uat_branch": "" },
     "mongodb": {
       "name_env": "MONGODB_DATABASE_NAME", "production_name": "", "preview_name": "",
-      "seed_command": "", "migrate_command": "", "migrations_collection": "migrations",
+      "seed_command": "", "migrate_command": "", "migrations_collection": "migrations", "uat_name": "",
       "previews": "none", "limits": { "databases": 100, "collections": 500, "name_bytes": 38 }
     }
   },

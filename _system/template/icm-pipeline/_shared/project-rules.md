@@ -18,10 +18,11 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 - **The client contact** — who is told what shipped, and by which variable: <`REPORT_EMAIL_TO`
   in the repo's environment names them; never an address in this file>. <Or: no client-facing
   report — the operator relays.>
-- **UAT sign-off** — <none: runs ship to production on the merge | `uat` in `.icm/project.json`
-  names the branch and the one fixed address; the client contact who signs a batch off there,
-  and how they say so (an email, a call); the operator records it with
-  `promote-uat.sh approve --by` (`.icm/uat/CONTEXT.md`); any one-time setup act still owed>.
+- **UAT sign-off** — <none: every merge ships to production | `uat` in `.icm/project.json`
+  names the Vercel custom environment and the one fixed address; the client contact who signs a
+  batch off there, and how they say so (an email, a call); the operator records it with
+  `promote.sh approve --by` and publishes the drafted Release (`_shared/promotion.md`); any
+  one-time setup act still owed (`promote.sh init`)>.
 
 ## Knowledge
 
@@ -61,17 +62,18 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   out-of-order is configured in the tool's own file>.
 - **The environments' databases** — <none declared | Neon project `<id>`: production is the
   `main` branch (protected: yes/no); previews are the Vercel integration's `preview/<git-branch>`
-  (`neon.previews: vercel` — the toggle is on: yes/no); the UAT branch's database is
-  `preview/<uat>`; migrations reach previews and UAT at build because <the build command / the
-  `vercel-build` script> runs the migrate step; production migrates by <the workflow / the same
-  build step>; `neon-cleanup.yaml` deletes a PR's branches on close (or: absent, because …) |
+  (`neon.previews: vercel` — the toggle is on: yes/no); the UAT database is the named
+  branch `<uat_branch>`, set on the UAT environment's variables; migrations reach previews and
+  UAT at build because <the build command / the `vercel-build` script> runs the migrate step; production migrates by <the workflow — on a UAT repo
+  at the promotion, called by release.yaml>; `neon-cleanup.yaml` deletes a PR's branches on close (or: absent, because …) |
   MongoDB cluster via `$MONGODB_URI`: production is `<production_name>`, the shared preview
   database `<preview_name>` (both never dropped or reset); previews <share `<preview_name>` |
   each read `preview_<branch>` — `MONGODB_PREVIEW_PER_BRANCH=1` on the Preview target (set: yes/no),
   the app's connection code reads the name through
   `.icm/scripts/lib/db-name.mjs` (yes/no — the file that does it)>; `<the preview-migrate
   workflow>` migrates and seeds the PR's database on each push and the smoke check waits for it;
-  the UAT branch's database is `preview_<uat>`; production migrates by <the workflow>;
+  the UAT database is `<uat_name>`, set on the UAT environment's variables; production
+  migrates by <the workflow — on a UAT repo at the promotion>;
   `mongodb-cleanup.yaml` drops a PR's databases on close (or: absent, because …); the cluster's
   caps are <100 databases / 500 collections (a shared tier) | uncapped>>.
 - **Health endpoint** — `health_endpoint` in `.icm/project.json` (or per project under

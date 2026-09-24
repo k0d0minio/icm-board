@@ -81,6 +81,29 @@ in this order; **[Jamie]** = the operator's act from this checklist, **[session]
     again. Rollout note `.icm/docs/2026-09-24-one-branch-cutover.md`: SHAs, choices (the agorasim
     UAT domain), refusals (branch tracking), what was proven.
 
+## Notes from stub 1 (template-two-targets, 2026-09-24)
+
+- **Step 5 — `report.sh` is P, never synced.** The reference `release.yaml` calls
+  `report.sh announce … --tag <the Release's tag>` so the published promotion Release is reused,
+  not duplicated; a repo's older `report.sh` rejects `--tag` (`RESULT: SKIPPED (usage)` → a red
+  announce step). Copy the template's `report.sh` over the repo's by hand in the sync PR (or add
+  the `--tag` flag to a customised one).
+- **Step 5 — `release.yaml`'s `migrate` job** calls `./.github/workflows/db-migrate.yml`; give the
+  repo's migrator the reference shape (triggers + the `gate` job + job-level concurrency, its own
+  steps kept). A repo without one deletes the job and drops it from `promote.needs`.
+- **Step 6 — the baseline.** The workflow promotes only a Release whose body carries
+  `- promote-sha: <40 hex>` equal to its tag's commit; any other published Release is a notice and
+  a no-op. For the idempotency proof, draft the baseline with `promote.sh approve --by "<operator>"
+  --sha <pre-merge origin/main> --announce none` and publish it: `stage` finds the deployment
+  already Current and nothing is promoted. If a `release/` tag already sits at that SHA,
+  `approve` refuses ("already released") — that tag is the baseline and there is nothing to run.
+- **Step 8 — proofs still owed by the real run:** which field Vercel's v6 deployment list uses for
+  a custom environment (`deploy-status.sh --uat` matches `customEnvironment.slug`, then the id
+  from `GET /v9/projects/<p>/custom-environments`, then `target`); that `GET /v9/projects/<p>`
+  carries `targets.production.id` (the Staged/Current test in `promote.sh status` and the
+  workflow's poll); `vercel build --target=<slug>` in `uat-deploy.yaml` if branch tracking is
+  refused.
+
 ## Acceptance criteria (rough)
 
 - [ ] berceo: steps 1–8 done, `uat` deleted, `promote.sh status` clean, batch visible on UAT

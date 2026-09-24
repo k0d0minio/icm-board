@@ -1,0 +1,77 @@
+name: Quality
+
+# The reference quality workflow (decision D43 — the cost floor, `.icm/_shared/ci.md`) — seeded
+# ONCE by /setup as a PROJECT-OWNED file, never synced: the commands are the repo's own. It is
+# the ONE quality job the estate runs in CI, and everything about its shape is a cost decision:
+#
+#   • ADVISORY, by name. The job is `Quality (advisory)`, so `ci-status.sh` reports it and never
+#     reds on it, and no ruleset requires it. The merge waits on the deploy status (Vercel) and on
+#     nothing else — Vercel already built the head, which is why there is no build step here.
+#   • READY HEADS ONLY. A draft owes CI nothing: `format.sh` / `lint.sh` / `security-check.sh`
+#     over the changed files are the session's pre-flip check. The `types:` list REPLACES
+#     GitHub's default [opened, synchronize, reopened] — `ready_for_review` is named so the flip
+#     itself runs it, and the job-level `if:` keeps a draft's `synchronize` from running.
+#   • NEVER ON `main`. The merge commit is the PR head plus main; its proof is Vercel's build of
+#     main (the UAT and Staged production deployments on a UAT repo). No `push:` trigger.
+#   • PATH-FILTERED. Nothing waits on this job, so it may skip a diff it has nothing to say
+#     about: `.icm/**`, markdown, and the workflow files themselves. (A REQUIRED check could
+#     never path-filter — it would hang the PRs it skipped. Advisory is what makes this legal.)
+#   • ONE JOB. GitHub bills per job, rounded up to the minute; a matrix of tiny jobs costs a
+#     minute each. Lint, typecheck and the unit tests run as steps of one job, cheapest first.
+#   • SUPERSEDED RUNS ARE CANCELLED. One run per branch; a newer push replaces the one in flight.
+#
+# Adopting it: replace the three `run:` lines with the repo's own scripts (or one turbo pass),
+# set the package manager and Node version, and record the job under `_shared/project-rules.md`
+# → The factory. A red run here is a finding the stage fixes on the branch — advisory means the
+# merge never waits on it, not that it may be ignored.
+
+on:
+  pull_request:
+    types: [ready_for_review, synchronize, reopened]
+    paths-ignore:
+      - ".icm/**"
+      - "**/*.md"
+      - "**/*.mdx"
+      - ".github/**"
+  workflow_dispatch:
+
+concurrency:
+  group: quality-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # A draft's synchronize still arrives (the types list cannot filter by draft state); the
+    # job-level guard is what keeps it free. A skipped job reports nothing — fine, nothing
+    # requires this check.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Cheapest first, so an obvious mistake fails fast. No build: Vercel's status is the build.
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test

@@ -1,3 +1,5 @@
+> Dropped (remainder): superseded by D39, 2026-09-24 — the UAT branch is retired, so agorasim's ticket-PR proof and the jamienisbet dashboard stub (the board reading a ticket base branch) are moot; both go in `one-branch-two-targets/cutover-agorasim-berceo`. What this stub did stands: all six pipeline repos synced to `de444cd`, `type:tickets` created, berceo#24 proved the ticket PR.
+
 # Stub: Roll D38 out — sync the estate, the operator's per-repo acts, prove it on berceo
 
 - feature-slug: ticket-base-rollout

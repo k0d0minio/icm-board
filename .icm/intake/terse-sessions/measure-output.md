@@ -6,6 +6,9 @@
 - size: S
 - depends-on: wire-stop-reports
 - sequence: 3 of 3
+- blocked: the after-table needs ≥5 archived runs on a repo synced past `wire-stop-reports`
+  (#74); only berceo has synced, and its `output.md` predates #74's loosening — 0 archived runs
+  there so far. Baseline done: `.icm/docs/2026-09-24-terse-sessions-measure.md`.
 - sources: the breakdown (answer 6) · `_system/template/icm-pipeline/scripts/usage-snapshot.sh`
   (`out=` is cumulative per session; a stage's own is `end − start` on the same `session=`) ·
   archived runs' `usage.md` under each pipeline repo's `.icm/runs/_archive/` (path per

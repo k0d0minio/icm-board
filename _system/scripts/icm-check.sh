@@ -11,7 +11,9 @@
 #   .icm/intake/triage/      the parking lane
 #   .icm/intake/_done/       the archive (completed epics + legacy tickets)
 #   .icm/docs/               ad hoc reports
-#   .claude/settings.json    clean policy baseline
+#   .claude/settings.json    clean policy baseline — the repo's own file, except that its
+#                            permissions.deny must carry every template entry and exactly
+#                            the template's .env rules (drift-reported, never rewritten)
 #   .claude/hooks/*          canonical estate hooks (session-start, wrap-reminder, and —
 #                            kodominio repos only — vercel-env-hydrate)
 #   .claude/skills/*         canonical estate skills (ticket-craft, pr-conventions)
@@ -79,9 +81,10 @@ done
 [[ -n "$APPS_ROOT" ]] || APPS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/template"
 
-# jq powers the single merge --fix is permitted to make into an existing file (D18).
-# Absent, the merge is skipped and the warning it would have silenced is reported with
-# the reason attached — the report never claims a repo is wired when it is not.
+# jq powers the single merge --fix is permitted to make into an existing file (D18), and
+# the settings.json deny-list comparison. Absent, the merge is skipped and the warning it
+# would have silenced is reported with the reason attached, and the deny list is reported
+# as unchecked — the report never claims a repo is wired, or current, when it is not.
 JQ="$(command -v jq 2>/dev/null || true)"
 
 if [[ ! -d "$APPS_ROOT" ]]; then echo "Not a directory: $APPS_ROOT" >&2; exit 2; fi
@@ -263,6 +266,22 @@ for repo in "${repos[@]}"; do
       warns+=("drift from canonical: $asset differs from _system/template/root/$asset")
     fi
   done
+  # settings.json is the repo's own file (its allow rules, hooks and any non-.env deny it
+  # adds), so it is never compared whole. Its secret-file deny rules are the estate's: every
+  # template entry present, and no .env rule the template lacks — a stale `Read(./.env.*)`
+  # also blocks .env.example. The repair is the template's list, by hand.
+  if [[ -f "$repo/.claude/settings.json" ]]; then
+    if [[ -z "$JQ" ]]; then
+      warns+=("settings.json deny list unchecked — jq not installed")
+    else
+      deny_diff="$("$JQ" -r --slurpfile t "$TEMPLATE/claude/settings.json" '
+          ($t[0].permissions.deny // []) as $want | (.permissions.deny // []) as $have
+          | [ ($want[] | select(. as $x | $have | index($x) | not) | "missing " + .),
+              ($have[] | select(test("\\.env")) | select(. as $x | $want | index($x) | not) | "extra " + .) ]
+          | join(", ")' "$repo/.claude/settings.json" 2>/dev/null)" || deny_diff="settings.json is not valid JSON"
+      [[ -n "$deny_diff" ]] && warns+=("settings.json deny list differs from _system/template/claude/settings.json: $deny_diff")
+    fi
+  fi
   # --- report-only checks (agent/human territory, never auto-fixed) ---
   # Layer-0 identity, shape-tolerant for the length of the AGENTS.md rollout: either the
   # legacy full CLAUDE.md or the AGENTS.md + importer pair satisfies it, and only a repo

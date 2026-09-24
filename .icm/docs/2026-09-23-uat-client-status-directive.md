@@ -2,11 +2,12 @@
 
 *Saved verbatim from the session that implemented it (icm-board, branch
 `claude/icm-uat-client-status-e6599f`), with Jamie's framing above the directive as he gave it.
-Decision of record: D31 in [`../project.md`](../project.md). The implementation is the template's
-[`uat/CONTEXT.md`](../../_system/template/icm-pipeline/uat/CONTEXT.md),
-[`scripts/client-status.sh`](../../_system/template/icm-pipeline/scripts/client-status.sh) and
-[`scripts/promote-uat.sh`](../../_system/template/icm-pipeline/scripts/promote-uat.sh); the
-contract [`PIPELINE.md`](../../_system/contracts/PIPELINE.md) carries the rule.*
+Decision of record: D31 in [`../project.md`](../project.md). The implementation was the template's
+`uat/CONTEXT.md`, [`scripts/client-status.sh`](../../_system/template/icm-pipeline/scripts/client-status.sh)
+and `scripts/promote-uat.sh` — the first and last retired by D39, replaced by
+[`_shared/promotion.md`](../../_system/template/icm-pipeline/_shared/promotion.md) and
+[`scripts/promote.sh`](../../_system/template/icm-pipeline/scripts/promote.sh); the contract
+[`PIPELINE.md`](../../_system/contracts/PIPELINE.md) carries the rule.*
 
 ## Jamie's framing (the constraints that shaped the implementation)
 

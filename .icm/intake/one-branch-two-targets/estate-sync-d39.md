@@ -28,6 +28,15 @@ shape. After stub 1 the template stamp moves and `icm-check` reports them behind
 - Jamie merges each PR. Nothing else: no Vercel act, no UAT declared. Offering UAT to any of them
   is a separate `/setup` conversation.
 
+## Notes from stub 1 (template-two-targets, 2026-09-24)
+
+For the four repos without UAT the sync is the T files only; nothing in their behaviour changes
+(`client-status.sh` output is byte-identical, the merge still ships). Two things still land:
+`type:promote` in `.github/labels.yml` is reported as retired, not failed; a
+repo that already carries the reference `release.yaml` should take the new one (the merge job now
+also requires `announce_from: ci`, and a `release: published` event on a repo without UAT is a
+no-op notice — report.sh's own Releases, created with a PAT, trigger it).
+
 ## Acceptance criteria (rough)
 
 - [ ] `icm-check.sh` clean across the estate: stamps at the D39 template, no skill drift

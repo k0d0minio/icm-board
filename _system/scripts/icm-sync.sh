@@ -129,11 +129,16 @@ while IFS= read -r f; do
   rel="${f#"$ICM_TARGET"/}"
   grep -qxF "$rel" "$list" || retired="${retired:+$retired$'\n'}    $rel"
 done < <(find "$ICM_TARGET/stages" "$ICM_TARGET/lanes" -name 'CONTEXT.md' 2>/dev/null | sort)
-# Files the template retired by name — replaced, never deleted here. One entry today; the
-# array is the list future retirements join.
-retired_by_name=(scripts/notify.sh)
+# Files the template retired by name — replaced, never deleted here. Each entry names what replaced
+# it; the list is where future retirements join.
+retired_by_name=(
+  "scripts/notify.sh|report.sh replaces it"
+  "scripts/promote-uat.sh|promote.sh replaces it — D39"
+  "uat/CONTEXT.md|_shared/promotion.md replaces it — D39"
+  "uat/batch.json|the batch is git log <last release>..main — D39; setup.sh fails while it exists"
+)
 for r in "${retired_by_name[@]}"; do
-  [ -e "$ICM_TARGET/$r" ] && retired="${retired:+$retired$'\n'}    $r   ← retired (report.sh replaces it)"
+  [ -e "$ICM_TARGET/${r%%|*}" ] && retired="${retired:+$retired$'\n'}    ${r%%|*}   ← retired (${r#*|})"
 done
 if [ -n "$retired" ]; then
   echo "  Not in the template's manifest (the repo's own addition — say so in _shared/project-rules.md — or a file the template retired: git rm it; nothing is deleted here):"

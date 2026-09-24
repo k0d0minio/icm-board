@@ -1,0 +1,58 @@
+name: UAT deploy
+
+# The reference UAT deployer (decision D39 (2)) — seeded ONCE by /setup, and ONLY where Vercel
+# refuses to let the UAT custom environment track the production branch (`main`). Where branch
+# tracking is accepted this file is not needed: Vercel deploys main to the environment itself.
+#
+# On every push to main it builds main for the custom environment `uat.target` and deploys it
+# there, so the one fixed address (`uat.url`) always shows main — the whole batch, integrated.
+# It never deploys to production and never promotes: production is a Staged deployment Vercel
+# builds from the same push, promoted only by the release workflow on a published Release.
+#
+# Names only: the environment's slug comes from `.icm/project.json` → uat.target, the product
+# project(s) from deploy.projects, the token from the repository secret `deploy.token_env` names
+# (default VERCEL_TOKEN). Each product project needs its Vercel org and project ids as the
+# repository variables VERCEL_ORG_ID and VERCEL_PROJECT_ID — a multi-project repo gives this job
+# a matrix over them when seeding (a per-repo edit).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: uat-deploy
+  cancel-in-progress: true   # a newer main supersedes an older one on UAT
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy main to the UAT environment
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the uat block
+        id: cfg
+        run: |
+          set -euo pipefail
+          f=.icm/project.json
+          echo "target=$(jq -r '.uat.target // ""' "$f")" >> "$GITHUB_OUTPUT"
+          echo "token_env=$(jq -r '.deploy.token_env // "VERCEL_TOKEN"' "$f")" >> "$GITHUB_OUTPUT"
+
+      - name: vercel pull · build · deploy --target
+        if: steps.cfg.outputs.target != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets[steps.cfg.outputs.token_env] }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          TARGET: ${{ steps.cfg.outputs.target }}
+        run: |
+          set -euo pipefail
+          npm i -g vercel@latest
+          vercel pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
+          vercel build --target="$TARGET" --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --target="$TARGET" --token="$VERCEL_TOKEN"

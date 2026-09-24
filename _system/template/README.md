@@ -60,11 +60,13 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every ado
   lanes/{bug,tweak,chore,knowledge}/  lanes/hotfix/ (human-invoked, opens READY)
   lanes/handover/ (the deal's last lane)                                              (T)
   intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
-  uat/CONTEXT.md                 ← OPTIONAL in effect, always seeded: the persistent client
-                                    UAT environment — one branch, one address, the batch the
-                                    client signs off, the promotion (D31). Inert until /setup
-                                    declares `uat` in project.json                     (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
+  _shared/promotion.md           ← OPTIONAL in effect, always seeded: one branch, two targets —
+                                    the client's UAT (a Vercel custom environment deployed from
+                                    main), the batch since the last published Release, the
+                                    client's word as a draft Release the operator publishes,
+                                    the promotion the release workflow makes (D39). Inert
+                                    until /setup declares `uat` in project.json        (T)
   _shared/template-change.md     ← the guard: a T file (or a canonical .claude/ asset) asked
                                     to change IN a repo is a template change request — a prompt
                                     for icm-board parked as a triage stub, never an edit there (T)
@@ -97,7 +99,7 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every ado
            select-model,check-migrations,process-raw,
            deploy-status,rollback,usage-snapshot,env,setup,retrospective,
            list-skills,db-branch,security-check,run-pack,health-check,
-           client-status,promote-uat}.sh                                              (T)
+           client-status,promote}.sh                                              (T)
                                     select-model.sh routes complexity × stage → tier
                                     (haiku · sonnet · opus/fable; advisor for Scope and
                                     Define, executor for Build and the lanes, validator
@@ -122,10 +124,16 @@ claude-pipeline/                 → copied to <repo>/.claude/        (every ado
   skills/setup/SKILL.md          ← /setup: the report, the questions, the P files (seeded; drift-reported)
 github-pipeline/                 → copied to <repo>/.github/        (every adopted repo — D22)
   pull_request_template.md       ← carries both gate anchors
-  workflows/{release,labels}.yaml ← REFERENCE workflows: seeded ONCE by /setup into a repo
-                                    whose reporting.announce_from is `ci` — deliberately NOT
-                                    in icm-check.sh's PIPELINE_GITHUB list, so the estate walk
-                                    never seeds a workflow uninvited
+  workflows/{release,labels}.yaml ← REFERENCE workflows: seeded ONCE by /setup — release.yaml
+                                    into a repo whose reporting.announce_from is `ci` AND into
+                                    every repo that declares `uat` (it is the promotion, D39) —
+                                    deliberately NOT in icm-check.sh's PIPELINE_GITHUB list, so
+                                    the estate walk never seeds a workflow uninvited
+  workflows/db-migrate.yml       ← REFERENCE production migrator: push to main without UAT;
+                                    workflow_call from release.yaml with UAT (D39 (5)). The
+                                    repo's own steps replace the reference Node/Drizzle ones
+  workflows/uat-deploy.yaml      ← REFERENCE, only where Vercel refuses to let the UAT custom
+                                    environment track main: vercel deploy --target=<uat.target>
   workflows/{neon,mongodb}-cleanup.yaml ← REFERENCE workflows: seeded ONCE by /setup where the
                                     database block asks for one (D32, D35) — drop a closed
                                     PR's preview and run databases

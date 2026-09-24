@@ -102,15 +102,23 @@ overruns on a one-line `Context budget:` note in `spec.md`.
    `project-body.sh --apply` is the scripted `update_pull_request`: it re-projects the whole body
    from `spec.md` exactly as `new-run.sh` did — Summary (kept from the PR unless `--summary`),
    the Spec block, the entire Acceptance criteria section with every box reset to `[ ]`, and both
-   gate anchors unticked. **If the Spec approved box was ticked, it tells you so on stderr — say
-   it plainly to the user: the revision re-opens the gate and the operator must re-tick it.**
-   Never re-run `new-run.sh` — one PR per run.
+   gate anchors unticked. **If the Spec approved box was ticked, it tells you so on stderr — the
+   revision re-opens the gate**: the stop report says so and carries `- [ ] re-tick Spec approved
+   on the PR` as an `Operator:` item. Never re-run `new-run.sh` — one PR per run.
 
-7. **Stop.** Last act: `.icm/scripts/usage-snapshot.sh <slug> define end`. Point at the spec
-   path + draft PR URL; editing the spec steers Build; **ticking
-   "Spec approved" on the PR is the gate** — Build won't start without it, and you never tick it.
-   The tick is **the operator's**: the business logic was settled at Scope and the business is
-   not involved from this stage on — everything past here is technical implementation.
+7. **Stop.** Last act: `.icm/scripts/usage-snapshot.sh <slug> define end`. Report per
+   `.icm/_shared/output.md`:
+
+   ```
+   define <slug> spec drafted · CI not read (draft) · <draft PR URL>
+   Operator:
+   - [ ] read the spec — .icm/runs/<slug>/02_define/output/spec.md; to change it: revise <slug> "<what>"
+   - [ ] tick Spec approved on the PR, then run /pipeline build <slug>
+   ```
+
+   **Ticking "Spec approved" on the PR is the gate** — Build won't start without it, and you
+   never tick it. The tick is **the operator's**: the business logic was settled at Scope and the
+   business is not involved from this stage on — everything past here is technical implementation.
 
 ## Outputs
 

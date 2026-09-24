@@ -54,12 +54,22 @@ Context budget: the Inputs table above is the budget (see `.icm/CONTEXT.md` → 
    disk, write `08-handover.md` into the engagement folder there (icm-board,
    `workspaces/deals/<client>/<engagement>/`): the date, the support tier, the accounts table,
    the env keys documented, the money line, the repo's `setup.sh` verdict, the PR link. Where
-   it is **not** on disk — a cloud session, a client's own machine — **STOP with the pointer**:
-   "the handover record goes into the operator's deal folder; write `08-handover.md` there
-   from `notes.md`". Nothing here reads or writes a path outside the repo to find it.
-9. **STOP.** (The usage `end` line was written before the close-out.) Report the PR, the accounts still owed,
-   the money line, and — where it was written — the record's location. "Smoke-test, then
-   squash-merge from GitHub."
+   it is **not** on disk — a cloud session, a client's own machine — write nothing and carry the
+   pointer to the stop report as an `Operator:` item (step 9). Nothing here reads or writes a
+   path outside the repo to find it.
+9. **STOP.** (The usage `end` line was written before the close-out.) Report per
+   `.icm/_shared/output.md` — the transfers still owed and the money line are human acts that
+   never land in git, so they are `Operator:` items; the record's location, where it was
+   written, rides the outcome line:
+
+   ```
+   handover <slug> ready[ — record at <deal-folder path>/08-handover.md] · CI GREEN · <PR URL>
+   Operator:
+   - [ ] <per transfer still owed> <the account> — <the transfer>, owner <who>
+   - [ ] <the money line>
+   - [ ] <where the deal folder was not on disk> write 08-handover.md into the deal folder (icm-board workspaces/deals/<client>/<engagement>/) from notes.md
+   - [ ] smoke-test, then squash-merge the PR from GitHub
+   ```
 
 ## Outputs
 
@@ -99,6 +109,6 @@ Plus, where the deal folder is on disk, `08-handover.md` in the engagement folde
 - `notes.md`'s `- support:` equals `project.json → support.tier`; a `basic`/`retainer` tier has
   the fail-safe page and the Sentry key declared (`setup.sh` section 11).
 - One PR, `type:handover`, draft, no gate checkboxes; `close-out.sh` `CLOSED` on its head.
-- The record went into the deal folder **or** the stop message says where it must go — never
+- The record went into the deal folder **or** the stop report's `Operator:` list says where it must go — never
   a path outside the repo assumed, never a write outside the repo from a session that could
   not see the folder.

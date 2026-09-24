@@ -104,6 +104,16 @@ subscribed session wakes for each one.
 Pipeline repos carry this in `.icm/_shared/github.md` and `.icm/_shared/ci.md`,
 gated by `.icm/scripts/ci-status.sh` — read it there rather than here. Each rule lives once.
 
+## What the session says
+
+The chat is the operator's; the files (the PR body, the stub, `handoff.md`) carry the history.
+While working, **one line per phase change** (`CI red on lint — fixing`) — no narration of tool
+calls, no restating a file or a diff. At a stop, one shape: `<task> <outcome> · CI <verdict> ·
+<PR link>`, then `Operator:` as a `- [ ]` checklist of human-only acts (merge, tick a gate, a
+dashboard or env change, rotate a secret), then `Unverified:` when anything was — no recap of what
+changed. **Never trimmed:** a STOP and its reason, a red check, anything skipped or unverified, a
+plaintext credential found. Pipeline repos hold the full doctrine in `.icm/_shared/output.md`.
+
 ## Finishing
 
 - The PR that finishes a stub's work `git mv`s the stub to its epic's (or triage's)

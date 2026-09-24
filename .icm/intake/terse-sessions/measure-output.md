@@ -6,9 +6,12 @@
 - size: S
 - depends-on: wire-stop-reports
 - sequence: 3 of 3
-- blocked: the after-table needs ≥5 archived runs on a repo synced past `wire-stop-reports`
-  (#74); only berceo has synced, and its `output.md` predates #74's loosening — 0 archived runs
-  there so far. Baseline done: `.icm/docs/2026-09-24-terse-sessions-measure.md`.
+- blocked: the after-table needs ≥5 archived runs closed out on a repo synced past
+  `wire-stop-reports` (#74). berceo (`f424b49`) still predates #74. agorasim resynced past it
+  today (`#128`/`#129`, D39 cutover + D41 stub 5), but every run in its `.icm/runs/_done/` is
+  from before that sync or was only moved there by the `main takes uat` batch merge (`#130`) —
+  0 runs have actually closed out under the new template so far. Baseline done:
+  `.icm/docs/2026-09-24-terse-sessions-measure.md`.
 - sources: the breakdown (answer 6) · `_system/template/icm-pipeline/scripts/usage-snapshot.sh`
   (`out=` is cumulative per session; a stage's own is `end − start` on the same `session=`) ·
   archived runs' `usage.md` under each pipeline repo's `.icm/runs/_archive/` (path per

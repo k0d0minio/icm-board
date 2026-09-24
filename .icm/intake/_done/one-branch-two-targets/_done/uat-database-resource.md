@@ -89,6 +89,17 @@ date). What stays open here is the last bullet of the proposal and criterion 4:
   `uat_branch` dropped, `project-rules.md` in the D41 shape; `setup.sh --report` OK, 0 warnings.
   **Unproven:** `neon-cleanup` against `uat-berceo` (#29's own close is the first run), and
   `db-env.sh status` / the Vercel env read on either repo (no key in the session's shell).
+- **Read back on both, 2026-09-24** (two cloud sessions with the keys, read-only). berceo at
+  `7e74115` (#29 merged): `setup.sh --report` OK (2 warnings), `lib/neon.sh --check` OK,
+  `db-env.sh status` → `NEON 2 branch(es) · production main · uat present · previews 0 · runs 0`;
+  production holds `main` only, uat-berceo its default branch only; Vercel `[OK] … production
+  $DATABASE_URL targets Production only (D41)`. agorasim at `2e105da`: OK (3 warnings), OK,
+  `NEON 3 branch(es)` — the same shape, plus one orphan in **production's** project,
+  `run/quote-page-and-deposit-link` (11:29Z, before D41; its PR #122 ran on the harness branch
+  `claude/sleepy-turing-k3vdjt`, so `neon-cleanup` looked for `run/sleepy-turing-k3vdjt` — triage
+  `neon-cleanup-harness-branch-run`); Vercel `[OK]` the same. Both productions' `main` **not
+  protected** (Jamie's, Neon Console). The "no preview/* yet" and "framework default" build lines
+  are false alarms — triage `neon-readback-false-alarms`.
 
 ## Acceptance criteria (rough)
 

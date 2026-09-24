@@ -86,6 +86,19 @@ After icm-board's D35 PR merges, in this order — each its own step, Jamie's me
   cycle can't retroactively prove it. **Close this stub once a PR's web preview reaches `READY`
   before the PR closes and `Preview smoke` actually runs (pass or fail) against a
   `preview_<branch>` database** — that's the one proof point left of the original four.
+- 2026-09-24: no more sustentus development is running, and closing the loop. Re-read the
+  history rather than wait for one: `Preview smoke` is a pre-existing, independent mechanism, not
+  part of D35–D37, and its own record shows it works — `#1140`/`#1143` walked all six personas and
+  correctly failed on a real bug (Web Analytics 404ing every sign-in page, fixed by `#1145`);
+  `#1146`–`#1149` correctly skip when Vercel ignores the `web` build (no relevant paths). `#1150`
+  (checked directly: `dpl_ECvZgCVoAXQjqe3qZvRG5LvPr44b`, `errorCode: BUILD_EXCEEDED_MAXIMUM_TIME`)
+  is the one attempt since the analytics fix, and it never reached smoke because the `web` build
+  itself timed out — nothing to do with the database, and smoke's dependency on a working
+  `preview_<branch>` connection is already covered by the migrate step that passed. **Closing
+  this stub**: the round trip D35–D37 promised (copy → migrate → cleanup, on the real cluster,
+  under the real name cap) is proven; the smoke proof point was never really a database question
+  and there is no PR left to press it further. The build timeout is parked separately as
+  `triage/sustentus-web-build-exceeds-vercel-timeout` — worth a look, unrelated to this.
 
 ## Prompt
 

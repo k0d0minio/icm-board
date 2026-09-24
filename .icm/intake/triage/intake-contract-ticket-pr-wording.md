@@ -24,3 +24,12 @@ the stale words and none may edit them (D33).
 - Line 239 → "in one direct ticket commit to `main`, and nothing else".
 - `grep -rn 'ticket PR' _system/template` afterwards shows only the history notes that name it as
   retired (`_shared/github.md` regime 3). Reaches the estate with the next `icm-sync.sh` pass.
+
+## Prompt
+
+In icm-board (`~/Apps`), read `.icm/intake/triage/intake-contract-ticket-pr-wording.md`. In
+`_system/template/icm-pipeline/intake/CONTEXT.md` (template-owned), reword the two phrases that
+still say "ticket PR" — the hotfix-candidate hand-off and `triage prune` — to the direct ticket
+commit to `main` that D39 §8 made the only route (`pr-conventions` → Ticket commits). Then
+`grep -rn 'ticket PR' _system/template` must show only the history notes naming it as retired.
+One PR on a `claude/` branch; CI is the verdict. Do not sync any client repo.

@@ -37,6 +37,39 @@ repo that already carries the reference `release.yaml` should take the new one (
 also requires `announce_from: ci`, and a `release: published` event on a repo without UAT is a
 no-op notice — report.sh's own Releases, created with a PAT, trigger it).
 
+## Progress (2026-09-24, first session)
+
+- **Three PRs open, unmerged — the operator merges:** k0d0minio/remi-ai#126,
+  k0d0minio/vinecliff#20, k0d0minio/jamienisbet#153 — each `icm-sync.sh --apply` at icm-board
+  `0db8a71` (30 T files, `promote.sh` + `_shared/promotion.md` new, `promote-uat.sh` +
+  `uat/CONTEXT.md` `git rm`'d), `uat: {target: "", url: ""}`, the T files and canonical skills
+  checked byte-identical to the template on each branch. Every checkout back on `main`.
+- **Canonical assets: five, not three.** `pipeline` and `setup` (`claude-pipeline/`) changed in
+  stub 1 too and were byte-identical to their pre-D39 canonical in all three repos, so they were
+  refreshed with `pr-conventions`, `ticket-craft` and `wrap-reminder.sh`.
+- **`labels.yml`, one choice:** `type:promote` removed (only vinecliff carried it);
+  `type:tickets` kept, described as retired; vinecliff's `type:hotfix` no longer names UAT. The
+  GitHub labels themselves are untouched.
+- **remi-ai `release.yaml`:** the D39 reference with remi-ai's edits carried over (Slack in every
+  announce/alert step, changelog H1 + docs link) and the `migrate` job deleted — no
+  `db-migrate.yml` there, and a `uses:` to a missing file would invalidate the workflow.
+  Recorded in its `project-rules.md`. vinecliff's `db-migrate.yml` and jamienisbet's
+  `db-migrations.yml` left alone (without UAT, push-to-main migration stays right).
+- **Repo-owned words fixed** where they named the retired files or the ticket PR: routers
+  (`.icm/CONTEXT.md`), remi-ai `SKILLS.md` + `settings.json` (`promote-uat.sh` → `promote.sh`),
+  jamienisbet `AGENTS.md` + `intake/README.md`.
+- **Parked:** jamienisbet `triage/tickets-board-reads-main` (the dashboard still probes
+  `uat.branch` and tells readers to "land a ticket PR"); icm-board
+  `triage/intake-contract-ticket-pr-wording` (two stale phrases in a T file).
+- **Acceptance grep, read literally, never empties:** `uat.branch` matches `uat_branch` (D39's
+  named-database key) and the template names the retired key/files on purpose to refuse them
+  (`setup.sh`, `lib/project.sh`, `promotion.md`, `MANIFEST`, `setup` skill). What remains
+  outside those is the two phrases parked above.
+- **Stamp behind already:** `7eb9541` (D40 stub 1) added `_shared/output.md` (T) after this
+  sync, so `icm-check` will report it missing in all three; inert until D40 stub 2, whose sync
+  carries it.
+- **Left:** Jamie merges the three PRs; sustentus only on Jamie's word.
+
 ## Acceptance criteria (rough)
 
 - [ ] `icm-check.sh` clean across the estate: stamps at the D39 template, no skill drift

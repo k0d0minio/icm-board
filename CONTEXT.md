@@ -49,6 +49,5 @@ table is for orientation, not dispatch. Sell runs from any session with icm-boar
   the knowledge layer; until it runs, knowledge files carry honest
   `— not yet established` gaps (Q22–Q24 are open). Never invent their content mid-task.
 - **Deal commits** — `Deal: <client> — <what>` straight to `main`, like `Plan:`/`Wrap:`;
-  every other change through a PR on a `claude/` branch. That direct lane is **this repo's
-  only**: a client repo's ticket state goes through a ticket PR into its ticket base branch
-  (D38; `pr-conventions` → The ticket PR).
+  every other change through a PR on a `claude/` branch. Ticket commits take the same
+  direct lane in every client repo (D39; `pr-conventions`).

@@ -76,11 +76,9 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
   standing as `Plan:`/`Wrap:`.
 - **Tickets live next to the logic they describe.** A ticket about this repo's machinery
   is cut here; a dashboard ticket is cut in `jamienisbet`. Planning is epics and stubs in
-  `.icm/intake/` — never a loose `TODO.md`. **Here**, ticket-only commits go straight to
-  `main`; everything else through a PR on a `claude/` branch. **In a client repo**, ticket
-  state goes through a ticket PR into its ticket base branch (`uat` where declared, else
-  `main`), merged at once by the session that opened it (D38) — icm-board is exempt only
-  because it has no UAT branch and nothing to drift.
+  `.icm/intake/` — never a loose `TODO.md`. Ticket-only commits go straight to `main` —
+  here and in every client repo alike: `main` is the only long-lived branch anywhere, so
+  there is nothing to drift (D39). Everything else through a PR on a `claude/` branch.
 - **This repo is held to its own baseline**, and to its own workspace grammar. A rule it
   exempts itself from is a rule it should delete.
 - **Conformance reports, it does not repair.** `--fix` seeds only what is missing and

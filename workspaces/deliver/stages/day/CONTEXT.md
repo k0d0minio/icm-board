@@ -20,21 +20,21 @@ that already exists and cuts the leftovers of work that already happened.
 | 4 | `_system/scripts/tickets-board.sh` output | The estate board |
 | 4 | `_system/scripts/ticket-hygiene.sh` output | Drift candidates — verified, never bulk-applied |
 | 4 | `.icm/today.md` (this repo) | Yesterday's plan — cleared or carried deliberately |
-| 4 | Each repo's `.icm/intake/` + `runs/` + git log **at its ticket base branch** (`origin/<base>`, D38) | The reality the board must match |
+| 4 | Each repo's `.icm/intake/` + `runs/` + git log **at `origin/main`** (D39 §8) | The reality the board must match |
 
 ## Process
 
 **1. Survey.** Run `pull-all.sh` first — both scripts read each client repo at
-`origin/<base>` (its ticket base branch, D38), so the refs are only as fresh as the last
-fetch. Run `tickets-board.sh` and show the board. Run `ticket-hygiene.sh` and show what it
-found. The scripts report; **you verify and fix with judgment** — never bulk-apply their
-findings. Verify a client repo the same way: `git -C projects/<repo> show
-origin/<base>:<path>` and `git log origin/<base>`, never its checked-out `main`.
+`origin/main` (the one home of its ticket state, D39 §8), so the refs are only as fresh as
+the last fetch. Run `tickets-board.sh` and show the board. Run `ticket-hygiene.sh` and show
+what it found. The scripts report; **you verify and fix with judgment** — never bulk-apply
+their findings. Verify a client repo the same way: `git -C projects/<repo> show
+origin/main:<path>` and `git log origin/main`, never its checkout.
 
 **Where a client repo is edited.** Every stub move and cut in steps 2 and 4 is made in a
-worktree of that repo cut from `origin/<base>` — the one step 5 ships from — never in the
-shared `projects/<repo>` checkout: on a UAT repo that checkout's `main` lags `uat`, so an
-edit there moves a stub that may already be done.
+worktree of that repo cut from `origin/main` — the one step 5 pushes from — never in the
+shared `projects/<repo>` checkout: one tree serves every session and the sweeper, and
+whatever branch or state it was left in is not `main`'s.
 
 **2. Reconcile — the board must be true before it's useful.**
 - *Merged but still open:* `possibly-done` names the commit it found, counting only
@@ -93,22 +93,18 @@ this ritual. Say so and move on.
 - *Note the drift:* work no stub described gets said plainly in the summary — that's how
   off-ticket work gets caught next time.
 
-**5. Ship — merging is publishing.** The board reads each repo's **ticket base branch** —
-`uat` where its `.icm/project.json` declares one, else `main` (`.icm/scripts/lib/project.sh →
-pipeline_base_branch`; D38) — so a stub exists once it lands there. Per changed client repo:
-**one ticket PR** into that branch, merged at once — the shape and the merge rule are the
-repo's `pr-conventions` skill → The ticket PR (branch `claude/tickets-<topic>-<YYYYMMDD>`,
-title `Plan: <one line>` or `Wrap: <one line>`, label `type:tickets`, path guard
-`.icm/intake/**` verified before the merge, `--admin` where a ruleset requires checks). Cut
-the branch **in a worktree** of the repo (`git -C projects/<repo> worktree add …` from
-`origin/<base>`), never by switching the shared `projects/<repo>` checkout — one tree serves
-every session and the sweeper; a checkout that had to move goes back to `main` before this
-step ends. Stage paths explicitly, **never `git add -A`**; anything else dirty is left
-strictly alone. A PR that will not merge cleanly is rebased on `origin/<base>` and retried
-once; otherwise report and move on. Never force-push.
-- **This repo is exempt**: its own stub moves and `.icm/today.md` commit straight to `main`
-  (`Plan:` / `Wrap:`) and push — no UAT branch, nothing to drift. A rejected push gets one
-  `pull --rebase` and retry.
+**5. Ship — pushing is publishing.** The board reads each repo's `main` (D39 §8), so a stub
+exists once it is pushed there. Per changed client repo: **one direct commit to `main`**, no
+PR — the shape is the repo's `pr-conventions` skill → Ticket commits (message `Plan: <one
+line>` or `Wrap: <one line>`, paths `.icm/intake/**` only, verified before the push). Commit
+**in the worktree** of step 1 (`git -C projects/<repo> worktree add <scratch> origin/main`)
+and `git push origin HEAD:main`, never by switching the shared `projects/<repo>` checkout; a
+checkout that had to move goes back to `main` before this step ends. Stage paths
+explicitly, **never `git add -A`**; anything else dirty is left strictly alone. A rejected
+push gets one `pull --rebase` and retry; still refused → report and move on. Never
+force-push.
+- **This repo the same:** its own stub moves and `.icm/today.md` commit straight to `main`
+  (`Plan:` / `Wrap:`) and push.
 
 ## Gate — Jamie
 
@@ -121,7 +117,7 @@ once; otherwise report and move on. Never force-push.
 
 | Artifact | Lands in |
 |---|---|
-| Stub moves, cuts, epic archives | each client repo's `.icm/intake/`, through one merged ticket PR into its ticket base branch (this repo's own: pushed to `main`) |
+| Stub moves, cuts, epic archives | each repo's `.icm/intake/`, one direct commit pushed to its `main` (this repo's included) |
 | `.icm/today.md` | this repo, pushed to `main` — the worklist on the phone |
 
 ## Audit

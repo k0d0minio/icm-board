@@ -10,10 +10,10 @@
 #   Next       each epic's lowest-sequence open stub · triage stubs · legacy ready
 #   Queued     epic stubs behind their epic's next
 #
-# A client repo is read at its TICKET BASE BRANCH — `origin/<uat.branch>` where its
-# `.icm/project.json` declares one, else `origin/main` (D38; lib/ticket-base.sh) — never the
-# shared `projects/<repo>` checkout, which sits on `main` and on a UAT repo lags every stub
-# finished on `uat`. No ref → the working tree, said on stderr. icm-board reads its own disk.
+# A client repo is read at `origin/main` — the one home of its ticket state (D39 §8;
+# lib/ticket-base.sh) — never the shared `projects/<repo>` checkout, which any session may have
+# left on another branch. No ref → the working tree, said on stderr. icm-board reads its own
+# disk.
 #
 # Sustentus is NOT exempt here — the board reads everything (its stubs parse natively);
 # writing tooling still leaves it alone. Legacy flat PREFIX-NNN tickets parse under the

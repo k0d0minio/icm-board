@@ -33,8 +33,16 @@ Fill each section in; a section that genuinely does not apply says so in one lin
 
 ## The factory
 
-- **Required CI checks** — `required_checks` in `.icm/project.json` (the names `ci-status.sh`
-  waits for). Tiering, if any (which checks run on a draft head, which on a ready one): <…>.
+- **The verdict** — the deploy status (`deploy.projects[].status_context`; `_shared/ci.md` →
+  the cost floor). `required_checks` in `.icm/project.json` is empty <or: names `…`, because
+  …>. A ruleset on `main`, where the plan allows one, requires the deploy status and nothing
+  else: <the ruleset's name | none — private on GitHub Free>.
+- **The advisory quality job** — `<job name> (advisory)` in `.github/workflows/quality.yaml`:
+  <lint · typecheck · unit tests>, on a ready head only, path-filtered out of `.icm/**` and
+  markdown, never on `main` after a merge. <Or: none — the session's scripts are the only check.>
+- **Every other workflow, and what each costs** — <name · trigger · why it must be CI: a
+  secret, a runner, a schedule | none>. The browser walk: <the operator's, at Ready-to-merge,
+  from the preview URL `ci-status.sh` printed | in CI, paid for by the client>.
 - **Deploy** — `deploy` in `.icm/project.json`: <which projects are product (preview on a ready
   head) and which quiet (build on merge only)>. The token is named there, never here.
 - **Migrations** — `migrations` in `.icm/project.json`: <where they live; reversible (`down`

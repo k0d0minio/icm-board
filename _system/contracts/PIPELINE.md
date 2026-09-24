@@ -26,7 +26,7 @@ Two rows survive from the first, tiered design because they still describe real 
 
 | Row | Means | For |
 |---|---|---|
-| **the reporting layer** | what a repo's own factory does on and after a merge — a GitHub Release by default, Slack or email when declared, a preview smoke walk where one exists | **read from the repo's project-owned files, never templated as a tier**: `project.json` → `reporting`, `deploy`, `smoke_check`; `project-rules.md` → Reporting. Sustentus is the reference; the reference workflows (`release.yaml`, `labels.yaml`) are seeded once by `/setup` where `announce_from` is `ci` |
+| **the reporting layer** | what a repo's own factory does on and after a merge — a GitHub Release by default, Slack or email when declared, a preview smoke walk where one exists | **read from the repo's project-owned files, never templated as a tier**: `project.json` → `reporting`, `deploy`, `smoke_check`; `project-rules.md` → Reporting. Sustentus is the reference; the reference workflows (`release.yaml`; `quality.yaml`, the advisory job — decision D43) are seeded once by `/setup` |
 | *(dormant)* | the empty `.icm/dormant` marker | parked repos ([TICKETS.md](TICKETS.md) § Dormant) |
 
 ## What the template seeds, and who owns each file

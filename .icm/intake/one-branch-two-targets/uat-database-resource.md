@@ -78,6 +78,13 @@ date). What stays open here is the last bullet of the proposal and criterion 4:
   entries — the field name is from Vercel's API, not yet seen on a live read); that one Neon key
   reaches both projects of a Vercel-managed organisation.
 
+- **agorasim synced 2026-09-24** (k0d0minio/agorasim#129, by the cutover session): `nonprod_project_id`
+  `lingering-frog-97017403`, `reset_command` empty, `uat_branch` dropped; `setup.sh --report` OK, 0
+  warnings. **Proven live:** `neon-cleanup` read the non-production project and deleted
+  `preview/claude/neon-two-projects-d41`, `preview/claude/main-takes-uat` (merged PRs) and
+  `preview/claude/preview-db-probe` (#131, closed unmerged) — so the Actions `NEON_API_KEY` reaches
+  both projects. Still owed: berceo's sync; `db-env.sh status` on both projects with the key exported.
+
 ## Acceptance criteria (rough)
 
 - [ ] A fixture D41 repo: `neon-cleanup` deletes `preview/<branch>` from the non-production

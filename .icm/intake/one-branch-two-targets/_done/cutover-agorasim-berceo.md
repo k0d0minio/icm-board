@@ -137,6 +137,46 @@ in this order; **[Jamie]** = the operator's act from this checklist, **[session]
   Berceo team owns; triage stub `uat-address-dns` in berceo); berceo's `project.json` still names
   production's project for previews and runs until `uat-database-resource`.
 
+## agorasim — steps 0–8 done (2026-09-24)
+
+- Freeze: `origin/main` `638cd3f`, `origin/uat` `461292b` (13 ahead; `main` 1 ahead — #126), batch of
+  **6** stubs (`batch.json` named 4 — `quote-page-and-deposit-link` and `stale-web-docs-refs` never
+  reached it); no Releases, no `release/` tag (the 2026-09-23 promotion #118 was never tagged).
+- Vercel: a custom environment `uat` already existed (`env_gHlPCyZHI3HCgQWGXkCjdxoY3XcE`, empty);
+  Auto-assign off; branch tracking `main` **accepted**; **`uat.agorasim.pt`** attached (Jamie's
+  choice over `uat.agorasim.jamienisbet.com` — does not resolve until a CNAME exists at amenworld);
+  Actions secret `VERCEL_TOKEN_KODOMINIO` added. No Neon Auth in the app — step 3d skipped.
+- Storage (D41, right first time): `uat-agorasim` (`lingering-frog-97017403`, **Postgres 18** —
+  production `nameless-sea-98952497` is 17; kept apart on Jamie's word) on `uat` + Preview with
+  preview branching; production's `agorasim` on Production only. `uat` variables set by hand
+  (a custom environment inherits nothing from Preview); read-back caught `BOOKING_NOTIFICATIONS_EMAILS`
+  (the app reads `BOOKING_NOTIFICATION_EMAILS`) and a Stripe webhook at `/webhook` (the route is
+  `/api/stripe/webhook`) — both fixed by Jamie.
+- k0d0minio/agorasim#128 (sync to ca57a11) → `87aab3e`: Staged production, UAT build migrated
+  `uat-agorasim` (27), `Migrate production` skipped. Baseline `release/2026-09-24-promote-87aab3e`
+  published: stage → migrate (27 applied, no-op) → promote (201, `dpl_8Fg4…` Current) → READY.
+- k0d0minio/agorasim#129 (sync to be13188 — stub 5's per-repo half): `nonprod_project_id`,
+  `uat_branch` dropped; `neon-cleanup` now deletes previews in `uat-agorasim` on its own.
+- k0d0minio/agorasim#130 (`main takes uat`, the 6 stubs) → `2e105da`: Staged `dpl_9Pys…`, UAT
+  `dpl_9CEd…` migrated `uat-agorasim` to 29, production still 27, `integrations` 0 s on both.
+  `uat` deleted from the remote by the session on Jamie's word (was `461292b`).
+- Probe k0d0minio/agorasim#131: an **empty commit is cancelled by Vercel** ("the commit didn't
+  affect this project"); a one-file commit built, got `preview/claude/preview-db-probe` inside
+  `uat-agorasim`, and `neon-cleanup` deleted it on the unmerged close.
+- Left: step 9 (Diogo & Rita's sign-off), the `uat.agorasim.pt` CNAME, the UAT owner account
+  (`pnpm db:seed-owner` against `uat-agorasim`), Neon `preview/uat` in production's project
+  (Jamie's to delete).
+- Step 10: nothing to drop — jamienisbet built the dashboard stub (#150) and moved the board back
+  to `main` in #155 (`tickets-board-reads-main`).
+
+## Closed (2026-09-24)
+
+Closed on Jamie's word with criterion 2 unmet: both repos' baseline promotions proved stage →
+migrate → promote live, but no promotion has run the **announce** step yet (`report.sh announce
+--tag` reusing the published Release — both baselines were `announce: none`). The first
+client-approved promotion on either repo exercises it, and a failure there is a red job; no stub
+is parked for it. Rollout note: `.icm/docs/2026-09-24-one-branch-cutover.md`.
+
 ## Notes from stub 1 (template-two-targets, 2026-09-24)
 
 - **Step 5 — `report.sh` is P, never synced.** The reference `release.yaml` calls

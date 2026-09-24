@@ -24,31 +24,39 @@
 #     never a target — nothing is mkdir'd for a repo the estate has not adopted;
 #   • the target's `.icm/` must have no uncommitted changes on `--apply` — a sync over local
 #     edits makes the resulting diff unreadable; commit or discard first (dry runs don't care);
+#   • on `--apply`, the template checkout's HEAD must be an ancestor of `origin/main` — a stamp
+#     otherwise names a commit `main` never held (an unmerged or since-rebased branch), which
+#     breaks `setup.sh`'s "current?" answer and any `git log main` lookup of the stamp. `--from-
+#     branch` is the explicit override for the lab/testing case: it takes no value — the branch
+#     already checked out in TEMPLATE_DIR is what gets stamped, as `branch: <name>` beside the
+#     commit in `.icm/template-version`, so the stamp says what it is. A dry run only warns.
 #   • rsync, jq and git must be present.
 #
 # Idempotent: `--apply` twice in a row changes nothing the second time, and the itemised output
 # says so (zero `>f` lines). Runs from the icm-board checkout; four worktrees share one
 # `projects/` tree, so run it from one session with no sweeper active.
 #
-# Usage: _system/scripts/icm-sync.sh [--apply|--dry-run] <path-to-target-repo>
-# Exit:  0 synced, or simulated · 2 refused (usage, not an adopted repo, dirty .icm/, missing tool)
-#        · 1 rsync itself failed
+# Usage: _system/scripts/icm-sync.sh [--apply|--dry-run] [--from-branch] <path-to-target-repo>
+# Exit:  0 synced, or simulated · 2 refused (usage, not an adopted repo, dirty .icm/, missing tool,
+#        template HEAD not on origin/main without --from-branch) · 1 rsync itself failed
 # Last line on stdout: RESULT: DRY-RUN <n> | SYNCED <n> | UNCHANGED  (n = files that changed)
 set -euo pipefail
 
 DRY_RUN=1
+FROM_BRANCH=0
 TARGET_REPO=""
 
-usage() { echo "Usage: icm-sync.sh [--apply|--dry-run] <path-to-target-repo>" >&2; }
+usage() { echo "Usage: icm-sync.sh [--apply|--dry-run] [--from-branch] <path-to-target-repo>" >&2; }
 refuse() { echo "  [REFUSED] $*" >&2; echo "RESULT: REFUSED"; exit 2; }
 
 for arg in "$@"; do
   case "$arg" in
-    --apply)   DRY_RUN=0 ;;
-    --dry-run) DRY_RUN=1 ;;
-    -h|--help) usage; exit 0 ;;
-    -*)        usage; refuse "unknown flag: $arg" ;;
-    *)         if [ -z "$TARGET_REPO" ]; then TARGET_REPO="$arg"; else usage; refuse "unexpected argument: $arg"; fi ;;
+    --apply)       DRY_RUN=0 ;;
+    --dry-run)     DRY_RUN=1 ;;
+    --from-branch) FROM_BRANCH=1 ;;
+    -h|--help)     usage; exit 0 ;;
+    -*)            usage; refuse "unknown flag: $arg" ;;
+    *)             if [ -z "$TARGET_REPO" ]; then TARGET_REPO="$arg"; else usage; refuse "unexpected argument: $arg"; fi ;;
   esac
 done
 [ -n "$TARGET_REPO" ] || { usage; refuse "no target repo given"; }
@@ -62,6 +70,29 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_DIR="$(cd "$SCRIPT_DIR/../template/icm-pipeline" && pwd)"
 MANIFEST="$TEMPLATE_DIR/MANIFEST"
 [ -f "$MANIFEST" ] || refuse "template manifest missing: $MANIFEST"
+
+# --- provenance guard: refuse to stamp a template commit `origin/main` never held ----------------------
+# on_main is false when origin/main can't be resolved at all (no remote-tracking ref fetched) as
+# well as when HEAD simply isn't an ancestor — both mean the stamp can't be trusted without saying
+# so. TV_BRANCH is only ever set when the override is actually the reason this ran.
+on_main=1
+if ! git -C "$TEMPLATE_DIR" rev-parse --verify -q origin/main >/dev/null 2>&1; then
+  on_main=0
+elif ! git -C "$TEMPLATE_DIR" merge-base --is-ancestor HEAD origin/main 2>/dev/null; then
+  on_main=0
+fi
+TV_BRANCH=""
+if [ "$on_main" -eq 0 ]; then
+  reason="template checkout's HEAD ($(git -C "$TEMPLATE_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)) is not on origin/main"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "  [WARN] $reason — --apply would refuse this without --from-branch"
+  elif [ "$FROM_BRANCH" -eq 1 ]; then
+    TV_BRANCH="$(git -C "$TEMPLATE_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+    echo "  [WARN] $reason — proceeding, stamping branch '$TV_BRANCH' (--from-branch)"
+  else
+    refuse "$reason — pass --from-branch to sync from this branch anyway (the lab/testing case)"
+  fi
+fi
 
 [ -d "$TARGET_REPO" ] || refuse "not a directory: $TARGET_REPO"
 TARGET_REPO="$(cd "$TARGET_REPO" && pwd)"
@@ -149,8 +180,12 @@ fi
 # Written on --apply only, never synced (it differs per repo by construction). setup.sh reads it.
 if [ "$DRY_RUN" -eq 0 ]; then
   tv_commit="$(git -C "$TEMPLATE_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
-  printf 'template: icm-board %s\nsynced: %s\nmanifest: %s T files\n' "$tv_commit" "$(date -u +%F)" "$n_owned" > "$ICM_TARGET/template-version"
-  echo "  Wrote .icm/template-version (icm-board $tv_commit, $(date -u +%F))"
+  {
+    printf 'template: icm-board %s\n' "$tv_commit"
+    [ -n "$TV_BRANCH" ] && printf 'branch: %s\n' "$TV_BRANCH"
+    printf 'synced: %s\nmanifest: %s T files\n' "$(date -u +%F)" "$n_owned"
+  } > "$ICM_TARGET/template-version"
+  echo "  Wrote .icm/template-version (icm-board $tv_commit$([ -n "$TV_BRANCH" ] && echo ", branch $TV_BRANCH"), $(date -u +%F))"
 fi
 
 echo "-------------------------------------------------"

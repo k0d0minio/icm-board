@@ -7,6 +7,9 @@ name: Self-check
 #   - env-audit-stability.sh: the template's `env.sh audit` against a mock Vercel API that
 #     rate-limits and pages — two runs byte-identical, an unreadable surface UNKNOWN, never
 #     a gap. A nondeterministic audit makes every repo's `setup.sh --report` unstable.
+#   - icm-sync-branch-guard.sh: icm-sync.sh --apply refuses to stamp a template commit
+#     `origin/main` never held, unless --from-branch says so explicitly (triage/
+#     icm-sync-stamps-unmerged-commit) — proven against a throwaway origin + target repo.
 #   - self-check.sh: every relative markdown link resolves, and every ticket meets
 #     contracts/TICKETS.md. This repo is almost entirely docs and contracts, so a dead
 #     link IS a defect — it is the estate's named failure mode ("aspirational docs are
@@ -42,3 +45,6 @@ jobs:
 
       - name: env.sh audit is deterministic
         run: _system/scripts/env-audit-stability.sh
+
+      - name: icm-sync.sh refuses an unmerged template stamp
+        run: _system/scripts/icm-sync-branch-guard.sh

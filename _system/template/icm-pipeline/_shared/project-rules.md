@@ -51,8 +51,9 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   the built-in patterns are the floor>. `security.audit_command` in `.icm/project.json` for a
   non-npm ecosystem: <…>.
 - **The run's database** — `database` in `.icm/project.json`: <`neon` — one Neon branch per run,
-  `run/<slug>`, a child of the production branch (`database.provider: neon`, the project id, the
-  key's NAME in `neon.api_key_env`) | `database` — one MongoDB database per run, `run_<slug>`, on
+  `run/<slug>`, a child of the production branch — on a UAT repo, of the UAT database in the
+  non-production project (`database.provider: neon`, the project id(s), the key's NAME in
+  `neon.api_key_env`) | `database` — one MongoDB database per run, `run_<slug>`, on
   the cluster `$MONGODB_URI` names, migrated by `<migrate_command> up` and seeded by
   `<seed_command>`; `db-branch.sh <slug> prove` round-trips this branch's migrations before the ready flip and
   the merge | `schema` — one Postgres schema per run on `$DATABASE_URL` |
@@ -62,8 +63,10 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   out-of-order is configured in the tool's own file>.
 - **The environments' databases** — <none declared | Neon project `<id>`: production is the
   `main` branch (protected: yes/no); previews are the Vercel integration's `preview/<git-branch>`
-  (`neon.previews: vercel` — the toggle is on: yes/no); the UAT database is the named
-  branch `<uat_branch>`, set on the UAT environment's variables; migrations reach previews and
+  (`neon.previews: vercel` — the toggle is on: yes/no); on a UAT repo (D41) previews live in the
+  second Marketplace database `uat-<repo>` (Neon project `<nonprod_project_id>`, connected to
+  `uat` + Preview) whose default branch is the UAT database, production's database is connected
+  to Production only (yes/no), and `reset_command` is `<…>`; migrations reach previews and
   UAT at build because <the build command / the `vercel-build` script> runs the migrate step; production migrates by <the workflow — on a UAT repo
   at the promotion, called by release.yaml>; `neon-cleanup.yaml` deletes a PR's branches on close (or: absent, because …) |
   MongoDB cluster via `$MONGODB_URI`: production is `<production_name>`, the shared preview

@@ -84,6 +84,11 @@ date). What stays open here is the last bullet of the proposal and criterion 4:
   `preview/claude/neon-two-projects-d41`, `preview/claude/main-takes-uat` (merged PRs) and
   `preview/claude/preview-db-probe` (#131, closed unmerged) — so the Actions `NEON_API_KEY` reaches
   both projects. Still owed: berceo's sync; `db-env.sh status` on both projects with the key exported.
+- **berceo sync opened 2026-09-24** (k0d0minio/berceo#29, CI green, unmerged): synced to `e85de24`
+  (also brings #74, #75, #79), `nonprod_project_id` `dawn-scene-70949411`, `reset_command` empty,
+  `uat_branch` dropped, `project-rules.md` in the D41 shape; `setup.sh --report` OK, 0 warnings.
+  **Unproven:** `neon-cleanup` against `uat-berceo` (#29's own close is the first run), and
+  `db-env.sh status` / the Vercel env read on either repo (no key in the session's shell).
 
 ## Acceptance criteria (rough)
 

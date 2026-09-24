@@ -46,3 +46,18 @@ In icm-board, fix triage stub `neon-cleanup-harness-branch-run` (read
 `run.md` whose `- branch:` equals the PR's head ref, keeping `run/${HEAD_REF#claude/}` as the
 fallback. Prove it on scratch fixtures, with no live Neon write. Open one PR on a `claude/` branch
 that moves this stub to `triage/_done/`, and list the repos that need the reference file by hand.
+
+## Closed
+
+2026-09-24: the reference `neon-cleanup.yaml` sparse-checks-out `.icm/project.json` and every
+`run.md`, reads `.icm/runs/*/run.md` and `<runs_archive>/*/run.md`, and deletes `run/<folder>` for
+each run whose `- branch:` equals the PR's head ref (the `branch_from_run_md` read); only when none
+does it guess `run/${HEAD_REF#claude/}`. Proven on eleven scratch fixtures against a stubbed `curl`
+(no network, no live Neon write): the old file targets `run/sleepy-turing-k3vdjt` on agorasim#122's
+shape, the new one `run/quote-page-and-deposit-link`; archived runs, a custom `runs_archive`, a
+trailing `# comment`, two runs on one branch, a prefix-only near-miss (falls back), the D41
+non-production project and `previews: none` all as intended; the `claude/<slug>` fallback output
+identical to before. Unproven: a live PR close. **Seeded, not synced — copy by hand into agorasim
+and berceo** (the two repos carrying it). vinecliff is `isolation: neon` with `previews: none`, so
+it never got the workflow; its run branches rely on the 7-day expiry. agorasim's orphan
+`run/quote-page-and-deposit-link` in production's project is untouched (Jamie's call).

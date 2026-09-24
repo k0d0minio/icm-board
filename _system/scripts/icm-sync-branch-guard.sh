@@ -61,6 +61,7 @@ new_target() {
 
 # --- 1. HEAD on main: apply exactly as today ------------------------------------------------------
 t1="$(new_target main)"
+# shellcheck disable=SC2034  # read inside check's eval string
 out="$("$sync" --apply "$t1" 2>&1)"; rc=$?
 check "1. apply from main succeeds" "[ $rc -eq 0 ]"
 check "1. RESULT SYNCED or UNCHANGED" "grep -qE 'RESULT: (SYNCED|UNCHANGED)' <<<\"\$out\""
@@ -74,6 +75,7 @@ git -C "$board" commit --quiet -am "unmerged template change"
 
 # --- 2. --apply from the unmerged branch, no --from-branch: refuse --------------------------------
 t2="$(new_target unmerged)"
+# shellcheck disable=SC2034  # read inside check's eval string
 out="$("$sync" --apply "$t2" 2>&1)"; rc=$?
 check "2. apply from unmerged branch refuses (exit 2)" "[ $rc -eq 2 ]"
 check "2. refusal names 'not on origin/main'" "grep -q 'not on origin/main' <<<\"\$out\""
@@ -82,6 +84,7 @@ check "2. writes nothing" "[ ! -e '$t2/.icm/template-version' ] && [ ! -e '$t2/.
 
 # --- 3. --apply --from-branch from the same branch: proceeds, stamps the branch -------------------
 t3="$(new_target from-branch)"
+# shellcheck disable=SC2034  # read inside check's eval string
 out="$("$sync" --apply --from-branch "$t3" 2>&1)"; rc=$?
 check "3. apply --from-branch succeeds" "[ $rc -eq 0 ]"
 check "3. stamps branch: feature/unmerged" "grep -q '^branch: feature/unmerged$' '$t3/.icm/template-version'"
@@ -90,6 +93,7 @@ check "3. warns about the override" "grep -qi 'from-branch' <<<\"\$out\""
 
 # --- 4. --dry-run from the unmerged branch: warns, refuses nothing, writes nothing ----------------
 t4="$(new_target dry-run)"
+# shellcheck disable=SC2034  # read inside check's eval string
 out="$("$sync" --dry-run "$t4" 2>&1)"; rc=$?
 check "4. dry-run does not refuse (exit 0)" "[ $rc -eq 0 ]"
 check "4. dry-run warns" "grep -qi 'WARN' <<<\"\$out\""

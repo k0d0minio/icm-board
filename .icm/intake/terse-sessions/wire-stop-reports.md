@@ -6,10 +6,10 @@
 - size: M
 - depends-on: output-doctrine
 - sequence: 2 of 3
-- sources: the breakdown · stop steps: `_system/template/icm-pipeline/stages/01_scope/CONTEXT.md:164`,
-  `02_define/CONTEXT.md:113`, `03_build/CONTEXT.md:192-199`, `04_release/CONTEXT.md:234`,
+- sources: the breakdown · stop steps: `_system/template/icm-pipeline/stages/01_scope/CONTEXT.md:162`,
+  `02_define/CONTEXT.md:109`, `03_build/CONTEXT.md:191-198`, `04_release/CONTEXT.md:234`,
   `lanes/bug/CONTEXT.md:73`, `lanes/chore/CONTEXT.md:69`, `lanes/tweak/CONTEXT.md:70`,
-  `lanes/hotfix/CONTEXT.md:76`, `lanes/handover/CONTEXT.md:51`, `lanes/knowledge/CONTEXT.md` ·
+  `lanes/hotfix/CONTEXT.md:78`, `lanes/handover/CONTEXT.md:51`, `lanes/knowledge/CONTEXT.md` ·
   `_system/template/claude-pipeline/skills/{pipeline,setup}/SKILL.md` ·
   `.claude/skills/{pr-conventions,ticket-craft}/SKILL.md` and their `_system/template/claude/skills/`
   twins · `_shared/run-pack/handoff.md`

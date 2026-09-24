@@ -7,8 +7,8 @@
   can be formatted to always be a checklist within the chat"; two rounds of questions the same
   session, seven answers (below) · read 2026-09-24: no output doctrine anywhere in
   `_system/template/` (no rule on length, shape or content of a session's messages); ten stop
-  steps each phrasing their own "tell the user" (`stages/01_scope/CONTEXT.md:164`,
-  `02_define:113`, `03_build:192-199`, `04_release:234`, `lanes/{bug:73,chore:69,tweak:70,hotfix:76,handover:51}`,
+  steps each phrasing their own "tell the user" (`stages/01_scope/CONTEXT.md:162`,
+  `02_define:109`, `03_build:191-198`, `04_release:234`, `lanes/{bug:73,chore:69,tweak:70,hotfix:78,handover:51}`,
   knowledge); `_shared/run-pack/handoff.md` already holds Next steps / Blockers / Do not;
   `usage-snapshot.sh` already records `out=` per stage
 

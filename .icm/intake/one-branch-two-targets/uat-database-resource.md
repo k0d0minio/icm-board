@@ -58,6 +58,26 @@ production, previews and runs alike. So on a D41 repo `neon-cleanup.yaml` looks 
 - Then: berceo and agorasim `project.json` to the new block (a sync PR each), and their
   `project-rules.md`.
 
+## Template shipped (2026-09-24) — what the sync PRs carry
+
+The template half landed on its own `claude/` PR (see `.icm/project.md`'s log row of the same
+date). What stays open here is the last bullet of the proposal and criterion 4:
+
+- **Per repo (berceo, then agorasim), one sync PR:** `icm-sync.sh --apply` (T: `lib/project.sh`,
+  `lib/neon.sh`, `db-branch.sh`, `db-env.sh`, `setup.sh`, `env-check.sh`, `promote.sh`,
+  `_shared/promotion.md`, `_shared/ci.md`, the `database-migration` skill); **by hand**, because
+  they are seeded once and never synced: the reference `.github/workflows/neon-cleanup.yaml`, the
+  `setup` skill, and `project.json` → `database.neon`: drop `uat_branch`, add
+  `nonprod_project_id` (berceo: `dawn-scene-70949411`, `uat-berceo`; agorasim: the id of its
+  `uat-agorasim` once its step 3 is done) and `reset_command` (the repo's own, or empty);
+  `project-rules.md` → The environments' databases in the D41 shape.
+- **Read back on each:** `setup.sh --report` (no `[FAIL]` in project.json; the Vercel line
+  "production's `$DATABASE_URL` targets Production only"), `db-env.sh status` (both projects —
+  production's should list no `preview/*`/`run/*`), `lib/neon.sh --check`.
+- **Unproven until then:** the Vercel env read (`customEnvironmentIds` on the `/v9/projects/<p>/env`
+  entries — the field name is from Vercel's API, not yet seen on a live read); that one Neon key
+  reaches both projects of a Vercel-managed organisation.
+
 ## Acceptance criteria (rough)
 
 - [ ] A fixture D41 repo: `neon-cleanup` deletes `preview/<branch>` from the non-production

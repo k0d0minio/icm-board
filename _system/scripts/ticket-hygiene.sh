@@ -23,11 +23,9 @@
 #     today-dilution     more than 10 entries (spec cap, estate-wide)
 #     stale-today        the file predates yesterday — a plan from a past day
 #
-# Where it reads: a client repo at its TICKET BASE BRANCH — `origin/<uat.branch>` where its
-# `.icm/project.json` declares one, else `origin/main` (D38; lib/ticket-base.sh) — intake, dormant
-# flag and log alike, so a run merged into `uat` is found and a stub finished there is not
-# reported. Never the shared `projects/<repo>` checkout; no ref → the working tree, said on
-# stderr. icm-board reads its own disk and HEAD.
+# Where it reads: a client repo at `origin/main` — the one home of its ticket state (D39 §8;
+# lib/ticket-base.sh) — intake, dormant flag and log alike. Never the shared `projects/<repo>`
+# checkout; no ref → the working tree, said on stderr. icm-board reads its own disk and HEAD.
 #
 # Dormancy: a repo carrying an empty `.icm/dormant` file is parked — `off-ticket` is
 # silenced for it; every other check still runs.
@@ -80,7 +78,7 @@ for repo in "${repos[@]}"; do
   [[ -d "$intake" ]] || continue
   name="${repo#"$APPS_ROOT"/}"
   [[ "$repo" == "$APPS_ROOT" ]] && name="icm-board"
-  # The log the base branch carries — where a run merged into `uat` actually is.
+  # The log origin/main carries — where a merged run actually is.
   logref=HEAD
   [[ "$view" != "$repo" ]] && logref="$(ticket_ref "$repo")"
 

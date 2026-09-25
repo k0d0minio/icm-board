@@ -1,7 +1,7 @@
 # Casey Hebbel — client
 
 - client: casey-hebbel
-- company: none yet — choosing the business name is a quote deliverable
+- company: a Portuguese company (Jamie, 2026-09-25) — its name and NIPC still to come, with her yes
 - contacts: Casey (coach, owner)
 - repo: k0d0minio/casey-hebbel
 - language: en
@@ -36,6 +36,11 @@
   deposit split, the timeline and revisions (`triage/requote-800-package` in the repo). The repo
   took the ICM template (1c6b0c7), `/setup` (k0d0minio/casey-hebbel#17), and a first `/project`
   run: register k0d0minio/casey-hebbel#18, tickets 7e70794.
+- 2026-09-25 — terms for the €800 (Jamie): full amount up front, invoiced to her Portuguese
+  company with VAT at 23% (€984; the +€100 links €123), up to five revision rounds, no fixed date
+  (a couple of working days once her copy and the designer's files are in), valid to 25 October
+  2026. Written up as `.icm/docs/quote-casey-2026-09-25.md` in the repo; the August quote is
+  marked superseded.
 
 ## Notes (adopted)
 

@@ -1,5 +1,9 @@
 # Measuring it — output tokens per stage and lane, before the output doctrine
 
+> Superseded 2026-09-25 by `.icm/docs/2026-09-25-terse-sessions-measure.md`, which carries
+> this baseline (recomputed, larger sample) side by side with the after-table and closes the
+> stub. Kept as-is for history.
+
 *Stub 3 of `terse-sessions` (`.icm/intake/terse-sessions/measure-output.md`). Read-only: no
 script added, no client repo written. Source data is each archived run's `usage.md`
 (`usage-snapshot.sh`), under every pipeline repo's `.icm/runs/_done/`.*

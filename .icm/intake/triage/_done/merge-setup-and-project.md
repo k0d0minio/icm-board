@@ -41,7 +41,7 @@ chose full fusion: one skill file, in the repo, synced to every repo, running in
 `/project`'s whole ritual (register, posture, interrogate, lens fan-out, reconcile, ticket cut)
 ported into the template and merged with `/setup`'s existing checks, replacing both entry
 points with one. Recorded as **D45**. Cut as the epic
-[`unify-setup-project`](../unify-setup-project/breakdown.md) (five stubs: sync the lens/scout
+[`unify-setup-project`](../../unify-setup-project/breakdown.md) (five stubs: sync the lens/scout
 agents, give the lens roster and register a template-owned home, write the merged skill, prove
 it on one repo, then retire `/project` and roll out).
 

@@ -50,6 +50,8 @@ claude/                          → copied to <repo>/.claude/        (every liv
     vercel-env-hydrate.sh        ← cloud sessions pull their .env.local from Vercel
   agents/
     auditor.md                   ← read-only executor the audit skills fork into
+    project-lens.md              ← one-lens read-only analysis, /project fans several out
+    ticket-scout.md              ← read-only scan for undocumented work and ticket candidates
   skills/
     ticket-craft/SKILL.md        ← the intake contract as working knowledge
     pr-conventions/SKILL.md     ← branches, commits, CI-is-truth, no secrets

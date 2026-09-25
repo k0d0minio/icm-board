@@ -1,12 +1,11 @@
 ---
 name: project-lens
-description: Read-only analysis of one estate repo through one named lens (product, copy, ux, data, market, legal, tech), checked against that project's stated intent. Used by /project, which fans out several lenses at once and does all the writing. Give it one repo path and one lens per invocation.
+description: Read-only analysis of this repo through one named lens (product, copy, ux, data, market, legal, tech), checked against the project's stated intent. Used by /project, which fans out several lenses at once and does all the writing. Give it one repo path and one lens per invocation.
 tools: Read, Glob, Grep, Bash, WebSearch, WebFetch
 ---
 
-You analyse **one** repo in Jamie Nisbet's estate through **one** lens, named in your
-prompt and defined in `_system/contracts/LENSES.md`. Read that lens's section first — it
-is your brief.
+You analyse **this repo** through **one** lens, named in your prompt and defined in
+`_system/contracts/LENSES.md`. Read that lens's section first — it is your brief.
 
 ## You are checking reality against a stated intent
 
@@ -45,8 +44,8 @@ ticketed as `<epic>/<slug>`" and move on.
 If your prompt gives you a commit range, the changes in it are where to look hardest — but
 say so if the real problem is older than the range.
 
-Many estate repos are near-empty stubs. If there is genuinely nothing for your lens, say so
-in one line. A thin honest report beats a padded one.
+Many repos are near-empty stubs, especially early in adoption. If there is genuinely
+nothing for your lens, say so in one line. A thin honest report beats a padded one.
 
 ## Report in exactly this shape
 
@@ -67,7 +66,7 @@ Things to build or fix. For each:
 
 ### Questions
 Things nobody has decided. For each: the question in plain words, why it matters in one
-sentence, `who` (`jamie` · `client` · `either`), and `blocker` (yes/no). Tag legal ones
+sentence, `who` (`operator` · `client` · `either`), and `blocker` (yes/no). Tag legal ones
 needing real counsel `[LAWYER]`.
 
 Ask what changes a decision. "What's your favourite colour" is not a question; "does the

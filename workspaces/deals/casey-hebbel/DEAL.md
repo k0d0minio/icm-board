@@ -11,7 +11,7 @@
 ## Engagements
 | slug | shape | started | ended | outcome |
 |---|---|---|---|---|
-| opening-night | one-off, two packages (A €1,200 · B €2,400) | 2026-08-13 |  | quote sent (`04-proposal.md`); awaiting her package choice, name, form answers and images |
+| opening-night | one-off; quoted A €1,200 · B €2,400 (expired 19 Sept), re-scoped to €800 (+€100 optional Stripe links) | 2026-08-13 |  | €800 agreed (Jamie, 2026-09-25); the re-quote document is still owed; build ticketed as the `landing-page` epic in the repo |
 
 ## Log
 - 2026-08-13 — "Before I quote you" questionnaire sent (20 questions).
@@ -29,6 +29,13 @@
   entered via the adoption sweep; she has never given a business name), Value corrected
   to reflect both packages.
 - 2026-09-22 — re-cut to the dash-field schema (D24): Ladder, Stage and Value rows retired; artefacts moved into the engagement folder with a provenance line each; nothing deleted.
+- 2026-09-25 — **€800 agreed** (Jamie, in `/project`): one landing page on neutral tokens, a
+  copy interview with Casey, and Google Workspace on the domain she picks. Stripe Payment Links
+  are an optional +€100, not yet decided. A separate designer supplies the brand, name and design
+  system later, which supersedes the `/brand` directions. The written re-quote waits on VAT, the
+  deposit split, the timeline and revisions (`triage/requote-800-package` in the repo). The repo
+  took the ICM template (1c6b0c7), `/setup` (k0d0minio/casey-hebbel#17), and a first `/project`
+  run: register k0d0minio/casey-hebbel#18, tickets 7e70794.
 
 ## Notes (adopted)
 

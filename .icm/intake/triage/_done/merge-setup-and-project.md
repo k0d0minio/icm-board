@@ -4,6 +4,8 @@
 - found-by: Jamie, lourenco-botelho adoption · 2026-09-25
 - priority: P2
 - complexity: high
+- settled: 2026-09-25 — decided with Jamie; recorded as **D45** in `.icm/project.md`; cut as
+  epic `unify-setup-project`
 
 ## Problem
 
@@ -30,6 +32,18 @@ that has no icm-board, and the project-owned files are the repo's own. Candidate
   first adoption.
 
 Decide with Jamie and record a decision (D-number); cut the change as an epic if he wants it.
+
+## Outcome
+
+Neither of the two reorder-only shapes fixed the actual bug (a config answer locked in
+before intent exists), and the `/sync` shape didn't either while costing the most churn. Jamie
+chose full fusion: one skill file, in the repo, synced to every repo, running intent-first —
+`/project`'s whole ritual (register, posture, interrogate, lens fan-out, reconcile, ticket cut)
+ported into the template and merged with `/setup`'s existing checks, replacing both entry
+points with one. Recorded as **D45**. Cut as the epic
+[`unify-setup-project`](../unify-setup-project/breakdown.md) (five stubs: sync the lens/scout
+agents, give the lens roster and register a template-owned home, write the merged skill, prove
+it on one repo, then retire `/project` and roll out).
 
 ## Prompt
 

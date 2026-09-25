@@ -43,6 +43,12 @@ whatever branch or state it was left in is not `main`'s.
   merely names the slug is noise. Ambiguous → batch and ask.
 - *Completed epics:* an epic whose every stub is in `_done/` (and, in pipeline repos,
   whose runs all merged) is archived whole — `git mv intake/<epic>/ intake/_done/<epic>/`.
+- *Unclosed runs:* `run-unclosed` names a live run whose work is over — its PR merged
+  without the close-out, or a front whose epic is archived. It is **not** a ticket commit:
+  `close-out.sh` refuses `main`, so the fix is one close-out PR per repo (a `claude/` branch
+  in a worktree off `origin/main`, `close-out.sh <slug>` per run, opened for Jamie to
+  merge) — offered with the step-5 diff, never pushed to `main`. `run-unsettled` (PR not
+  merged, or a front with no epic anywhere) goes in the ambiguity batch.
 - *Stale `today.md`:* entries pointing at done, archived or missing stubs are removed; a
   plan that survived its day unexecuted is re-argued, not silently carried.
 - *Unmet `blocked:` lines:* a stub whose recorded blockage has visibly lifted gets the
@@ -119,6 +125,7 @@ force-push.
 |---|---|
 | Stub moves, cuts, epic archives | each repo's `.icm/intake/`, one direct commit pushed to its `main` (this repo's included) |
 | `.icm/today.md` | this repo, pushed to `main` — the worklist on the phone |
+| Close-out PRs for `run-unclosed` runs (when Jamie says yes) | each repo, a `claude/` branch PR — Jamie merges |
 
 ## Audit
 

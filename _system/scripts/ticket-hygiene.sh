@@ -10,6 +10,15 @@
 #     off-ticket         repo committed to in the last 14 days but has zero open tickets
 #     legacy-unmigrated  flat PREFIX-NNN tickets still awaiting a /project re-cut
 #
+#   run drift (pipeline repos — .icm/runs/, the live runs; `_`-prefixed archives skipped)
+#     run-unclosed       a live run whose work is over — the case close-out.sh archives late:
+#                        its `- pr:` merge is on main (a Release that merged without its
+#                        close-out), or it is a front (no PR) whose epic is already in the
+#                        intake archive. The fix is close-out.sh on a branch, merged by its
+#                        own PR — it refuses main, so nothing here can be a direct commit.
+#     run-unsettled      a live run close-out.sh would STOP on: its PR is not merged on main,
+#                        or it is a front with no epic live or archived. A human decides.
+#
 #   contract lint (contracts/TICKETS.md) — per epic / stub:
 #     no-breakdown       an epic with stubs but no breakdown.md
 #     slug-mismatch      '- feature-slug:' disagreeing with the filename
@@ -169,6 +178,37 @@ for repo in "${repos[@]}"; do
     if (( last > 0 && (now - last) < 14 * 86400 )); then
       issues+=("off-ticket: commits in the last 14 days but no open tickets — work is invisible to the board")
     fi
+  fi
+
+  # run-unclosed / run-unsettled: close-out.sh's own test, read from git instead of the PR API.
+  # A squash merge ends its subject "(#N)"; a merge commit reads "Merge pull request #N ".
+  if [[ -d "$view/.icm/runs" ]]; then
+    intake_archive="$(git -C "$repo" show "$logref:.icm/project.json" 2>/dev/null \
+      | jq -r '.intake_archive // empty' 2>/dev/null || true)"
+    intake_archive="${intake_archive:-.icm/intake/_done}"
+    intake_archive="${intake_archive%/}"
+    for rd in "$view/.icm/runs"/*/; do
+      [[ -d "$rd" ]] || continue
+      run="$(basename "$rd")"
+      [[ "$run" == _* ]] && continue
+      pr="$(grep -m1 '^- pr:' "$rd/run.md" 2>/dev/null \
+        | sed -E 's/^- pr:[[:space:]]*//; s/[[:space:]]+#.*$//; s#^.*/pull/##; s/^#//; s/[^0-9].*$//' || true)"
+      if [[ -n "$pr" ]]; then
+        merge="$(git -C "$repo" log -1 --format=%h -E \
+          --grep="\\(#${pr}\\)\$" --grep="^Merge pull request #${pr} " "$logref" 2>/dev/null || true)"
+        if [[ -n "$merge" ]]; then
+          issues+=("run-unclosed: runs/$run — PR #$pr merged in $merge without its close-out; close-out.sh on a branch, its own PR")
+        else
+          issues+=("run-unsettled: runs/$run — PR #$pr has no merge on main; read the PR (closed unmerged is abandoned, not history)")
+        fi
+      elif [[ -d "$intake/$run" ]]; then
+        :   # a front whose epic is live — it stays until the epic archives with it
+      elif git -C "$repo" cat-file -e "$logref:$intake_archive/$run" 2>/dev/null; then
+        issues+=("run-unclosed: runs/$run — a front whose epic is archived in $intake_archive/; close-out.sh on a branch, its own PR")
+      else
+        issues+=("run-unsettled: runs/$run — no '- pr:' line and no '$run' epic live or archived; close-out.sh stops on it")
+      fi
+    done
   fi
 
   suffix=""

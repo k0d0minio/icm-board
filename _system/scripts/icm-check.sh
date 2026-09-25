@@ -8,6 +8,8 @@
 #
 #   .icm/CONTEXT.md          the repo's .icm map
 #   .icm/intake/README.md    micro-copy of the intake contract (epics + stubs + triage)
+#                            — both seeded when missing and drift-reported against
+#                            template/icm/ like the canonical .claude/ assets (D45)
 #   .icm/intake/triage/      the parking lane
 #   .icm/intake/_done/       the archive (completed epics + legacy tickets)
 #   .icm/docs/               ad hoc reports
@@ -111,6 +113,13 @@ CANONICAL=(
   "skills/ticket-craft/SKILL.md"
   "skills/pr-conventions/SKILL.md"
 )
+
+# The baseline micro-copies (template/icm/…): seeded when missing and, like CANONICAL,
+# drift-reported when a repo's copy diverges — never overwritten (D45). Without the
+# comparison a stale copy is invisible: when this landed (2026-09-25) 15 intake copies
+# still taught the retired PREFIX-NNN numbering and 19 maps still carried the `- profile:`
+# line. Paths relative to <repo>/.icm/.
+BASELINE=( "CONTEXT.md" "intake/README.md" )
 
 # The pipeline (template/icm-pipeline/…): paths relative to <repo>/.icm/, read from the
 # MANIFEST — `T` template-owned (drift-reported), `P` project-owned (seeded once). One list
@@ -233,6 +242,14 @@ for repo in "${repos[@]}"; do
   fi
 
   # --- canonical drift (report-only, never repaired — repos own their copies) ---
+  # A repo that means its map or intake copy to say more than the template (a backlog, a
+  # full workspace map) warns here too: deliberate divergence is Jamie's call per repo,
+  # exactly as for a drifted hook (conformance stage, D7/D45).
+  for b in "${BASELINE[@]}"; do
+    if [[ -f "$repo/.icm/$b" ]] && ! cmp -s "$TEMPLATE/icm/$b" "$repo/.icm/$b"; then
+      warns+=("baseline drift: .icm/$b differs from _system/template/icm/$b — refresh by hand, keeping any deliberate local additions (never repaired here)")
+    fi
+  done
   for asset in "${assets[@]}"; do
     if [[ -f "$repo/.claude/$asset" ]] && ! cmp -s "$TEMPLATE/claude/$asset" "$repo/.claude/$asset"; then
       warns+=("drift from canonical: .claude/$asset differs from _system/template/claude/$asset")

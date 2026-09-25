@@ -2,7 +2,9 @@
 
 Consumed by `_system/scripts/icm-check.sh`:
 
-1. **The baseline** `--fix` seeds when a repo is missing it (never overwrites).
+1. **The baseline** `--fix` seeds when a repo is missing it (never overwrites). Its two
+   micro-copies, `icm/CONTEXT.md` and `icm/intake/README.md`, are drift-reported like the
+   canonical assets below — never repaired (decision D45).
 2. **The canonical Claude-asset library** — the estate-wide hooks and skills every repo
    should carry. Seeded when missing; **drift is reported, never repaired** — repos own
    their copies (decision D7, [`.icm/project.md`](../../.icm/project.md)).

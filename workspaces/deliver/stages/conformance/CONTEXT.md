@@ -17,7 +17,9 @@ commit or push anything — leave created files uncommitted for Jamie to review 
 
 **1. Check.** Run `_system/scripts/icm-check.sh` (no flags) and show the report —
 including its **drift** lines, where a repo's copy of a canonical asset has diverged
-from [`_system/template/claude/`](../../../../_system/template/README.md), and its
+from [`_system/template/claude/`](../../../../_system/template/README.md), its
+**baseline drift** lines, where a repo's `.icm/CONTEXT.md` or `.icm/intake/README.md` has
+diverged from `_system/template/icm/` (D45), and its
 **pipeline drift** lines, where a repo's template-owned file has diverged from
 [`_system/template/icm-pipeline/`](../../../../_system/template/icm-pipeline/MANIFEST).
 Then, **for every repo that carries `.icm/scripts/setup.sh`**, run

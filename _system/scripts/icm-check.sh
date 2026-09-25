@@ -18,7 +18,8 @@
 #                            the template's .env rules (drift-reported, never rewritten)
 #   .claude/hooks/*          canonical estate hooks (session-start, install-deps,
 #                            vercel-env-hydrate, route-request + its test, wrap-reminder)
-#   .claude/agents/auditor.md the read-only executor the audit skills fork into
+#   .claude/agents/*         auditor.md (the read-only audit executor), project-lens.md and
+#                            ticket-scout.md (the repo-analysis agents /project fans out to)
 #   .claude/skills/*         canonical estate skills (ticket-craft, pr-conventions)
 #   AGENTS.md                reported only — never templated (each repo writes its own)
 #   CLAUDE.md                the one-line `@AGENTS.md` importer — seeded, but only into
@@ -110,6 +111,8 @@ CANONICAL=(
   "hooks/route-request.test.sh"
   "hooks/wrap-reminder.sh"
   "agents/auditor.md"
+  "agents/project-lens.md"
+  "agents/ticket-scout.md"
   "skills/ticket-craft/SKILL.md"
   "skills/pr-conventions/SKILL.md"
 )

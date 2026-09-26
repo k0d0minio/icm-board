@@ -23,7 +23,8 @@ _system/
 
 One workflow in [`../.github/workflows/`](../.github/workflows/) runs the checks that should
 not wait for a session: `self-check` on every push (links, the ticket contract, shellcheck,
-and two regression checks — `env-audit-stability.sh`, `icm-sync-branch-guard.sh`). The daily
+and three regression checks — `env-audit-stability.sh`, `icm-sync-branch-guard.sh`,
+`close-out-working-tree.sh`). The daily
 estate walk is the `estate-housekeeping` routine on Jamie's machine, which runs
 `icm-check.sh` and the ticket scripts against `projects/` and stops at the gate; the
 API-only `estate-conformance.sh` it replaced was retired on 2026-09-26 (it had drifted from
@@ -81,7 +82,7 @@ seeing icm-board).
 | [scripts/ticket-hygiene.sh](scripts/ticket-hygiene.sh) | Read-only drift report, plus contract lint over every ticket; `/day` applies the fixes with judgment. An empty `.icm/dormant` parks a repo ([TICKETS.md](contracts/TICKETS.md)). |
 | [scripts/pull-all.sh](scripts/pull-all.sh) | Pull every repo. |
 | [scripts/self-check.sh](scripts/self-check.sh) | Holds **this** repo to its own rules: links resolve, tickets meet the contract, the synced price table is complete and fresh. |
-| [scripts/env-audit-stability.sh](scripts/env-audit-stability.sh) · [scripts/icm-sync-branch-guard.sh](scripts/icm-sync-branch-guard.sh) | CI-only regression checks for `env.sh audit` determinism and `icm-sync.sh`'s provenance guard — run by `self-check.yml`, never by hand. |
+| [scripts/env-audit-stability.sh](scripts/env-audit-stability.sh) · [scripts/icm-sync-branch-guard.sh](scripts/icm-sync-branch-guard.sh) · [scripts/close-out-working-tree.sh](scripts/close-out-working-tree.sh) | CI-only regression checks for `env.sh audit` determinism, `icm-sync.sh`'s provenance guard, and `close-out.sh` archiving the working tree (the usage end line rides the move) — run by `self-check.yml`, never by hand. |
 | [scripts/validate-deal.sh](scripts/validate-deal.sh) | Read-only: a deal engagement's quote, proposal and agreement still agree — scope bullets, numbers per tier, the agreed tier, `[LAWYER]` tags, the language, no `private/` reference from a client-facing file, no credential-shaped string anywhere in the client folder. `--all` walks every client; `DRIFT` is a report (an adopted engagement may carry it). |
 | [scripts/render-deal.sh](scripts/render-deal.sh) | A deal artefact, markdown → DOCX under the client's gitignored `out/` (pandoc, with `knowledge/house.docx` as the reference document when it exists). Never uploads, never commits; `SKIP` with the install hint when pandoc is absent. |
 | [scripts/vercel-env.sh](scripts/vercel-env.sh) | The estate's Vercel env plumbing, over [scripts/vercel-env-registry.json](scripts/vercel-env-registry.json) — which repo/app path is which Vercel project, on which of the three teams. All five flows: `link`; `init` seeds each app's committed `.env.example` from the names Vercel holds, never values, never overwriting a line; `push-notes` makes each key's note in git the variable's Vercel comment, comments and nothing else; `pull` writes each app's `.env.local` from Vercel's development environment with those same notes interleaved above the keys; `audit` is the drift report the three one-way flows imply, read-only in the strong sense (epic `vercel-env-system`). Since D23 the parser and the rules live once in the template's per-repo `.icm/scripts/env.sh`, driven by each repo's deploy block: `--via-repos` makes this script the estate loop over that, and `registry` regenerates the registry from the deploy blocks (printed; `--write` replaces the file). Local machine only, and per-team `VERCEL_TOKEN_*` env vars only. |

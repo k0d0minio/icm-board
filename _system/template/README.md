@@ -27,6 +27,10 @@ they get there; project-owned files are seeded once and never touched again.
 root/                            → copied to <repo>/                (migrated repos only)
   CLAUDE.md                      ← the one-line `@AGENTS.md` importer
   opencode.jsonc                 ← the estate's OpenCode rails (deny local checks, ask on push)
+  .opencode/agents/{auditor,project-lens,ticket-scout}.md
+                                 ← the same three agents in OpenCode's shape (`description`,
+                                    `mode: subagent`, `permission.edit: deny`): OpenCode reads
+                                    only .opencode/agents/, never .claude/agents/ (2026-09-26)
   .opencode/plugins/icm-session-env.js
                                  ← OPTIONAL, never required or drift-checked: the shell.env
                                     bridge that exports OPENCODE_SESSION_ID so usage-snapshot.sh
@@ -68,6 +72,7 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every ado
   lanes/handover/ (the deal's last lane)                                              (T)
   intake/CONTEXT.md              ← breakdown/stub formats, triage, archive rules       (T)
   _shared/{github,ci,stage-preamble,scope-template,conventions}.md                    (T)
+  _shared/output.md              ← the output doctrine: one stop-report shape, terse chat (D40)  (T)
   _shared/promotion.md           ← OPTIONAL in effect, always seeded: one branch, two targets —
                                     the client's UAT (a Vercel custom environment deployed from
                                     main), the batch since the last published Release, the
@@ -131,7 +136,7 @@ claude-pipeline/                 → copied to <repo>/.claude/        (every ado
   skills/setup/SKILL.md          ← /setup: the report, the questions, the P files (seeded; drift-reported)
 github-pipeline/                 → copied to <repo>/.github/        (every adopted repo — D22)
   pull_request_template.md       ← carries both gate anchors
-  workflows/{release,labels}.yaml ← REFERENCE workflows: seeded ONCE by /setup — release.yaml
+  workflows/{release,quality}.yaml ← REFERENCE workflows: seeded ONCE by /setup — release.yaml
                                     into a repo whose reporting.announce_from is `ci` AND into
                                     every repo that declares `uat` (it is the promotion, D39) —
                                     deliberately NOT in icm-check.sh's PIPELINE_GITHUB list, so

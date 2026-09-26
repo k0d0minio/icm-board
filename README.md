@@ -25,7 +25,7 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
 │   ├── knowledge/             positioning · services · pricing · voice · terms · stack
 │   ├── setup/                 the questionnaire that fills knowledge/
 │   ├── scripts/               icm-check · icm-sync · tickets-board · ticket-hygiene · pull-all
-│   │                          · estate-conformance (API-only) · self-check · vercel-env
+│   │                          · self-check · vercel-env
 │   │                          · run-economics · validate-deal · render-deal
 │   ├── template/              the baseline + canonical Claude assets --fix seeds
 │   ├── hooks/                 SessionStart (estate board)
@@ -33,7 +33,7 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
 │
 ├── .claude/                   /client · /project · /day · /icm-check (thin routers)
 ├── .icm/                      this repo's own register + intake epics (+ today.md)
-├── .github/workflows/         self-check · estate-conformance
+├── .github/workflows/         self-check
 │
 └── projects/                  the estate — gitignored, on this machine only
     ├── jamienisbet/           the web estate, its own repo + CI + tickets
@@ -52,10 +52,10 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
   dashboard; every deal document, private reasoning included, lives in the deal folder
   here; the dashboard reads the folder live and nothing syncs. `Deal:` commits go
   straight to `main`.
-- **Two halves of the same check.** On this machine the estate is on disk, so
-  `icm-check.sh` reads it directly — and now also seeds and drift-checks the canonical
-  Claude assets. In CI it isn't, so `estate-conformance.sh` asks the GitHub API the same
-  questions about the `k0d0minio` org (via the `ESTATE_TOKEN` secret).
+- **One check, on disk.** The estate lives under `projects/` on Jamie's machine, so
+  `icm-check.sh` reads it directly — baseline, canonical Claude assets, the pipeline's
+  manifest — and the daily `estate-housekeeping` routine runs it there. The API-only CI
+  twin was retired on 2026-09-26.
 - **Tickets live next to their logic.** Work on this repo's machinery is cut here;
   dashboard work is cut in `k0d0minio/jamienisbet` — epics and stubs per
   `_system/contracts/TICKETS.md`. They commit straight to `main` — here and in every

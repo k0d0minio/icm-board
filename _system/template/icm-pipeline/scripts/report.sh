@@ -57,7 +57,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # A reporting hook never exits non-zero — but a usage error is still said plainly.
-usage() { echo "usage: report.sh <announce|alert|economics> \"<summary>\" [--slug s] [--sha sha] [--url u] [--body file] [--audience public|internal] [--tag t] [--dry-run]" >&2; echo "RESULT: SKIPPED (usage)"; exit 0; }
+usage() { echo "usage: report.sh selftest | report.sh <announce|alert|economics> \"<summary>\" [--slug s] [--sha sha] [--url u] [--body file] [--audience public|internal] [--tag t] [--dry-run]" >&2; echo "RESULT: SKIPPED (usage)"; exit 0; }
 die()   { echo "error: $*" >&2; echo "RESULT: SKIPPED ($*)"; exit 0; }
 
 command -v jq >/dev/null 2>&1 || die "jq not found"
@@ -76,7 +76,36 @@ while [ $# -gt 0 ]; do
     *) if [ -z "$kind" ]; then kind="$1"; elif [ -z "$summary" ]; then summary="$1"; else usage; fi; shift ;;
   esac
 done
-case "$kind" in announce|alert|economics) : ;; *) usage ;; esac
+case "$kind" in announce|alert|economics) : ;; selftest) : ;; *) usage ;; esac
+if [ "$kind" = "selftest" ]; then
+  # `report.sh selftest` — prove every channel the repo maps can be reached, posting nothing:
+  # the payload each channel would send parses as JSON, its env names are set, and the token
+  # is accepted (Slack auth.test; Resend GET /domains). Release runs it before it announces, so
+  # a dead channel is one red step with a reason, not twenty silent SKIPPED lines.
+  fails=0
+  for k in announce alert; do
+    for ch in $(reporting_channels "$k"); do
+      case "$ch" in
+        slack)
+          tv="$(reporting_channel_field slack token_env SLACK_BOT_TOKEN)"
+          if [ "$k" = announce ]; then cv="$(reporting_channel_field slack announce_channel_env SLACK_ANNOUNCE_CHANNEL_ID)"; else cv="$(reporting_channel_field slack alert_channel_env SLACK_ALERTS_CHANNEL_ID)"; fi
+          [ -n "${!tv:-}" ] || { echo "FAIL slack/$k: $tv unset"; fails=$((fails+1)); continue; }
+          [ -n "${!cv:-}" ] || { echo "FAIL slack/$k: $cv unset"; fails=$((fails+1)); continue; }
+          jq -n --arg c "${!cv}" --arg t "selftest" '{channel: $c, text: $t}' | jq -e . >/dev/null || { echo "FAIL slack/$k: payload is not JSON"; fails=$((fails+1)); continue; }
+          r="$(printf 'url = "https://slack.com/api/auth.test"\nheader = "Authorization: Bearer %s"\nsilent\nmax-time = 20\n' "${!tv}" | curl --config - -X POST 2>/dev/null)" || { echo "FAIL slack/$k: unreachable"; fails=$((fails+1)); continue; }
+          if [ "$(printf '%s' "$r" | jq -r '.ok // false' 2>/dev/null)" = "true" ]; then echo "ok   slack/$k: token accepted ($(printf '%s' "$r" | jq -r '.team // "?"'))"; else echo "FAIL slack/$k: $(printf '%s' "$r" | jq -r '.error // "unknown"')"; fails=$((fails+1)); fi ;;
+        email)
+          kv="$(reporting_channel_field email api_key_env RESEND_API_KEY)"
+          [ -n "${!kv:-}" ] || { echo "FAIL email/$k: $kv unset"; fails=$((fails+1)); continue; }
+          r="$(printf 'url = "https://api.resend.com/domains"\nheader = "Authorization: Bearer %s"\nsilent\nmax-time = 20\n' "${!kv}" | curl --config - 2>/dev/null)" || { echo "FAIL email/$k: unreachable"; fails=$((fails+1)); continue; }
+          if printf '%s' "$r" | jq -e '.data' >/dev/null 2>&1; then echo "ok   email/$k: key accepted"; else echo "FAIL email/$k: $(printf '%s' "$r" | jq -r '.message // "rejected"' 2>/dev/null)"; fails=$((fails+1)); fi ;;
+        github-release) command -v gh >/dev/null && gh auth status >/dev/null 2>&1 && echo "ok   github-release/$k: gh authenticated" || { echo "FAIL github-release/$k: gh not authenticated"; fails=$((fails+1)); } ;;
+        *) echo "FAIL $ch/$k: unknown channel"; fails=$((fails+1)) ;;
+      esac
+    done
+  done
+  if [ "$fails" -eq 0 ]; then echo "RESULT: SELFTEST OK"; exit 0; else echo "RESULT: SELFTEST FAIL $fails"; exit 1; fi
+fi
 [ -n "$summary" ] || usage
 case "$audience" in public|internal) : ;; *) die "--audience must be public|internal" ;; esac
 
@@ -159,7 +188,11 @@ send_slack() {
   if [ "$dry" -eq 1 ]; then echo "--- slack (dry run) POST chat.postMessage"; printf '%s\n' "$payload"; sent+=("slack"); return; fi
   [ -n "$token" ] || { skip slack "$token_var unset — fix: printf '%s' \"\$VALUE\" | .icm/scripts/env.sh add $token_var --ci --github secret"; return; }
   [ -n "$chan" ]  || { skip slack "$chan_var unset — fix: .icm/scripts/env.sh add $chan_var --ci --github variable"; return; }
-  resp="$(printf 'url = "https://slack.com/api/chat.postMessage"\nheader = "Authorization: Bearer %s"\nheader = "Content-Type: application/json; charset=utf-8"\ndata = @-\nsilent\nmax-time = 20\n' "$token" \
+  # The config on stdin carries only the url and headers (the token never lands in argv or a
+  # process list); the body is the ONE --data-binary. A `data = @-` line in the config read
+  # `--config -`'s own remaining lines as the body and curl joined the two with `&`, so Slack
+  # saw `silentmax-time = 20&{…}` and answered invalid_json on every post (estate audit 2026-09-26).
+  resp="$(printf 'url = "https://slack.com/api/chat.postMessage"\nheader = "Authorization: Bearer %s"\nheader = "Content-Type: application/json; charset=utf-8"\nsilent\nmax-time = 20\n' "$token" \
     | curl --config - --data-binary "$payload" 2>/dev/null)" || { skip slack "Slack unreachable"; return; }
   if [ "$(printf '%s' "$resp" | jq -r '.ok // false' 2>/dev/null)" = "true" ]; then echo "slack: posted to $chan_var"; sent+=("slack")
   else skip slack "Slack rejected the post: $(printf '%s' "$resp" | jq -r '.error // "unknown"' 2>/dev/null)"; fi
@@ -180,7 +213,7 @@ send_email() {
   [ -n "$key" ]  || { skip email "$key_var unset — fix: printf '%s' \"\$VALUE\" | .icm/scripts/env.sh add $key_var --ci --github secret"; return; }
   [ -n "$from" ] || { skip email "$from_var unset — fix: .icm/scripts/env.sh add $from_var --ci --github variable"; return; }
   [ -n "$to" ]   || { skip email "$to_var unset — fix: .icm/scripts/env.sh add $to_var --ci --github variable"; return; }
-  resp="$(printf 'url = "https://api.resend.com/emails"\nheader = "Authorization: Bearer %s"\nheader = "Content-Type: application/json"\ndata = @-\nsilent\nmax-time = 20\n' "$key" \
+  resp="$(printf 'url = "https://api.resend.com/emails"\nheader = "Authorization: Bearer %s"\nheader = "Content-Type: application/json"\nsilent\nmax-time = 20\n' "$key" \
     | curl --config - --data-binary "$payload" 2>/dev/null)" || { skip email "Resend unreachable"; return; }
   if printf '%s' "$resp" | jq -e '.id' >/dev/null 2>&1; then echo "email: sent (id $(printf '%s' "$resp" | jq -r .id))"; sent+=("email")
   else skip email "Resend rejected it: $(printf '%s' "$resp" | jq -r '.message // .error // "unknown"' 2>/dev/null)"; fi

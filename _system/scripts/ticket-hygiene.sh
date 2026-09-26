@@ -24,7 +24,10 @@
 #     slug-mismatch      '- feature-slug:' disagreeing with the filename
 #     no-sequence        a stub without '- sequence: <n> of <m>'
 #     no-lane            a triage stub without '- lane: bug|tweak|chore'
-#     no-prompt          a stub without '## Prompt' in a repo that has no /pipeline
+#     legacy-field       a scope stub still carrying `- epic:` / a breakdown with `- epic-slug:`
+#                        (the contract's field is `scope:` / `scope-slug:` — 2026-09-26)
+#     template-change    a `found-by: template-change` stub no icm-board triage stub names yet
+#                        (the D33 hand-off has not happened)
 #                        (the board's pick-up depends on it)
 #
 #   today.md (this repo's .icm/today.md — the one home of the today flag)
@@ -87,8 +90,6 @@ for repo in "${repos[@]}"; do
   dormant=0
   [[ -e "$view/.icm/dormant" ]] && dormant=1
 
-  has_pipeline=0
-  [[ -f "$view/.claude/skills/pipeline/SKILL.md" ]] && has_pipeline=1
 
   issues=()
   open_keys=()   # slugs (and legacy IDs) used by possibly-done
@@ -110,9 +111,6 @@ for repo in "${repos[@]}"; do
           bug|tweak|chore) ;;
           *) issues+=("no-lane: triage/$fn — '- lane: bug|tweak|chore' required") ;;
         esac
-        if (( ! has_pipeline )) && ! grep -qiE '^## +(prompt|agent prompt) *$' "$f"; then
-          issues+=("no-prompt: triage/$fn — the board's pick-up depends on it")
-        fi
       done
       continue
     fi
@@ -134,10 +132,9 @@ for repo in "${repos[@]}"; do
       seq="$(dash_field "$f" sequence)"
       [[ "$seq" =~ ^[0-9]+[[:space:]]+of[[:space:]]+[0-9]+ ]] \
         || issues+=("no-sequence: $epic/$fn — missing or malformed '- sequence: <n> of <m>'")
-      if (( ! has_pipeline )) && ! grep -qiE '^## +(prompt|agent prompt) *$' "$f"; then
-        issues+=("no-prompt: $epic/$fn — the board's pick-up depends on it")
-      fi
+      grep -qE '^- epic:' "$f" && issues+=("legacy-field: $epic/$fn — carries '- epic:'; the contract's field is '- scope:' (2026-09-26)")
     done
+    [[ -f "${d}breakdown.md" ]] && grep -qE '^- epic-slug:' "${d}breakdown.md" && issues+=("legacy-field: $epic/breakdown.md — carries '- epic-slug:'; the contract's field is '- scope-slug:'")
     if (( stubs > 0 )) && [[ ! -f "${d}breakdown.md" ]]; then
       issues+=("no-breakdown: $epic/ has $stubs stub(s) but no breakdown.md")
     fi
@@ -174,10 +171,25 @@ for repo in "${repos[@]}"; do
 
   # off-ticket work: recent commits, zero open tickets. Silenced for dormant repos.
   if (( ${#open_keys[@]} == 0 && !dormant )); then
-    last="$(git -C "$repo" log -1 --format=%ct "$logref" 2>/dev/null || echo 0)"
+    # Only a commit that touched the work counts: the estate's own plumbing (.icm/, .claude/,
+    # the Layer-0 pair, the rails file) is seeded and synced from icm-board and is not evidence
+    # of off-ticket work (audit 2026-09-26: three repos flagged on a canonical-asset fan-out).
+    last="$(git -C "$repo" log -1 --format=%ct "$logref" -- . ':!.icm' ':!.claude' ':!CLAUDE.md' ':!AGENTS.md' ':!opencode.jsonc' ':!.opencode' 2>/dev/null || echo 0)"
     if (( last > 0 && (now - last) < 14 * 86400 )); then
       issues+=("off-ticket: commits in the last 14 days but no open tickets — work is invisible to the board")
     fi
+  fi
+
+  # template-change hand-off (D33): every `found-by: template-change` stub in this repo's triage
+  # must have an icm-board triage stub that names it (by slug); until it does, the change is owed.
+  if [[ -d "$view/.icm/intake/triage" && "$repo" != "$APPS_ROOT" ]]; then
+    for tf in "$view"/.icm/intake/triage/*.md; do
+      [[ -e "$tf" ]] || continue
+      grep -qiE '^- found-by: *template-change' "$tf" || continue
+      tslug="$(basename "$tf" .md)"
+      grep -rqlF "$tslug" "$APPS_ROOT/.icm/intake/triage/" 2>/dev/null \
+        || issues+=("template-change: triage/$tslug — no icm-board triage stub names it; the D33 hand-off is owed")
+    done
   fi
 
   # run-unclosed / run-unsettled: close-out.sh's own test, read from git instead of the PR API.

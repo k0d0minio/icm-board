@@ -1,7 +1,7 @@
 # Stub: Preview-side inspection — playwright-cli and impeccable detect against deployed URLs, with the guard carve-out
 
 - feature-slug: preview-inspection-tooling
-- epic: design-system-skills
+- scope: design-system-skills
 - priority: P1
 - size: M
 - depends-on: research-fit-and-overlap

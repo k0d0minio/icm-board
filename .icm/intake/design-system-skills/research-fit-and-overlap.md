@@ -1,7 +1,7 @@
 # Stub: Research — how the five design tools fit the estate, and what they overlap
 
 - feature-slug: research-fit-and-overlap
-- epic: design-system-skills
+- scope: design-system-skills
 - priority: P0
 - size: M
 - complexity: research

@@ -77,6 +77,7 @@ roll_repo() { # <repo-dir> <repo-label>
         key=stage "|" v["session"]
         if (kind=="start") { s_in[key]=v["in"]; s_out[key]=v["out"]; s_cr[key]=v["cache_read"]; s_cw[key]=v["cache_write"]; s_cost[key]=v["cost_usd"]; seen[key]=1 }
         if (kind=="end")   { e_in[key]=v["in"]; e_out[key]=v["out"]; e_cr[key]=v["cache_read"]; e_cw[key]=v["cache_write"]; e_cost[key]=v["cost_usd"]; seen[key]=1 }
+        if (v["cost_usd"]=="unknown" && v["model"]!="") unpriced[v["model"]]=1
       }
       END {
         for (k in seen) {
@@ -84,7 +85,8 @@ roll_repo() { # <repo-dir> <repo-label>
             if (s_cost[k]=="unknown" || e_cost[k]=="unknown") unk=1; else t_cost+=e_cost[k]-s_cost[k] }
           else open++
         }
-        if (n+open > 0) printf "%s\t%s\t%d\t%d\t%d\t%d\t%s\t%d\t%d\n", repo, run, t_in, t_out, t_cr, t_cw, (unk ? "unknown" : sprintf("%.4f", t_cost)), n, open
+        why=""; for (m in unpriced) why=(why=="" ? m : why ", " m)
+        if (n+open > 0) printf "%s\t%s\t%d\t%d\t%d\t%d\t%s\t%d\t%d\n", repo, run, t_in, t_out, t_cr, t_cw, (unk ? "unknown (" (why=="" ? "no cost line" : "no price row for " why) ")" : sprintf("%.4f", t_cost)), n, open
       }' "$f"
   done < <(usage_files "$r")
 }
@@ -93,7 +95,7 @@ render() { # <rows on stdin> → markdown table
   awk -F'\t' '
     BEGIN { printf "| repo | run | in | out | cache read | cache write | list-price USD | stage pairs | open |\n|---|---|---:|---:|---:|---:|---:|---:|---:|\n" }
     { printf "| %s | %s | %d | %d | %d | %d | %s | %d | %d |\n", $1, $2, $3, $4, $5, $6, $7, $8, $9
-      in_+=$3; out+=$4; cr+=$5; cw+=$6; if ($7=="unknown") unk=1; else cost+=$7; pairs+=$8; open+=$9; rows++ }
+      in_+=$3; out+=$4; cr+=$5; cw+=$6; if ($7 ~ /^unknown/) unk=1; else cost+=$7; pairs+=$8; open+=$9; rows++ }
     END { if (rows==0) print "| — | no run carries a usage line yet | | | | | unavailable | | |";
           else printf "| **total** | %d run(s) | %d | %d | %d | %d | **%s** | %d | %d |\n", rows, in_, out, cr, cw, (unk ? sprintf("%.4f + unknown", cost) : sprintf("%.4f", cost)), pairs, open }'
 }

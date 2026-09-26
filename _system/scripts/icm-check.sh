@@ -150,7 +150,12 @@ PIPELINE_GITHUB=( "pull_request_template.md" )
 #                  point of the transition tolerance.
 #   opencode.jsonc the estate's OpenCode rails; drift-reported like any other canonical
 #                  asset once a repo carries one.
-CANONICAL_ROOT=( "opencode.jsonc" )
+CANONICAL_ROOT=(
+  "opencode.jsonc"
+  ".opencode/agents/auditor.md"
+  ".opencode/agents/project-lens.md"
+  ".opencode/agents/ticket-scout.md"
+)
 
 bold=$'\033[1m'; red=$'\033[31m'; green=$'\033[32m'; yellow=$'\033[33m'; dim=$'\033[2m'; off=$'\033[0m'
 [[ -t 1 ]] || { bold=; red=; green=; yellow=; dim=; off=; }
@@ -186,6 +191,13 @@ for repo in "${repos[@]}"; do
   # one fact, so an un-migrated repo is measured exactly as it was before the move.
   migrated=0
   [[ -f "$repo/AGENTS.md" ]] && migrated=1
+  # Layer 0 routes, it does not teach: ~30–90 lines (deliver/conformance). Longer guidance
+  # belongs in .claude/rules/*.md scoped by `paths:` (Jamie, 2026-09-26 — replaces AUDIT #6).
+  l0="$repo/AGENTS.md"; [[ -f "$l0" ]] || l0="$repo/CLAUDE.md"
+  if [[ -f "$l0" ]]; then
+    l0n="$(wc -l < "$l0")"
+    (( l0n > 90 )) && warns+=("Layer 0 is $l0n lines ($(basename "$l0")) — routes, does not teach: ≤90; move long guidance to .claude/rules/*.md with paths:")
+  fi
   # Has this repo adopted the pipeline? Only a sync lands .icm/MANIFEST; without it the
   # pipeline is not reported, seeded or drift-checked here at all.
   adopted=0
@@ -360,6 +372,7 @@ for repo in "${repos[@]}"; do
       fi
       for asset in "${CANONICAL_ROOT[@]}"; do
         if [[ ! -f "$repo/$asset" ]]; then
+          mkdir -p "$(dirname "$repo/$asset")"
           cp "$TEMPLATE/root/$asset" "$repo/$asset"
           actions+=("created $asset")
         fi
@@ -512,5 +525,5 @@ echo
 echo "RESULT: $total repos checked, $conformant conformant, $gaps with gaps, $fixed fixed, $warnings warnings$( (( FIX )) || echo ' (check only — rerun with --fix to populate)')"
 # Exit convention (decision D15, 2026-08-28): gaps exit 0 — conformance REPORTS, it does
 # not repair, so a gap is the report's content, not the report failing. Only a bad
-# invocation (2) is a failure. estate-conformance.sh follows the same convention.
+# invocation (2) is a failure.
 exit 0

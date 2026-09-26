@@ -1,7 +1,7 @@
 # Stub: DESIGN.md — one project-owned design system per repo, in the Stitch schema
 
 - feature-slug: design-md-contract
-- epic: design-system-skills
+- scope: design-system-skills
 - priority: P0
 - size: M
 - depends-on: research-fit-and-overlap

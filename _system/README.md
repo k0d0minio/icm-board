@@ -15,18 +15,24 @@ _system/
   contracts/     ← the specs the workspaces and scripts read
   knowledge/     ← what the business knows: services, pricing, voice, terms, stack
   setup/         ← the questionnaire that fills knowledge/
-  scripts/       ← the seven executables
+  scripts/       ← the estate's executables (plus two CI regression checks)
   template/      ← the baseline + canonical Claude assets icm-check.sh --fix seeds
   hooks/         ← session hooks for this repo (estate board on SessionStart)
   reference/     ← background reading (the ICM paper)
 ```
 
-Two workflows in [`../.github/workflows/`](../.github/workflows/) run the checks that
-should not wait for a session: `self-check` on every push, `estate-conformance` daily.
+One workflow in [`../.github/workflows/`](../.github/workflows/) runs the checks that should
+not wait for a session: `self-check` on every push (links, the ticket contract, shellcheck,
+and two regression checks — `env-audit-stability.sh`, `icm-sync-branch-guard.sh`). The daily
+estate walk is the `estate-housekeeping` routine on Jamie's machine, which runs
+`icm-check.sh` and the ticket scripts against `projects/` and stops at the gate; the
+API-only `estate-conformance.sh` it replaced was retired on 2026-09-26 (it had drifted from
+`icm-check.sh`'s asset list, and CI minutes are a cost once this repo is private).
 
 ## Four commands, three workspaces
 
-Commands live in [`../.claude/commands/`](../.claude/commands/) and are **thin routers**
+Commands live in [`../.claude/skills/`](../.claude/skills/) (one `SKILL.md` each — the
+shape Claude Code recommends over `.claude/commands/`, 2026-09-26) and are **thin routers**
 — each opens its stage's `CONTEXT.md` and follows it. **The stage contracts are the
 process**; there is deliberately no second narrative describing them.
 
@@ -71,18 +77,17 @@ seeing icm-board).
 | [scripts/icm-check.sh](scripts/icm-check.sh) | Checks every repo **on disk** — this one included — against the baseline + canonical assets and the pipeline's manifest. `--fix` seeds gaps from [template/](template/README.md), **never overwrites**; drift is reported, never repaired here. `--repo <path>` measures one repo, exempt or not. Once a repo carries `setup.sh`, `/icm-check` runs that repo's `setup.sh --report` rather than re-deriving the checks. |
 | [scripts/icm-sync.sh](scripts/icm-sync.sh) | The one repair: brings a repo's **template-owned** files (`template/icm-pipeline/MANIFEST`, the `T` lines) up to the template and writes its `.icm/template-version`. Human-invoked, dry-run by default, `--apply` to write; refuses an unadopted repo or a dirty `.icm/`; never deletes — a retired file (`scripts/notify.sh`) is reported for `git rm` (decision D20). |
 | [scripts/run-economics.sh](scripts/run-economics.sh) | The per-client cost roll-up (D23): walks every repo's `usage.md` lines, pairs the stage start/end, and writes `workspaces/deals/<client>/<engagement>/private/economics.md` for each DEAL.md whose `- repo:` names the repo; `--repo <name>` prints one repo; `--print` writes nothing. List price, never an invoice line; nothing is sent. |
-| [scripts/estate-conformance.sh](scripts/estate-conformance.sh) | The same question **over the GitHub API** — so it runs in CI, where `projects/` does not exist. Reports only; never writes. |
 | [scripts/tickets-board.sh](scripts/tickets-board.sh) | The estate board. `--today` powers the SessionStart hook. Like `ticket-hygiene.sh`, it reads each client repo at **`origin/main`** (D39) through [scripts/lib/ticket-base.sh](scripts/lib/ticket-base.sh) — never the shared checkout. |
 | [scripts/ticket-hygiene.sh](scripts/ticket-hygiene.sh) | Read-only drift report, plus contract lint over every ticket; `/day` applies the fixes with judgment. An empty `.icm/dormant` parks a repo ([TICKETS.md](contracts/TICKETS.md)). |
 | [scripts/pull-all.sh](scripts/pull-all.sh) | Pull every repo. |
-| [scripts/self-check.sh](scripts/self-check.sh) | Holds **this** repo to its own rules: links resolve, tickets meet the contract. |
+| [scripts/self-check.sh](scripts/self-check.sh) | Holds **this** repo to its own rules: links resolve, tickets meet the contract, the synced price table is complete and fresh. |
+| [scripts/env-audit-stability.sh](scripts/env-audit-stability.sh) · [scripts/icm-sync-branch-guard.sh](scripts/icm-sync-branch-guard.sh) | CI-only regression checks for `env.sh audit` determinism and `icm-sync.sh`'s provenance guard — run by `self-check.yml`, never by hand. |
 | [scripts/validate-deal.sh](scripts/validate-deal.sh) | Read-only: a deal engagement's quote, proposal and agreement still agree — scope bullets, numbers per tier, the agreed tier, `[LAWYER]` tags, the language, no `private/` reference from a client-facing file, no credential-shaped string anywhere in the client folder. `--all` walks every client; `DRIFT` is a report (an adopted engagement may carry it). |
 | [scripts/render-deal.sh](scripts/render-deal.sh) | A deal artefact, markdown → DOCX under the client's gitignored `out/` (pandoc, with `knowledge/house.docx` as the reference document when it exists). Never uploads, never commits; `SKIP` with the install hint when pandoc is absent. |
 | [scripts/vercel-env.sh](scripts/vercel-env.sh) | The estate's Vercel env plumbing, over [scripts/vercel-env-registry.json](scripts/vercel-env-registry.json) — which repo/app path is which Vercel project, on which of the three teams. All five flows: `link`; `init` seeds each app's committed `.env.example` from the names Vercel holds, never values, never overwriting a line; `push-notes` makes each key's note in git the variable's Vercel comment, comments and nothing else; `pull` writes each app's `.env.local` from Vercel's development environment with those same notes interleaved above the keys; `audit` is the drift report the three one-way flows imply, read-only in the strong sense (epic `vercel-env-system`). Since D23 the parser and the rules live once in the template's per-repo `.icm/scripts/env.sh`, driven by each repo's deploy block: `--via-repos` makes this script the estate loop over that, and `registry` regenerates the registry from the deploy blocks (printed; `--write` replaces the file). Local machine only, and per-team `VERCEL_TOKEN_*` env vars only. |
 
-`icm-check.sh` and `estate-conformance.sh` are a deliberate pair, not a duplication — one
-severity model (`GAP` = what `--fix` would seed; `warn` = never auto-fixed), two vantage
-points.
+`icm-check.sh`'s severity model: `GAP` = what `--fix` would seed; `warn` = never auto-fixed
+(drift, Layer 0 over 90 lines, a legacy rails file).
 
 ## The shape of a repo
 

@@ -1,6 +1,6 @@
 # Breakdown: A design layer for the template — DESIGN.md per repo, one design skill, preview-side inspection
 
-- epic-slug: design-system-skills
+- scope-slug: design-system-skills
 - sources: Jamie, 2026-09-25 — "introduce these skills/plugins to the icm template in order to
   allow incredible front end design and customised design systems within each of my projects…
   cut an intake batch that not only knows how to configure it to work but also researches and

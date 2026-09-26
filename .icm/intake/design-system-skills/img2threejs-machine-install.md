@@ -1,7 +1,7 @@
 # Stub: img2threejs — a user-global, opt-in skill for the one repo that renders 3D
 
 - feature-slug: img2threejs-machine-install
-- epic: design-system-skills
+- scope: design-system-skills
 - priority: P2
 - size: S
 - depends-on: research-fit-and-overlap

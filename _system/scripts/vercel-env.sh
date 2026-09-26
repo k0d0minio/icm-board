@@ -132,7 +132,7 @@
 # tool it never runs.
 #
 # It reads the same three places the flows do — the registry, Vercel, and the disk — and
-# sorts what it finds by what would fix it, in estate-conformance.sh's severity spirit:
+# sorts what it finds by what would fix it, in icm-check.sh's severity spirit:
 #
 #   GAP   two systems disagree, and something known closes the gap: a Vercel variable no
 #         `.env.example` documents (fix: `init`), a documented key Vercel does not hold
@@ -199,7 +199,7 @@
 #        1 the flows: one or more entries failed (missing token, unreachable team,
 #          unknown project, a failed link or pull, a refused write) — these are actions,
 #          not reports, so failure stays red ·
-#          audit: gaps found. Unlike the scheduled estate-conformance report (D15), this
+#          audit: gaps found. Unlike icm-check.sh's scheduled walk (D15), this
 #          one is a step in a ritual a human runs, and a wrap that cannot tell clean from
 #          drifted cannot gate on it ·
 #        2 bad invocation, a missing dependency, or — audit only — no team token at all,

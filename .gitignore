@@ -34,3 +34,8 @@ workspaces/deals/**/raw/*.opus
 workspaces/deals/**/raw/*.amr
 workspaces/deals/**/raw/*.flac
 workspaces/deals/**/raw/*.avi
+
+# Until this repo is private again (Jamie: end of September 2026) the deal folders' private/
+# reasoning stays out of git — D24 wants it here, and it returns the day the flip lands
+# (.icm/intake/triage/retrack-deal-private-after-flip.md). The files stay on disk.
+workspaces/deals/**/private/

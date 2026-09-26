@@ -1,7 +1,7 @@
 # Stub: Rollout — MANIFEST, conformance checks, estate sync, D46 recorded
 
 - feature-slug: rollout-and-conformance
-- epic: design-system-skills
+- scope: design-system-skills
 - priority: P1
 - size: M
 - depends-on: prove-on-one-repo
@@ -24,7 +24,7 @@ a local fact, not an estate rule.
 
 1. **Conformance.** `DESIGN.md` joins the presence checks (`P`: seeded when missing, then the
    repo's); `skills/design/**` are `T` lines (drift-reported, synced by `--apply`); `setup.sh`'s
-   Baseline section knows both; `estate-conformance.sh` stays presence-only for them (D23).
+   Baseline section knows both (`estate-conformance.sh` was retired on 2026-09-26; the disk walk is the only checker).
    `self-check.sh` proves icm-board is held to it too — this repo has no UI, so its own
    `DESIGN.md` is the untouched stub and its `setup.sh` shows the `[WARN]` honestly.
 2. **The register.** Jamie records D46 in `.icm/project.md` from the proposal stub 1 wrote and

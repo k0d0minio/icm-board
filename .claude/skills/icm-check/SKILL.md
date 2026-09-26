@@ -6,7 +6,7 @@ allowed-tools: Bash(_system/scripts/icm-check.sh:*), Bash(/home/jamie-nisbet/App
 
 # /icm-check — thin entry point
 
-Read [`workspaces/deliver/stages/conformance/CONTEXT.md`](../../workspaces/deliver/stages/conformance/CONTEXT.md)
+Read [`workspaces/deliver/stages/conformance/CONTEXT.md`](../../../workspaces/deliver/stages/conformance/CONTEXT.md)
 and follow it exactly — **the stage contract is the process**; this file only routes.
 Where a repo carries `.icm/scripts/setup.sh`, the contract runs that repo's `setup.sh
 --report` — its own answer to "complete, current, configured" — rather than re-deriving it.

@@ -10,12 +10,12 @@ Argument: `$ARGUMENTS` — a person, a company, or a client slug. Resolve with J
 ambiguous; never guess between two similar names.
 
 **Routing, not process** — the stage contracts are the process
-([`workspaces/sell/`](../../workspaces/sell/CONTEXT.md) · [`workspaces/start/`](../../workspaces/start/CONTEXT.md);
-the folder shape: [`workspaces/deals/README.md`](../../workspaces/deals/README.md)).
+([`workspaces/sell/`](../../../workspaces/sell/CONTEXT.md) · [`workspaces/start/`](../../../workspaces/start/CONTEXT.md);
+the folder shape: [`workspaces/deals/README.md`](../../../workspaces/deals/README.md)).
 
 1. **Find the client folder**: `workspaces/deals/<client>/`.
 2. **No folder, genuinely new** → confirm with Jamie (inbound lead or outbound prospect),
-   then enter [`sell/01_intake`](../../workspaces/sell/stages/01_intake/CONTEXT.md), which
+   then enter [`sell/01_intake`](../../../workspaces/sell/stages/01_intake/CONTEXT.md), which
    creates it.
 3. **No folder, but the relationship predates the system** — a Neon row already
    `talking`/`active`, a repo, a proposal already sent → **adopt, never fabricate**: create

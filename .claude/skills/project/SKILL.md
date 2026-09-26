@@ -6,7 +6,7 @@ allowed-tools: Bash(git -C:*), Bash(gh repo clone:*), Bash(_system/scripts/icm-c
 
 # /project <repo> — thin entry point
 
-Read [`workspaces/deliver/stages/project/CONTEXT.md`](../../workspaces/deliver/stages/project/CONTEXT.md)
+Read [`workspaces/deliver/stages/project/CONTEXT.md`](../../../workspaces/deliver/stages/project/CONTEXT.md)
 and follow it exactly — **the stage contract is the process**; this file only routes.
 
 Argument: `$ARGUMENTS` (a repo name or a client's name — resolve with Jamie if

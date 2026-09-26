@@ -6,7 +6,7 @@ allowed-tools: Bash(_system/scripts/tickets-board.sh:*), Bash(/home/jamie-nisbet
 
 # /day [wrap] — thin entry point
 
-Read [`workspaces/deliver/stages/day/CONTEXT.md`](../../workspaces/deliver/stages/day/CONTEXT.md)
+Read [`workspaces/deliver/stages/day/CONTEXT.md`](../../../workspaces/deliver/stages/day/CONTEXT.md)
 and follow it exactly — **the stage contract is the process**; this file only routes.
 
 Argument: `$ARGUMENTS` (empty = plan mode; `wrap` = close out).

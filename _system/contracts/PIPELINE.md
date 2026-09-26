@@ -16,11 +16,13 @@ one-page site and sustentus is a **`complexity`** key in the repo's own `.icm/pr
 `validate-knowledge-map.sh` returns 0 at once). Nothing is declared or chosen beyond that;
 an old `- profile:` line, or a `"profile"` key in `project.json`, is ignored, never an
 error. `icm-check.sh --fix` is what makes the folders arrive, and nothing starts running
-by itself. The project-owned files are then filled by **`/setup`** — a command every repo
-carries beside the router (decision D23): `setup.sh` reports what is complete, current and
-configured from the repo's own files, the skill asks only what the report left open, writes
-the project-owned files, and stops on a `claude/` branch. `/project` keeps intent, analysis
-and tickets, with one precondition: `/setup` reports `OK` or names its gaps in the run.
+by itself. The repo is then adopted by **`/setup`** — one command every repo carries beside
+the router (decisions D23, D45), runnable with no icm-board in view: it establishes or
+re-checks intent in the register (`.icm/project.md`), then asks the config questions
+`setup.sh`'s report left open — intent first, so no config answer is locked in before the
+project's purpose is stated — fans out the lenses, writes the project-owned files and the
+register on a `claude/` branch, and cuts the tickets straight to `main`. icm-board's
+`/project` is the fallback only for a repo not yet carrying that version.
 
 Two rows survive from the first, tiered design because they still describe real things:
 
@@ -84,7 +86,7 @@ Two rows survive from the first, tiered design because they still describe real 
     client-status.sh promote.sh                                                            (T)
     format.sh lint.sh validate-knowledge-map.sh report.sh                                 (P)
 .claude/skills/pipeline/SKILL.md   ← the /pipeline router (one skill, many stages)
-.claude/skills/setup/SKILL.md      ← /setup: the report, the questions, the P files
+.claude/skills/setup/SKILL.md      ← /setup: intent, the report, the questions, the P files, the ticket cut
 .github/pull_request_template.md   ← carries both gate anchors
 .github/workflows/{release,labels}.yaml ← reference workflows, seeded ONCE by /setup (announce_from: ci)
 .github/workflows/neon-cleanup.yaml     ← reference workflow, seeded ONCE by /setup (a Neon project branching per preview)

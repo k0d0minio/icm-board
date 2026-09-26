@@ -537,3 +537,26 @@ Answers change what the next session does; none blocks the retire/duplicate move
   https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/ · /docs/atlas/flex-migration/
 - Anthropic pricing (per MTok in/out): Fable 5.1 $10/$50 · Opus 5.5 $4/$20 · Opus 5/4.x $5/$25 ·
   Sonnet 5 $2/$10 (permanent) · Haiku 4.5 $1/$5 — https://platform.claude.com/docs/en/about-claude/pricing
+
+---
+
+## 7. Outcome — Jamie's rulings and what landed (2026-09-26, same day)
+
+Rulings: icm-board private at month end (public was a deliberate Actions-minutes move); the
+template's stub fields are the contract; `## Prompt` optional, the board sends verb + slug; dropped
+work deleted or archived; a front run archives with its scope; cafe-jardim and kau-american-bbq
+dormant altogether; agorasim.pt still on the old site by choice; serviflow hands-off; remi-ai one
+database, preview + production, no UAT; barzinho and escondidinho dormant; every owned remote on
+disk; rule per item before acting. All 33 items of the ledger were ruled; 32 yes, one deferred
+(item 6, `setup.sh` warnings — the `unify-setup-project` scope owns that surface).
+
+Landed: icm-board [#92](https://github.com/k0d0minio/icm-board/pull/92) (this document's branch);
+`Wrap:` commits on `main` in agorasim (683f4e8), berceo (d924a5f), vinecliff (469f617), remi-ai
+(4729e98, a825a74), jamienisbet (dde140f), cafe-jardim (f577894), kau-american-bbq (d1cfb1e),
+barzinho (dormant, history rewritten without the P&L PDFs and force-pushed), escondidinho (dormant),
+and the seven freshly cloned repos (baseline seeded, dormant); PRs vinecliff #24 (project.json
+shape), casey-hebbel #19 (react-patch), sustentus #1210 (report.sh fix, selftest, triage sweep).
+remi-ai PR #115 closed and 41 stale branches deleted (six with unmerged commits kept for Jamie).
+serviflow moved to `~/Consulting/`, the three archived clones to `~/Archive/`. Not done: the
+`.agents/` folder Jamie believed both harnesses read — neither documents it, so the twins live in
+`.opencode/agents/` (ruling 13, adjusted).

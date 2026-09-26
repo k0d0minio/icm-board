@@ -82,6 +82,10 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every ado
   _shared/template-change.md     ← the guard: a T file (or a canonical .claude/ asset) asked
                                     to change IN a repo is a template change request — a prompt
                                     for icm-board parked as a triage stub, never an edit there (T)
+  _shared/lenses.md              ← the seven discovery lenses the adoption ritual fans out as
+                                    project-lens agents, and the contract they share (D45) (T)
+  _shared/register.md            ← the shape and rules of .icm/project.md, the register the
+                                    adoption ritual reads first and writes last (D45)    (T)
   _shared/run-pack/{project,plan,tasks,decisions,status,handoff,FAILURE}.md
                                  ← the canonical file pack run-pack.sh seeds into every
                                     run: context card, passes, DoD queue, D-n ledger,
@@ -95,6 +99,9 @@ icm-pipeline/                    → copied to <repo>/.icm/           (every ado
                                     archives, required checks/env, smoke check, and the
                                     deploy · reporting · migrations · support blocks) —
                                     --fix fills name                                   (P)
+  project.md                     ← the register: what the project is for, its business logic,
+                                    features, constraints, decisions — seeded as an unfilled
+                                    stub (`> Last run: never`), filled by the ritual     (P)
   runs/README.md                 ← the repo's own note on its runs                     (P)
   raw/README.md  raw/_processed/.gitkeep  processed/.gitkeep
                                  ← the drop folder for what a client sent, its archive,

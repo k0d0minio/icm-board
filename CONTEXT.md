@@ -34,8 +34,8 @@ table is for orientation, not dispatch. Sell runs from any session with icm-boar
 | How is a workspace/stage/deal structured | [`WORKSPACES.md`](_system/contracts/WORKSPACES.md) · [`deals/README.md`](workspaces/deals/README.md) |
 | Ticket format, estate-wide | [`TICKETS.md`](_system/contracts/TICKETS.md) |
 | The per-repo pipeline — spine, lanes, gates, the agency layer | [`PIPELINE.md`](_system/contracts/PIPELINE.md) |
-| What a project register holds | [`PROJECT.md`](_system/contracts/PROJECT.md) |
-| The seven analysis lenses | [`LENSES.md`](_system/contracts/LENSES.md) |
+| What a project register holds | [`register.md`](_system/template/icm-pipeline/_shared/register.md) |
+| The seven analysis lenses | [`lenses.md`](_system/template/icm-pipeline/_shared/lenses.md) |
 | The client ladder and its flags | [`CLIENTS.md`](_system/contracts/CLIENTS.md) |
 | What's broken / undecided estate-wide | [`_system/AUDIT.md`](_system/AUDIT.md) |
 | What `--fix` seeds; the canonical assets | [`_system/template/README.md`](_system/template/README.md) |

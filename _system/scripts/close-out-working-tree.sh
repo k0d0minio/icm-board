@@ -44,7 +44,7 @@ python3 "$lab/mock.py" "$port" >/dev/null 2>&1 & pids+=($!)
 for _ in $(seq 1 50); do curl -s -o /dev/null "http://127.0.0.1:$port/" && break; sleep 0.1; done
 curl -s -o /dev/null "http://127.0.0.1:$port/" || { echo "mock API did not start"; exit 1; }
 
-export GITHUB_API_URL="http://127.0.0.1:$port" GITHUB_TOKEN=lab-not-a-token GH_TOKEN= GITHUB_REPO=lab/repo
+export GITHUB_API_URL="http://127.0.0.1:$port" GITHUB_TOKEN=lab-not-a-token GH_TOKEN='' GITHUB_REPO=lab/repo
 
 # A fresh repo per case: the template scripts at .icm/scripts, a run branch checked out.
 new_repo() {

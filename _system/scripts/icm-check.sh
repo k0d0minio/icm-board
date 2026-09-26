@@ -25,7 +25,8 @@
 #   CLAUDE.md                the one-line `@AGENTS.md` importer — seeded, but only into
 #                            a repo that already carries AGENTS.md
 #   opencode.jsonc           the estate's OpenCode rails — same gate as the importer
-#   .icm/project.md          reported only — /project writes it from an interrogation
+#   .icm/project.md          the register — `P` in the pipeline MANIFEST (seeded as an unfilled
+#                            stub, `> Last run: never`); warned while missing or unfilled
 #
 # Layer 0 is moving from a full CLAUDE.md to AGENTS.md plus a one-line `@AGENTS.md`
 # importer (epic opencode-sidecar). Both shapes are accepted for as long as the rollout
@@ -310,9 +311,14 @@ for repo in "${repos[@]}"; do
      grep -qE '^[[:space:]]*@AGENTS\.md[[:space:]]*$' "$repo/CLAUDE.md" 2>/dev/null; then
     warns+=("CLAUDE.md imports @AGENTS.md but no AGENTS.md exists — Layer 0 resolves to nothing")
   fi
-  # Deliberately never templated: an empty register is worse than none, because it
-  # reads as established intent. /project writes it from a real interrogation.
-  [[ -f "$repo/.icm/project.md" ]] || warns+=("no .icm/project.md — /project has never run here")
+  # A pipeline repo is seeded the register as an unfilled stub (MANIFEST `P`); the stub says
+  # `> Last run: never` so it can never read as established intent. Missing or unfilled, the
+  # adoption ritual has not interrogated this repo yet (`.icm/_shared/register.md`).
+  if [[ ! -f "$repo/.icm/project.md" ]]; then
+    warns+=("no .icm/project.md — the adoption ritual has never run here")
+  elif grep -q '^> Last run: never' "$repo/.icm/project.md"; then
+    warns+=(".icm/project.md is the unfilled stub — the adoption ritual has never run here")
+  fi
   legacy=0
   for f in "$repo/.icm/intake"/*.md; do
     [[ -e "$f" ]] || continue

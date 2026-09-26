@@ -21,8 +21,8 @@ analysis lens per invocation) and `ticket-scout` (work in flight no ticket knows
 
 - **Layer 3** — the contracts: [TICKETS.md](../../_system/contracts/TICKETS.md) ·
   [PIPELINE.md](../../_system/contracts/PIPELINE.md) ·
-  [PROJECT.md](../../_system/contracts/PROJECT.md) ·
-  [LENSES.md](../../_system/contracts/LENSES.md) ·
+  [register.md](../../_system/template/icm-pipeline/_shared/register.md) ·
+  [lenses.md](../../_system/template/icm-pipeline/_shared/lenses.md) ·
   [CLIENTS.md](../../_system/contracts/CLIENTS.md).
 - **Layer 4** — deliberately not here: the working artifacts are **the estate repos
   themselves** — each repo's `.icm/project.md`, `intake/`, code and git history, under

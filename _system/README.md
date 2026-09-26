@@ -55,8 +55,8 @@ knows about).
 | [contracts/WORKSPACES.md](contracts/WORKSPACES.md) | The workspace grammar — five layers, stage contracts, the deal folder (one home per fact), the rules. |
 | [contracts/TICKETS.md](contracts/TICKETS.md) | The intake layer — epics, stubs, triage, positional status, what the dashboard parses. |
 | [contracts/PIPELINE.md](contracts/PIPELINE.md) | The per-repo pipeline — the run spine, the lanes, gates, ownership, the scripts contract, the agency layer (reporting, deploy, environment, usage, `/setup`). |
-| [contracts/PROJECT.md](contracts/PROJECT.md) | `.icm/project.md` — a project's intent, business logic, features, constraints, decisions. |
-| [contracts/LENSES.md](contracts/LENSES.md) | The seven analysis lenses deliver/project fans over a repo. |
+| [contracts/PROJECT.md](contracts/PROJECT.md) | Pointer — the register's shape moved to `template/icm-pipeline/_shared/register.md` (T, D45). |
+| [contracts/LENSES.md](contracts/LENSES.md) | Pointer — the lens roster moved to `template/icm-pipeline/_shared/lenses.md` (T, D45). |
 | [contracts/CLIENTS.md](contracts/CLIENTS.md) | The client lifecycle — `new → talking → client` (+ `lost`) — which sell and start walk. |
 
 ## `knowledge/` — what the business knows
@@ -99,7 +99,7 @@ Every estate repo looks like this:
   CONTEXT.md         ← the repo's .icm map              → contracts/PIPELINE.md
   MANIFEST           ← the pipeline's ownership list, in the repo (T)
   project.json       ← the manifest a script reads      → contracts/PIPELINE.md
-  project.md         ← what this is for, and why        → contracts/PROJECT.md
+  project.md         ← what this is for, and why        → _shared/register.md (P)
   intake/            ← the work                         → contracts/TICKETS.md
     <epic-slug>/       breakdown.md + stubs + _done/
     triage/            parked one-off bug/tweak/chore stubs

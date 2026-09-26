@@ -16,9 +16,9 @@ is ruleset-guarded, so what lands there goes through a PR.
 
 | Layer | File | Why |
 |---|---|---|
-| 3 | [`PROJECT.md`](../../../../_system/contracts/PROJECT.md) | The register this ritual reads first and writes last |
+| 3 | [`register.md`](../../../../_system/template/icm-pipeline/_shared/register.md) | The register this ritual reads first and writes last (T — every pipeline repo carries it as `.icm/_shared/register.md`) |
 | 3 | [`TICKETS.md`](../../../../_system/contracts/TICKETS.md) | What findings become |
-| 3 | [`LENSES.md`](../../../../_system/contracts/LENSES.md) | The analysis roster §4 fans out |
+| 3 | [`lenses.md`](../../../../_system/template/icm-pipeline/_shared/lenses.md) | The analysis roster §4 fans out (T — `.icm/_shared/lenses.md` in the repo) |
 | 3 | [`PIPELINE.md`](../../../../_system/contracts/PIPELINE.md) · [`template/README.md`](../../../../_system/template/README.md) | The pipeline: what the template seeds, which files are the repo's own, what `/setup` fills |
 | 4 | The repo itself — `.icm/`, `CLAUDE.md`, docs, git history | The reality being reconciled |
 | 4 | `.icm/scripts/setup.sh --report` output, where the repo carries it | The precondition (§1c) |
@@ -37,7 +37,7 @@ formatter guard, the repo's own surfaces — is **`/setup`'s** work, in the repo
 | Repo not on disk | Clone it (`gh repo clone k0d0minio/<name> projects/<name>`) |
 | Repo not on GitHub | **Stop.** The dashboard creates client repos (`createClientRepo`); say so and end |
 | No `.icm/` | `_system/scripts/icm-check.sh --fix`, report what it seeded |
-| No `project.md` | First run — 1a |
+| No `project.md`, or the unfilled stub (`> Last run: never`) | First run — 1a |
 | `project.md` present | Re-run — 1b |
 | No tickets, no git history, no docs | Fine. Thin repo, thin first pass, more questions |
 | Uncommitted changes | Leave them strictly alone; never `git add -A` |
@@ -97,7 +97,7 @@ in `.icm/onboarding/`; on Jamie's own repos they become decision tickets. Never 
 recipient.
 
 **4. Analyse — lenses, scoped by what §3 established.** Fan out `project-lens` agents
-per [`LENSES.md`](../../../../_system/contracts/LENSES.md), **in a single message** so
+per [`lenses.md`](../../../../_system/template/icm-pipeline/_shared/lenses.md), **in a single message** so
 they run concurrently. Each prompt carries: repo path, its lens, the intent and business
 logic, the constraints, the open ticket titles. Scope the fan-out — first run: every
 lens with substance (say which were dropped and why) · intent changed: the lenses intent
@@ -123,7 +123,7 @@ old files to `intake/_done/` with a `> Recut as <epic>/<slug>` (or `> Dropped:`)
 are `/setup`'s, written in the repo on its own PR; a merged run still sitting in
 `.icm/runs/` is a `setup.sh` gap that names its `close-out.sh`.)
 `.icm/project.md` per
-[`PROJECT.md`](../../../../_system/contracts/PROJECT.md): decisions appended with stable
+[`register.md`](../../../../_system/template/icm-pipeline/_shared/register.md): decisions appended with stable
 IDs (supersede, never edit away), Features table brought current (rows point at epic
 paths), open questions carried forward, run-log row with date and `HEAD`. Then the cut
 per [`TICKETS.md`](../../../../_system/contracts/TICKETS.md): related work becomes an

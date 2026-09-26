@@ -1,7 +1,7 @@
 # Stub: The design capability skill — three tiers, taste-skill and impeccable distilled into it
 
 - feature-slug: design-capability-skill
-- epic: design-system-skills
+- scope: design-system-skills
 - priority: P0
 - size: L
 - depends-on: research-fit-and-overlap, design-md-contract

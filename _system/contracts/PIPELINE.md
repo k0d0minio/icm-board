@@ -1,7 +1,7 @@
 # The estate pipeline — the spine, the lanes, the gates, the ownership
 
 *The contract for the templated, per-repo SDLC pipeline — extracted from the sustentus
-`.icm/` (the reference implementation, which stays exempt from the estate baseline and
+`.icm/` (the reference implementation until D44 — since 2026-09-24 sustentus is measured and synced like any repo, and
 authoritative for itself) and seeded from [`_system/template/`](../template/README.md).
 Re-founded on that source's current four-stage shape in September 2026, generalised
 rather than parameterised — a template-owned copy is exact, which is what makes both the

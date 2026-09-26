@@ -1,7 +1,7 @@
 # Stub: Give the lens roster and the project register a template-owned home
 
 - feature-slug: port-lenses-and-register-contract
-- epic: unify-setup-project
+- scope: unify-setup-project
 - priority: P1
 - size: M
 - depends-on: none

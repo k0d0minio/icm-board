@@ -8,7 +8,7 @@
 #            and this repo is almost entirely docs.
 #   tickets  every ticket in .icm/intake/ meets contracts/TICKETS.md: stubs live in an
 #            epic (feature-slug matching the filename, a sequence, a breakdown.md) or in
-#            triage/ (lane-tagged), each with a standalone `## Prompt`; nothing loose;
+#            triage/ (lane-tagged); nothing loose (`## Prompt` is optional — 2026-09-26);
 #            .icm/today.md entries resolve and respect the ≤10 cap.
 #
 # The ticket half is deliberately narrow — it checks *this* repo only, on every push.
@@ -87,7 +87,6 @@ for d in .icm/intake/*/; do
         bug|tweak|chore) ;;
         *) report "lane" "$f — '- lane: bug|tweak|chore' required" ;;
       esac
-      grep -qE '^## Prompt *$' "$f" || report "prompt" "$f — no standalone '## Prompt' section"
     done
     continue
   fi
@@ -104,7 +103,6 @@ for d in .icm/intake/*/; do
     seq="$(dash_field "$f" sequence)"
     [[ "$seq" =~ ^[0-9]+[[:space:]]+of[[:space:]]+[0-9]+ ]] \
       || report "sequence" "$f — missing or malformed '- sequence: <n> of <m>'"
-    grep -qE '^## Prompt *$' "$f" || report "prompt" "$f — no standalone '## Prompt' section"
   done
   (( stubs == 0 )) || [[ -f "${d}breakdown.md" ]] \
     || report "breakdown" "${d} — $stubs stub(s) but no breakdown.md"
@@ -127,6 +125,21 @@ if [[ -f .icm/today.md ]]; then
 fi
 
 (( problems == before )) && echo "  ${green}every ticket meets the contract${off}"
+
+# prices  the synced price table parses, every row carries the five numbers, and it is no
+#         older than 120 days — a stale table prices every run as `unknown` (audit 2026-09-26).
+echo "${bold}Prices${off}"
+before=$problems
+PRICES="$ROOT/_system/template/icm-pipeline/scripts/lib/model-prices.json"
+if command -v jq >/dev/null 2>&1 && [[ -f "$PRICES" ]]; then
+  jq -e '.models | to_entries | all(.value | has("input") and has("output") and has("cache_read") and has("cache_write_5m") and has("cache_write_1h"))' "$PRICES" >/dev/null 2>&1 \
+    || report "prices" "$PRICES — a model row lacks one of input/output/cache_read/cache_write_5m/cache_write_1h"
+  as_of="$(jq -r '.as_of // ""' "$PRICES")"
+  if [[ -n "$as_of" ]] && (( $(date -d "$as_of" +%s 2>/dev/null || echo 0) < $(date +%s) - 120*86400 )); then
+    report "prices" "$PRICES — as_of $as_of is older than 120 days; refresh from the pricing page and bump as_of"
+  fi
+fi
+(( problems == before )) && echo "  ${green}price table complete, as_of ${as_of:-?}${off}"
 
 echo
 if (( problems == 0 )); then

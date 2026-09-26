@@ -1,4 +1,5 @@
 ---
+name: icm-check
 description: Check every estate repo against the .icm/.claude baseline, populate gaps from _system/template, then review each repo's .claude setup
 allowed-tools: Bash(_system/scripts/icm-check.sh:*), Bash(/home/jamie-nisbet/Apps/_system/scripts/icm-check.sh:*), Bash(_system/scripts/icm-sync.sh:*), Bash(/home/jamie-nisbet/Apps/_system/scripts/icm-sync.sh:*), Bash(projects/*/.icm/scripts/setup.sh --report), Read, Glob, Grep, Agent
 ---

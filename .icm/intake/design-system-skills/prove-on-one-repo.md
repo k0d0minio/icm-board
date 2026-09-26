@@ -1,7 +1,7 @@
 # Stub: Prove the loop on one repo — a real UI ticket, DESIGN.md to polished preview
 
 - feature-slug: prove-on-one-repo
-- epic: design-system-skills
+- scope: design-system-skills
 - priority: P1
 - size: M
 - depends-on: design-md-contract, design-capability-skill, preview-inspection-tooling

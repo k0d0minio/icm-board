@@ -1,4 +1,5 @@
 ---
+name: client
 description: One command, every stage of a relationship — find the deal, work out where it stands from the folder, continue from there. Idempotent; re-run it freely.
 allowed-tools: Bash(git -C:*), Bash(_system/scripts/validate-deal.sh:*), Bash(/home/jamie-nisbet/Apps/_system/scripts/validate-deal.sh:*), Bash(_system/scripts/render-deal.sh:*), Bash(/home/jamie-nisbet/Apps/_system/scripts/render-deal.sh:*), Read, Glob, Grep, Edit, Write, Agent, AskUserQuestion, WebSearch, WebFetch
 ---

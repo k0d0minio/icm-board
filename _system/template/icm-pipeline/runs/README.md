@@ -10,7 +10,8 @@ something failed on the way, an `error.log` beside it (each error and its fix;
 `retrospective.sh` reads it at Release, and the archive keeps it so later runs can count what
 recurs). A **front**
 run — Scope — carries `01_scope/_source/story.md` and `01_scope/output/scope.md`, and
-opens no PR of its own.
+opens no PR of its own. It lives until the last stub of its scope has finished — regardless of UAT or
+promotion — and `close-out.sh` archives it with the scope (Jamie, 2026-09-26).
 
 ```md
 # Run: <slug>

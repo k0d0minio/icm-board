@@ -1,7 +1,7 @@
 # Stub: Write the merged skill — /setup runs the whole adoption ritual, intent-first
 
 - feature-slug: write-unified-setup-skill
-- epic: unify-setup-project
+- scope: unify-setup-project
 - priority: P0
 - size: L
 - depends-on: sync-lens-and-scout-agents, port-lenses-and-register-contract

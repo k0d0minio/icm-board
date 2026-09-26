@@ -176,7 +176,7 @@ Named so it is never argued later. Their own deferrals first:
 
 ## Number
 
-**€7.500 fixed**, for the scope above — presented to them as **€9.600 at full rate,
+One tier offered — **full-build** — **€7.500 fixed**, for the scope above — presented to them as **€9.600 at full rate,
 reduced by €2.100**.
 
 **Second deviation, named — an hourly rate is quoted at the client.**

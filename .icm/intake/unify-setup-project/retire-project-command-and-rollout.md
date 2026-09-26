@@ -1,7 +1,7 @@
 # Stub: Retire icm-board's /project, sync the merged skill across the estate
 
 - feature-slug: retire-project-command-and-rollout
-- epic: unify-setup-project
+- scope: unify-setup-project
 - priority: P2
 - size: M
 - depends-on: prove-on-one-repo

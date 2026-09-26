@@ -1,7 +1,7 @@
 # Stub: Prove the merged skill end-to-end on one real repo
 
 - feature-slug: prove-on-one-repo
-- epic: unify-setup-project
+- scope: unify-setup-project
 - priority: P0
 - size: M
 - depends-on: write-unified-setup-skill

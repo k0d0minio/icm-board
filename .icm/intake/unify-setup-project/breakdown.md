@@ -1,6 +1,6 @@
 # Breakdown: One command, one file — /setup absorbs /project's adoption ritual (D45)
 
-- epic-slug: unify-setup-project
+- scope-slug: unify-setup-project
 - sources: `.icm/intake/triage/_done/merge-setup-and-project.md` (the original find, settled
   as this epic) · `.icm/project.md` D45 · D23 (the split this replaces) · lourenco-botelho
   adoption evidence, k0d0minio/lourenco-botelho#7 · Jamie, 2026-09-25 — "I want a single

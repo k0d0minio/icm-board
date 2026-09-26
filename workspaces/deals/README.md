@@ -24,7 +24,8 @@ deals/<repo>/                       ← the relationship; slug = the client repo
     07-kickoff.md                   ← the handover into the client repo
     08-handover.md                  ← written by the client repo's handover lane at the end of the build
     answers/<form>.md               ← immutable snapshots of Neon's form answers (the dashboard writes them)
-    raw/                            ← client material: transcripts tracked, media ignored
+    raw/                            ← client material: documents, transcripts, extracted text — the
+                                      only home of client-supplied files in the estate (D47); media ignored
     private/                        ← pricing.md · negotiation.md · terms-sheet.md · economics.md — never leaves this repo
   out/                              ← rendered DOCX — gitignored
 ```
@@ -102,6 +103,12 @@ nothing gets a fake history:
   partnership term sheet (equity, commission, revenue share — REMI's lives here and
   nowhere a repository reader can see), the economics roll-up.
 - **`Deal:` commits go straight to `main`** — words, not code; stage paths explicitly.
+- **Client documents live here and nowhere else** (D47, 2026-09-26). Anything a client sent —
+  a PDF, a deck, a spreadsheet, a transcript, a braindump, the text `process-raw.sh` extracted —
+  is tracked under the engagement's `raw/`, never in the client's repository, whatever that
+  repository's visibility. A client repo keeps what a session wrote from them (scope, spec,
+  decisions) and cites the path here; its own `.icm/raw/` and `.icm/processed/` are ignored.
+  `icm-check.sh` warns on a document tracked under any repo's `.icm/`.
 - **Media is never committed.** Recordings and screen captures under `raw/` are
   gitignored (the patterns in the repo's `.gitignore`); their transcripts (`.txt`, `.md`)
   are tracked. `out/` (rendered DOCX) is never committed either.

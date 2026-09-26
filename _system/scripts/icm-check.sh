@@ -231,6 +231,11 @@ for repo in "${repos[@]}"; do
   # Biome parses a `.json` file as strict JSON and fails on it. A leftover `.json` is
   # either a half-finished rename or a repo OpenCode is now reading twice, so say so
   # wherever it appears, migrated or not.
+  # A client's document tracked under .icm/ belongs in icm-board's deal folder (D47, 2026-09-26):
+  # remi-ai, agorasim and berceo carried proposals, answers, a shareholder register and call
+  # transcripts in public repositories until that day.
+  docs_tracked="$(git -C "$repo" ls-files -- .icm 2>/dev/null | grep -iE '\.(pdf|docx?|pptx?|xlsx?|eml)$|^\.icm/(raw|processed)/' | grep -vE '^\.icm/raw/README\.md$|/\.gitkeep$' | head -5 | paste -sd', ' -)"
+  [[ -n "$docs_tracked" ]] && warns+=("client documents tracked under .icm/ — they live in icm-board workspaces/deals/<client>/<engagement>/raw/ (D47), never here: $docs_tracked")
   [[ -f "$repo/opencode.json" ]] && \
     warns+=("legacy opencode.json at root — the rails file is opencode.jsonc (a .json copy is strict JSON to Biome and breaks \`biome check\`)")
 

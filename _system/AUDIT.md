@@ -23,10 +23,10 @@ and Jamie's rulings on it; every line below was verified that day.*
 - **P0 Visibility.** This repo is **public** until Jamie flips it at the end of September 2026
   (it went public to recover Actions minutes). Its deal folders, quotes and `_system/AUDIT.md`
   are readable by anyone until then; the five `private/` files were untracked on 2026-09-26
-  (`triage/retrack-deal-private-after-flip`). Public client repos track client documents:
-  remi-ai (`registre-des-actionnaires.pdf` and 61 other docs under `.icm/docs/`), agorasim
-  (proposal, commission agreement, prices PDFs), berceo (`berceo-answers.pdf`, the cahier).
-  Jamie's call per repo: private, or purge from history.
+  (`triage/retrack-deal-private-after-flip`). The client documents remi-ai, agorasim and
+  berceo tracked under `.icm/` were purged from their working trees and histories on
+  2026-09-26 (D47) and are held outside git until this repo is private; old commit URLs and
+  closed-PR refs on GitHub can still show them until GitHub support purges the objects.
 - **P0 kau-american-bbq** (public, dormant since 2026-09-26): the seeded admin password is still
   tracked in `drizzle/0006_kau_accounts_and_settings.sql:9`. Rotate it, then strip it — the
   pick-up note in the repo's `AGENTS.md` says so; the value is deliberately not repeated here.

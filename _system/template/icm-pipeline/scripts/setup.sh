@@ -40,7 +40,7 @@
 #    5. Tickets    validate-intake.sh over every live epic and triage/; triage-report.sh against
 #                  the cap; a loose TODO.md/BACKLOG.md at the root.
 #    6. Raw        process-raw.sh --dry-run: assets waiting, which need a missing local tool; a
-#                  media file tracked under .icm/raw/ (media is never committed).
+#                  anything tracked under .icm/raw/ or .icm/processed/ (client material lives in icm-board — D47).
 #    7. Runs       a merged run still in runs/ (the archive alarm); a live run whose PR is closed;
 #                  usage.md pairs with a start and no end. Needs a GitHub route; says so without.
 #    8. Knowledge  validate-knowledge-map.sh.
@@ -391,8 +391,8 @@ if [ -x "$here/process-raw.sh" ]; then
   out="$("$here/process-raw.sh" --dry-run 2>/dev/null)"; r="$(printf '%s\n' "$out" | tail -n1)"
   case "$r" in *EMPTY*) ok "process-raw.sh → nothing waiting" ;; *) info "process-raw.sh → $r"; printf '%s\n' "$out" | grep -E '^\s+skipped' | sed 's/^/         /' ;; esac
 fi
-media="$(git ls-files .icm/raw 2>/dev/null | grep -iE '\.(mp4|mov|m4a|mp3|wav|webm|mkv|aac|ogg|opus|amr|flac)$' || true)"
-[ -z "$media" ] && ok "no media tracked under .icm/raw/" || warn "media tracked under .icm/raw/ — recordings are never committed (git rm --cached, add the pattern to .gitignore; keep the transcript): $(printf '%s' "$media" | paste -sd', ' -)"
+media="$(git ls-files .icm/raw .icm/processed 2>/dev/null | grep -vE '^\.icm/raw/README\.md$|/\.gitkeep$' || true)"
+[ -z "$media" ] && ok "nothing tracked under .icm/raw/ or .icm/processed/" || warn "tracked under .icm/raw/ or .icm/processed/ — client material is never committed here; its home is icm-board workspaces/deals/<client>/<engagement>/raw/ (D47): git rm --cached, ignore both folders, move the files: $(printf '%s' "$media" | paste -sd', ' -)"
 
 # --- 7. runs ------------------------------------------------------------------------------------------------------
 echo "[7/11] Runs — live folders hold only live work"

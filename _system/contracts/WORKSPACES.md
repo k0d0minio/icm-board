@@ -58,7 +58,8 @@ workspaces/deals/<client>/
   <engagement>/                 one per deal, sequential, never two live
     01-intake.md … 08-handover.md     the artefacts, as sent / as signed
     answers/<form>.md                 immutable snapshots of Neon's form answers
-    raw/                              client material; media ignored, transcripts tracked
+    raw/                              client material — documents, transcripts, extracted text:
+                                      the ONLY home of client-supplied files (D47); media ignored
     private/ pricing.md · negotiation.md · terms-sheet.md · economics.md
   out/                          rendered DOCX — gitignored
 ```

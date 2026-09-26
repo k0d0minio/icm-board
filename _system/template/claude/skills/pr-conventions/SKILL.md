@@ -42,6 +42,10 @@ promotion PRs stay the operator's to merge. GitHub auto-merge is not used.
 - **Stage paths explicitly — never `git add -A`.** Anything dirty that the task didn't
   touch is left strictly alone.
 - Commit messages say what changed and why in the first line; no model identifiers.
+- **No client documents in a client repo, ever** (D47). A PDF, deck, spreadsheet, transcript
+  or braindump the client sent — or the text extracted from it — lives in icm-board at
+  `workspaces/deals/<client>/<engagement>/raw/`; `.icm/raw/` and `.icm/processed/` stay
+  ignored. Cite the icm-board path; never commit the file.
 - **No secrets in git, ever.** Env vars only. A plaintext credential found anywhere is a
   P0 — flag it immediately, do not commit around it.
 

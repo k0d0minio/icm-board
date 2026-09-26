@@ -1,7 +1,7 @@
 name: Self-check
 
-# This repo enforces a baseline on ~20 others, so it holds itself to one too. Two checks,
-# both fast:
+# This repo enforces a baseline on ~20 others, so it holds itself to one too. Every check
+# is fast:
 #   - shellcheck over every script and hook. They are the estate's only executables and
 #     they run against real repos with --fix; a quoting bug here does damage elsewhere.
 #   - env-audit-stability.sh: the template's `env.sh audit` against a mock Vercel API that
@@ -10,6 +10,9 @@ name: Self-check
 #   - icm-sync-branch-guard.sh: icm-sync.sh --apply refuses to stamp a template commit
 #     `origin/main` never held, unless --from-branch says so explicitly (triage/
 #     icm-sync-stamps-unmerged-commit) — proven against a throwaway origin + target repo.
+#   - close-out-working-tree.sh: the template's close-out.sh archives what is on disk, not
+#     the index — the `usage-snapshot.sh … end` line appended just before it rides the move
+#     (triage/template-close-out-archives-the-working-tree), against a mock GitHub API.
 #   - self-check.sh: every relative markdown link resolves, and every ticket meets
 #     contracts/TICKETS.md. This repo is almost entirely docs and contracts, so a dead
 #     link IS a defect — it is the estate's named failure mode ("aspirational docs are
@@ -48,3 +51,6 @@ jobs:
 
       - name: icm-sync.sh refuses an unmerged template stamp
         run: _system/scripts/icm-sync-branch-guard.sh
+
+      - name: close-out.sh archives the working tree
+        run: _system/scripts/close-out-working-tree.sh

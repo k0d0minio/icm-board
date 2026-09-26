@@ -288,7 +288,8 @@ a wait:
 Two consequences worth spelling out:
 
 - **The flip is what starts the full gate.** `ready_for_review` triggers the advisory job's run,
-  and Build's contract follows the flip with a push (empty commit if nothing is pending), so the
+  and Build's contract follows the flip with a push that always carries a diff (the `- ready:`
+  line in `notes.md` — an empty commit is skipped for every project and builds nothing), so the
   previews and the full verdict settle on a fresh head — never on a stale draft-era green.
 - **`converted_to_draft` downgrades the verdict with it.** A ready PR pulled back to draft
   cancels its in-flight advisory run (the concurrency group) and re-settles on nothing owed; any

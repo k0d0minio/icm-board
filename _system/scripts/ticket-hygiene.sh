@@ -90,8 +90,6 @@ for repo in "${repos[@]}"; do
   dormant=0
   [[ -e "$view/.icm/dormant" ]] && dormant=1
 
-  has_pipeline=0
-  [[ -f "$view/.claude/skills/pipeline/SKILL.md" ]] && has_pipeline=1
 
   issues=()
   open_keys=()   # slugs (and legacy IDs) used by possibly-done

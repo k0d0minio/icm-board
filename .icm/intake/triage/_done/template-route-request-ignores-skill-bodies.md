@@ -23,3 +23,23 @@ leading `/<name>` or the expanded skill front matter (`---\nname:`), exit 0 sile
 case to `route-request.test.sh`. Confirm what the hook receives for an expanded skill in both
 harnesses before choosing the detector. This is a canonical `.claude/` asset: the change ships
 here and is copied by hand into every repo (D7); the source stub retires with `- superseded-by:`.
+
+## Outcome
+
+Fixed. Added the frontmatter detector (`route-request.sh`: prompt trimmed of leading blank
+lines, silenced when line 1 is `---` and line 2 matches `^name:`) alongside the existing `/*`
+guard, plus two `route-request.test.sh` cases.
+
+**The confirmation this stub asked for came back negative, not positive.** Checked against
+Claude Code's current official docs (hooks/slash-commands/skills, 2026-09-28): a user-typed
+`/<name>` delivers `UserPromptSubmit.prompt` as the literal `"/<name> args…"` text — already
+caught by the pre-existing `/*` case — never the rendered SKILL.md body; a model-initiated
+Skill-tool call fires `PreToolUse`/`PostToolUse`, never `UserPromptSubmit`; and no documented
+path puts a skill's raw frontmatter into `.prompt`. Only one harness wires this hook at all
+(`.claude/settings.json`; no opencode plugin shims it), so "confirm in both harnesses" no
+longer applies. The berceo incident's exact trigger was not reproduced — it may be a runtime
+quirk outside current docs, a different/older harness build, or a resumed-session replay path.
+The frontmatter guard shipped anyway, since it is what this stub asked for and is a free,
+harmless backstop (a real user prompt starting `---\nname: …` is not a realistic false
+silence) — but if the false Route line recurs, the real fix needs a live repro capturing the
+hook's actual stdin, not another documentation pass.

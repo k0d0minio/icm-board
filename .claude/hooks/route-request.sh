@@ -23,8 +23,13 @@
 #       Advisory. The bug / tweak / chore classifiers are heuristics; the router announces the
 #       suggestion and the user can redirect.
 #
-# `/pipeline <sub>` typed explicitly is the override: slash commands are never touched. Pure
-# questions, analysis requests, webhook payloads and short conversational prompts stay silent.
+# `/pipeline <sub>` typed explicitly is the override: slash commands are never touched. A
+# skill or command's own raw body (its YAML frontmatter, `---` then `name: …`) is silenced too
+# — it is instruction content being read, not a fresh request; a user-typed `/<name>` already
+# exits above (Claude Code delivers that literal text, not the expanded body — verified against
+# code.claude.com/docs/en/{hooks,skills}.md, 2026-09-28), so this is a defensive backstop for
+# whatever harness or resumed-session path resubmits the expansion instead. Pure questions,
+# analysis requests, webhook payloads and short conversational prompts stay silent.
 # Re-verify with .claude/hooks/route-request.test.sh (bash, no framework — not a repo check).
 #
 # Contract:
@@ -40,6 +45,15 @@ prompt="$(printf '%s' "$input" | jq -r '.prompt // ""' 2>/dev/null || true)"
 
 # Slash commands are already routed — `/pipeline <sub>` is the explicit override.
 case "$prompt" in /*) exit 0 ;; esac
+
+# A skill or slash-command's own raw file — its YAML frontmatter (`---` then `name: …`) — is
+# not a fresh request; trim leading blank lines first so a wrapped/re-submitted body still
+# matches.
+trimmed="$(printf '%s\n' "$prompt" | sed '/./,$!d')"
+if [ "$(printf '%s' "$trimmed" | sed -n '1p')" = "---" ] \
+   && printf '%s' "$trimmed" | sed -n '2p' | grep -qE '^name:[[:space:]]'; then
+  exit 0
+fi
 
 # Webhook / injected-event payloads are not user requests — remote sessions (PR watching, task
 # notifications) deliver them as prompts; classifying them produces stray lane hints. Stay silent.

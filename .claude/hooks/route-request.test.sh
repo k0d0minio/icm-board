@@ -109,6 +109,10 @@ expect "short conversational"        "hi there"                            "SILE
 expect "question opener"             "Why does the invoice page load slowly?" "SILENT"
 expect "analysis verb"               "Please review the auth middleware for gaps" "SILENT"
 expect "webhook payload"             "<github-webhook-activity>{\"action\":\"opened\"}</github-webhook-activity> fix the build" "SILENT"
+skill_body="$(printf -- '---\nname: security-review\ndescription: Perform a security review of the codebase.\n---\n\n# Security review\n\nAdd checks for the following:\n- SQL injection\n- XSS\n- CSRF\n- secrets in logs\n- dependency vulnerabilities\n- authentication bypass\n')"
+expect "skill body frontmatter is silent" "$skill_body" "SILENT"
+skill_body_leading_blank="$(printf '\n\n---\nname: pr-conventions\ndescription: x\n---\nAdd, build and implement the change.\n')"
+expect "skill body, leading blank lines" "$skill_body_leading_blank" "SILENT"
 
 # --- layer 2: lane classifiers (advisory) -------------------------------------------------------
 expect "bug report"                  "The export button crashes when the list is empty" "Suggest: /pipeline bug"

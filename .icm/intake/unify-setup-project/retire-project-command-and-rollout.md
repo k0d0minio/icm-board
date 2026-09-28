@@ -6,7 +6,7 @@
 - size: M
 - depends-on: prove-on-one-repo
 - sequence: 5 of 5
-- sources: `.icm/project.md` D45 · `.claude/commands/project.md` ·
+- sources: `.icm/project.md` D45 · `prove-on-one-repo` Outcome (2026-09-28) · `.claude/commands/project.md` ·
   `workspaces/deliver/stages/project/CONTEXT.md` · `AGENTS.md` routing table
 
 ## Problem
@@ -17,9 +17,12 @@ is synced would strand repos still on the old split.
 
 ## Proposed change
 
-- `icm-sync.sh --apply` the new skill (and the two newly-synced agents) across the estate,
-  one repo at a time — same cadence as every other template rollout here (each repo gets its
-  own PR).
+- Bring each repo current, one at a time, straight to `main` like every template fan-out:
+  `icm-sync.sh --apply` for the `.icm/` T files (`_shared/lenses.md`, `_shared/register.md`),
+  `icm-check.sh --fix --repo` for the two agents (created when missing), and a **hand copy**
+  of `.claude/skills/setup/SKILL.md` — and of `ticket-craft` where it lags — because neither
+  script ever overwrites a `.claude/` asset (D7). `prove-on-one-repo` did exactly this on
+  lourenco-botelho (e9ff070).
 - Once a repo is synced, its adoption/maintenance runs go through the in-repo command, not
   `/project`.
 - Retire `.claude/commands/project.md` and `workspaces/deliver/stages/project/CONTEXT.md` only

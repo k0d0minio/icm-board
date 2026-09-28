@@ -91,6 +91,9 @@ out="$(audit "$p_flaky" --twice)"
 check "two audits of the same tree are byte-identical" 'grep -q "^RESULT: \(OK\|GAPS\)" <<<"$out" && ! grep -q "RESULT: UNSTABLE" <<<"$out"'
 check "…and every project was read (no UNKNOWN under retry)" '! grep -q "UNKNOWN" <<<"$out"'
 check "no env value reaches the output" '! grep -q MOCK_SECRET_VALUE <<<"$out"'
+# Every fixture key's note has no [targets] suffix (apps/p*/.env.example above) — a tab-IFS read
+# collapses the two empty-targets delimiters and swallows the note into a false "no note yet" WARN.
+check "a note with no [targets] suffix survives (not swallowed by tab-IFS collapse)" '! grep -q "no note yet" <<<"$out"'
 [ "$fails" -eq 0 ] || printf '%s\n' "$out" | grep -E '^[-+@]' | head -20
 
 out="$(audit "$p_hidden")"

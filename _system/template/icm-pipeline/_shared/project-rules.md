@@ -79,10 +79,12 @@ Fill each section in; a section that genuinely does not apply says so in one lin
   at the promotion, called by release.yaml>; `neon-cleanup.yaml` deletes a PR's branches on close (or: absent, because …) |
   MongoDB cluster via `$MONGODB_URI`: production is `<production_name>`, the shared preview
   database `<preview_name>` (both never dropped or reset); previews <share `<preview_name>` |
-  each read `preview_<branch>` — `MONGODB_PREVIEW_PER_BRANCH=1` on the Preview target (set: yes/no),
-  the app's connection code reads the name through
-  `.icm/scripts/lib/db-name.mjs` (yes/no — the file that does it)>; `<the preview-migrate
-  workflow>` migrates and seeds the PR's database on each push and the smoke check waits for it;
+  read `preview_<branch>` only for a PR that adds a migration (D47) — `MONGODB_PREVIEW_PER_BRANCH=1`
+  on the Preview target (set: yes/no), the app's connection code reads the name through
+  `.icm/scripts/lib/db-name.mjs` and falls back to `<preview_name>` when that database is absent
+  (yes/no — the file that does it)>; `<the preview-migrate workflow>` makes, migrates and seeds
+  the database of a PR that adds a migration on each push, drops it when a push no longer adds
+  one, and touches nothing otherwise; the smoke check waits for it;
   the UAT database is `<uat_name>`, set on the UAT environment's variables; production
   migrates by <the workflow — on a UAT repo at the promotion>;
   `mongodb-cleanup.yaml` drops a PR's databases on close (or: absent, because …); the cluster's

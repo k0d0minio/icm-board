@@ -40,7 +40,6 @@ process**; there is deliberately no second narrative describing them.
 | Command | Routes into | When |
 |---|---|---|
 | **`/client <name>`** | [`workspaces/sell/`](../workspaces/sell/CONTEXT.md) · [`workspaces/start/`](../workspaces/start/CONTEXT.md) | A lead, a free look, a quote, a proposal, an agreement, an onboarding, a kickoff — any one relationship, any stage; the stage is read from the engagement folder. Idempotent. |
-| **`/project <repo>`** | [`workspaces/deliver/stages/project/`](../workspaces/deliver/stages/project/CONTEXT.md) | Adopting · before a sprint · whenever direction may have moved. Idempotent. |
 | **`/day [wrap]`** | [`workspaces/deliver/stages/day/`](../workspaces/deliver/stages/day/CONTEXT.md) | Evening: pick tomorrow's ≤10. Session end: bank what shipped, cut what's left. |
 | **`/icm-check`** | [`workspaces/deliver/stages/conformance/`](../workspaces/deliver/stages/conformance/CONTEXT.md) | Does every repo carry the baseline + canonical assets. |
 

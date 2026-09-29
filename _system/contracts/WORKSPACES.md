@@ -36,7 +36,7 @@ a reference file that names a real client is a Layer-4 artifact in the wrong fol
 | Workspace | Stages | Runs | Ends when |
 |---|---|---|---|
 | [`sell/`](../../workspaces/sell/) | `01_intake → 02_look → 03_quote → 04_proposal → 05_agreement` | once per engagement | the agreement is signed (or the deal is lost) |
-| [`start/`](../../workspaces/start/) | `06_onboarding → 07_kickoff` | once per signed engagement | `/project` has run in the client repo |
+| [`start/`](../../workspaces/start/) | `06_onboarding → 07_kickoff` | once per signed engagement | the repo is adopted and its `/setup` has run |
 | [`deliver/`](../../workspaces/deliver/) | `project · day · conformance` | forever, cyclically | never |
 
 Sell and start share one number line (01–07) because a deal is one story: its artefacts

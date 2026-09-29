@@ -17,7 +17,7 @@ and `07_kickoff` adopts it.
 | Stage | Job | Needs | Ends with |
 |---|---|---|---|
 | [`stages/06_onboarding/`](stages/06_onboarding/CONTEXT.md) | Collect what delivery needs — answers, access, the deposit | icm-board in view | every checklist row *received* · deposit paid |
-| [`stages/07_kickoff/`](stages/07_kickoff/CONTEXT.md) | Hand over to the delivery machine | **the client repo on disk** (`projects/<repo>`) | `/project` first run done · the snapshots in `.icm/docs/` · flags cleared |
+| [`stages/07_kickoff/`](stages/07_kickoff/CONTEXT.md) | Hand over to the delivery machine | **the client repo on disk** (`projects/<repo>`) | repo adopted · its `/setup` first run done · the snapshots in `.icm/docs/` · flags cleared |
 
 When `07_kickoff` closes, this workspace is done with the engagement — everything after
 lives in [`deliver/`](../deliver/CONTEXT.md) and the client's own repo, until that repo's

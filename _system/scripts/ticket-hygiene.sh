@@ -8,7 +8,7 @@
 #                        commit that changed something outside .icm/ — the work, not the
 #                        ticket admin. Reports the commit, so /day judges in one line.
 #     off-ticket         repo committed to in the last 14 days but has zero open tickets
-#     legacy-unmigrated  flat PREFIX-NNN tickets still awaiting a /project re-cut
+#     legacy-unmigrated  flat PREFIX-NNN tickets still awaiting a /setup re-cut
 #
 #   run drift (pipeline repos — .icm/runs/, the live runs; `_`-prefixed archives skipped)
 #     run-unclosed       a live run whose work is over — the case close-out.sh archives late:
@@ -150,7 +150,7 @@ for repo in "${repos[@]}"; do
     id="$(grep -oE '^[A-Z]+-[0-9]+' <<<"$fn" || true)"
     [[ -n "$id" ]] && open_keys+=("$id")
   done
-  (( legacy > 0 )) && issues+=("legacy-unmigrated: $legacy flat ticket(s) awaiting a /project re-cut")
+  (( legacy > 0 )) && issues+=("legacy-unmigrated: $legacy flat ticket(s) awaiting a /setup re-cut")
 
   # possibly-done: an open key appearing in a commit that changed something OUTSIDE
   # .icm/ — the work itself, not the ticket admin. Slugs shorter than 6 chars are

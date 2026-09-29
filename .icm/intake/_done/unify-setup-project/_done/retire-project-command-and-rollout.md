@@ -64,12 +64,18 @@ deleted. Adoption, the one step a repo cannot do for itself, is now `/icm-check 
 and their `.opencode` twins, `session-start.sh`, `icm/CONTEXT.md`, `_shared/output.md`, the
 setup skill's provenance paragraph).
 
-**Left to close this stub:** once icm-board #105 merges, fan the template edits out to every
-pipeline repo, the same way the first sync went: `icm-sync.sh --apply` plus hand copies. The
-new bytes are the setup skill, the two agents and `session-start.sh`. The `.opencode` agents
-and `.icm/CONTEXT.md` are drift-report-only. After that, merge sustentus/sustentus#1238 (or
-refresh it first). Acceptance box 1 holds only once `icm-check.sh` shows no drift on these files.
-
 Unrelated drift that the rollout surfaced but did not touch: `route-request.sh` (+test) differs
 from the template in every pipeline repo (#102 has not been fanned out), and `.icm/CONTEXT.md` /
 `intake/README.md` baseline drift persists (D45 stub).
+
+## Outcome — 2026-09-29
+
+Done. icm-board #105 (routing) and #106 (D48: `/project` retired, adoption is
+`/icm-check adopt <repo>`) merged. The template at 2070dfb was fanned out straight to
+`main`: agorasim 0ef7660 · berceo 0c1418f · casey-hebbel a0fc37c · jamienisbet fac40ba ·
+lourenco-botelho 9884ec5 · remi-ai ea6081d · vinecliff b290fa3. sustentus#1238 merged, and
+its follow-up sustentus/sustentus#1239 is open. Hand copies were made only where a repo's
+copy matched the previous template. `.icm/CONTEXT.md` got a one-line fix where it carried the
+`/project` line. remi-ai's and sustentus's own maps don't mention `/project` and were left
+alone. `icm-check.sh --repo` shows no pipeline or canonical drift in any of the 8 repos, apart
+from `route-request.sh`, which is #102's fan-out and is not this stub's.

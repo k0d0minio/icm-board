@@ -1,8 +1,10 @@
-# deliver/conformance — check, populate, review
+# deliver/conformance — check, populate, review, adopt
 
-Entered by `/icm-check`. Work from the Apps root. Every repo is in the walk, sustentus
-included (D44); what reaches sustentus goes through a PR there. Never
-commit or push anything — leave created files uncommitted for Jamie to review per repo.
+Entered by `/icm-check` (the estate walk, §1–4) or `/icm-check adopt <repo>` (one repo
+brought onto the pipeline, § Adopt). Work from the Apps root. Every repo is in the walk,
+sustentus included (D44); what reaches sustentus goes through a PR there. The walk never
+commits or pushes — it leaves created files uncommitted for Jamie to review per repo;
+adoption commits only on his word (§ Adopt, step 5).
 
 ## Inputs
 
@@ -36,10 +38,10 @@ created.
   seeded) against the one pipeline — there is nothing to declare (D22); report pipeline
   gaps in their own group. A repo never synced is labelled `no pipeline` and nothing of the
   pipeline is flagged for it — not the security gate, not the health probe: it is not being
-  worked on. Adopting it is `icm-sync.sh --apply`, on Jamie's word. The project-owned files
+  worked on. Adopting it is § Adopt (`/icm-check adopt <repo>`), on Jamie's word. The project-owned files
   are then filled by `/setup` in the repo, never here; an empty `health_endpoint` is fine.
 - Legacy flat `PREFIX-NNN` tickets are reported as *unmigrated*, never converted —
-  migration is `/project`'s judgment work.
+  migration is the repo's own `/setup` (its reconcile step re-cuts them).
 - Drift is **reported, never repaired** — repos own their copies. Where a drifted copy
   looks deliberate, propose registering the divergence in the repo's own docs; where it
   looks like rot, propose updating from canonical — Jamie decides per repo.
@@ -80,23 +82,69 @@ improve, each suggestion one line with the file it touches. Repos that are fine 
 "ok" line. **Suggest only — change nothing beyond what `--fix` created** unless Jamie
 asks.
 
+## Adopt — `/icm-check adopt <repo>`
+
+Brings one repo onto the pipeline (D22 — adopted means it carries `.icm/MANIFEST`). This is
+the one step a repo cannot do for itself: it needs this repo's template. Everything after
+it — the register, posture, interrogation, lenses, reconcile and the cut — is the repo's
+own `/setup`, run in the repo (D45). Nothing here asks an intent or config question, and
+nothing here writes `project.md` or a project-owned value.
+
+**1. Guards — never error, always land somewhere.**
+
+| Found | Do |
+|---|---|
+| Repo not on disk | Clone it (`gh repo clone k0d0minio/<name> projects/<name>`) |
+| Repo not on GitHub | **Stop.** The dashboard creates client repos (`createClientRepo`); say so and end |
+| Already carries `.icm/MANIFEST` | Not an adoption: say so, and point at `/setup` in the repo (or § Populate's sync for drift) |
+| Uncommitted changes in the checkout | Work in a worktree off `origin/main` instead; never move the shared checkout, never `git add -A` |
+
+**2. Formatter guard, by hand, first.** If the repo has a formatter (Prettier, Biome,
+lint-staged…), exclude the template-owned paths — `.icm/` T files, `.claude/skills/**`, the
+canonical agents — before any template file is committed, or the next commit rewrites
+them into drift (D17/D19; remi-ai #105, sustentus#1238).
+
+**3. Seed and sync.** `_system/scripts/icm-check.sh --fix --repo projects/<repo>` (the
+baseline), then `_system/scripts/icm-sync.sh --apply projects/<repo>` (the template-owned
+pipeline files, `.icm/MANIFEST`, `.icm/template-version`), then `icm-check.sh --fix --repo`
+once more — now that the repo is adopted, it seeds the project-owned stubs, the pipeline's
+`.claude/` skills (`setup`, `pipeline`) and its `.github/` files. Report each script's `RESULT:` line.
+
+**4. Verify.** `icm-check.sh --repo projects/<repo>` shows no gap and no pipeline drift;
+`.icm/scripts/setup.sh --report` runs (its `GAPS` are expected — they are `/setup`'s
+work). A legacy `PREFIX-NNN` board is reported, never converted.
+
+**5. Land it — on Jamie's word.** One commit straight to the repo's `main` (an estate
+fan-out: paths staged explicitly — `.icm/`, `.claude/`, `.github/`, the formatter ignore
+file), in the
+repo's own message style; sustentus by PR. Until it is pushed, a cloud session cannot see
+it.
+
+**6. Hand over.** Say: *run `/setup` in `<repo>`* — locally or in a cloud session. Its
+first run establishes the register (reading `.icm/docs/` first: adopt, never fabricate),
+then config, then the first cut.
+
 ## Gate — Jamie
 
 - Reviews and commits (or discards) what `--fix` seeded, per repo.
 - Rules on each drift line: deliberate divergence or rot.
 - Runs `/setup` in a repo whose report names gaps, and merges its PR; decides when an
-  unmigrated repo gets its `/project` re-cut.
+  unmigrated repo gets its `/setup` re-cut.
+- Names the repo for `/icm-check adopt`, and says when its seed is pushed (§ Adopt, 5).
 
 ## Outputs
 
 | Artifact | Lands in |
 |---|---|
 | Seeded baseline files (uncommitted) | each gapped repo |
+| An adopted repo's seed (one commit to `main`, on Jamie's word) | the adopted repo |
 | The conformance + review report | the session |
 
 ## Audit
 
 - Every repo in the report is accounted for: ok, gapped, seeded, no pipeline, or exempt.
+- An adoption ends with `icm-check.sh --repo` clean of gaps and pipeline drift, and the
+  hand-over to `/setup` named — never with a register or a ticket written from here.
 - Nothing beyond `--fix`'s own writes touched any repo.
 - Every drift line ends the session as either a Jamie decision or a named open question
   — not silently dropped.

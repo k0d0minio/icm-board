@@ -17,17 +17,16 @@ The profile wears a warning badge per open gap; kickoff is not done while it wea
 
 ## The handover
 
-1. `icm-check.sh --fix` then `icm-sync.sh --apply projects/<repo>` from the Apps root
-   (formatter guard first, by hand); then **`/setup` in the repo** — `project.json`
-   (complexity, deploy, reporting, the `support` block from the agreement's line),
-   `project-rules.md`; its PR is Jamie's to merge. There is no prefix to choose or
-   register — identity is the `epic/slug` path.
+1. `/icm-check adopt <repo>` from the Apps root (formatter guard first, by hand) — the
+   baseline and the template, verified, nothing committed yet. There is no prefix to
+   choose or register — identity is the `epic/slug` path.
 2. The snapshots into client repo `.icm/docs/`: `proposal-<date>.md`, `scope-<date>.md`
    (the quote's scope section only), each provenance-stamped and immutable. Nothing from
-   `private/`, no number.
-3. `/project <repo>` first run: register written from the deal's documents; the scope
+   `private/`, no number. Adoption and snapshots pushed to `main` together, on Jamie's word.
+3. **`/setup` in the repo**, first run: register written from the snapshots; the scope
    snapshot seeds the Features table; surviving `[BLOCKER]`s become Open questions or
-   decision tickets; the first tickets exist.
+   decision tickets; then `project.json` (the `support` block from the agreement's line)
+   and `project-rules.md`; the first tickets exist. Its PR is Jamie's to merge.
 4. **Work started** flagged on the profile when the doing begins — not before.
 
 ## The look-back (edit the source)
@@ -47,4 +46,4 @@ Layer-3 edit would fix for every future deal?
   [`forms/`](../../sell/references/forms/) (a new `key:` if the meaning changed).
 
 Findings that touch this repo's own machinery become stubs in `.icm/intake/` here;
-findings about the client's build are already `/project`'s output.
+findings about the client's build are already the repo's `/setup` output.

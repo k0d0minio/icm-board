@@ -36,7 +36,7 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
 |---|---|
 | A lead, a free look, a quote, a proposal, an agreement, an onboarding, a kickoff — anything about one relationship | **`/client <name>`** → [`workspaces/sell/`](workspaces/sell/CONTEXT.md) · [`workspaces/start/`](workspaces/start/CONTEXT.md) |
 | Work out what to build · cut a sprint's tickets on an adopted repo | **`/setup`, run in that repo** — one intent-first ritual, cloud-runnable (D45) |
-| Adopt a repo with no pipeline yet (fallback until it carries `/setup`) | `/project <repo>` |
+| Adopt a repo with no pipeline yet | **`/icm-check adopt <repo>`**, then `/setup` in the repo |
 | Pick today's ≤10 · reconcile the board · end a session | **`/day [wrap]`** |
 | Does every repo carry the baseline + canonical assets | **`/icm-check`** |
 | What the business sells, charges, sounds like, promises | [`_system/knowledge/`](_system/knowledge/README.md) |
@@ -49,7 +49,7 @@ Full table: [`CONTEXT.md`](CONTEXT.md). The short version:
 
 - **`projects/` is never tracked here.** The `/projects/` line in `.gitignore` has **no
   exceptions** — never add a negation. Client repos are created by the admin dashboard
-  (`createClientRepo`), never by hand; `/client` stage 06 and `/project` adopt them.
+  (`createClientRepo`), never by hand; `/client` stage 07 and `/icm-check adopt` adopt them.
 - **Deals are tracked; secrets are not.** `workspaces/deals/` is committed (private repo,
   cloud sessions need it) — but never a credential, token, or identity document. One home
   per fact (D24): business *state* stays in Neon/Stripe, the folders hold words and

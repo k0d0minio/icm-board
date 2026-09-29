@@ -22,7 +22,7 @@ re-checks intent in the register (`.icm/project.md`), then asks the config quest
 `setup.sh`'s report left open — intent first, so no config answer is locked in before the
 project's purpose is stated — fans out the lenses, writes the project-owned files and the
 register on a `claude/` branch, and cuts the tickets straight to `main`. icm-board's
-`/project` is the fallback only for a repo not yet carrying that version.
+A repo not yet adopted is brought on by `/icm-check adopt <repo>` first.
 
 Two rows survive from the first, tiered design because they still describe real things:
 

@@ -53,7 +53,7 @@ and Jamie's rulings on it; every line below was verified that day.*
 ## Still open — docs vs reality
 
 The estate's consistent failure mode: **aspirational docs are richer than the running
-system.** `/project` and the register exist to attack this.
+system.** Each repo's `/setup` and its register exist to attack this.
 
 - sustentus `CLAUDE.md`'s monorepo table omits `apps/agent`, `apps/console` and `apps/e2e`
   (stub `claude-md-monorepo-table-omits-agent-and-console`).

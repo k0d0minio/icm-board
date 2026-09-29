@@ -12,7 +12,7 @@ without it STOPs at step 1 and says so.
 | 3 | [`references/kickoff-checklist.md`](../../references/kickoff-checklist.md) | The gaps + the handover, in order |
 | 3 | [`CLIENTS.md`](../../../../_system/contracts/CLIENTS.md) · [`PIPELINE.md`](../../../../_system/contracts/PIPELINE.md) | The flags this stage clears; what `/setup` fills |
 | 3 | [`_system/knowledge/stack.md`](../../../../_system/knowledge/stack.md) | What the repo defaults to; where the deal deviates |
-| 4 | The whole engagement folder, 01–06 | What was promised — `/project` must inherit it, not rediscover it |
+| 4 | The whole engagement folder, 01–06 | What was promised — the repo's `/setup` must inherit it, not rediscover it |
 | 4 | `DEAL.md` → `- repo:` · `projects/<repo>` | The repo, on disk |
 
 ## Process
@@ -21,22 +21,22 @@ without it STOPs at step 1 and says so.
    gate), or adopted if it already exists (a returning client) — **never by hand**. Resolve
    `projects/<repo>`; not on disk → STOP with the clone command and stop. Not on GitHub →
    STOP: the dashboard creates it; say so.
-2. **The baseline, then the template.** From the Apps root: `_system/scripts/icm-check.sh
-   --fix` seeds what is missing (the formatter guard first, by hand, where the repo has a
-   formatter — D17/D19), then `_system/scripts/icm-sync.sh --apply projects/<repo>` brings
-   the template-owned files up and writes `.icm/template-version`. Once `.icm/scripts/setup.sh`
-   is in the repo, **`/setup` there** fills the project-owned files — `project.json`
-   (complexity, deploy, reporting, `support` from the agreement's line), `project-rules.md` —
-   and stops on its own PR.
+2. **Adopt it: `/icm-check adopt <repo>`** — [conformance § Adopt](../../../deliver/stages/conformance/CONTEXT.md)
+   steps 1–4: the formatter guard by hand, the baseline, `icm-sync.sh --apply`, verify.
+   Hold the commit until step 3's snapshots are in, so both land together.
 3. **The snapshots into `.icm/docs/`**, each opening with the provenance line
    *"snapshot from icm-board deal `<client>/<engagement>`, taken <date>; the deal folder is
    canonical; do not edit"*: `proposal-<date>.md` (the proposal as sent) and
    `scope-<date>.md` (**the quote's scope section only — never its numbers, never anything
-   under `private/`**). Immutable copies; the engagement folder keeps the originals.
-4. **Run `/project <repo>` — first run.** The register is written from the deal's real
-   documents per its adopt-never-fabricate rule; the scope snapshot seeds the Features
-   table; open `[BLOCKER]`s that survived become Open questions or decision tickets. First
-   tickets are cut by `/project`, not here.
+   under `private/`**). Immutable copies; the engagement folder keeps the originals. On
+   Jamie's word the adoption and the snapshots land as one commit straight to the repo's
+   `main` (§ Adopt step 5) — a cloud session sees nothing unpushed.
+4. **Run `/setup` in the repo — first run** (locally or in a cloud session). Intent first:
+   the register is written from the snapshots per its adopt-never-fabricate rule, the scope
+   snapshot seeds the Features table, open `[BLOCKER]`s that survived become Open questions
+   or decision tickets; then config — `project.json` (complexity, deploy, reporting,
+   `support` from the agreement's line), `project-rules.md`; then the first cut. Tickets are
+   cut by `/setup`, not here; its register and config ride its own PR.
 5. Write `07-kickoff.md`: date, register commit, tickets cut, flags cleared, the support
    line as declared in the repo, and anything the sell/start run got wrong (→ edit the
    reference file that caused it).
@@ -55,7 +55,7 @@ without it STOPs at step 1 and says so.
 |---|---|
 | `07-kickoff.md` | `workspaces/deals/<client>/<engagement>/` |
 | `proposal-<date>.md` · `scope-<date>.md` (snapshots) | client repo `.icm/docs/` |
-| Register + first tickets | client repo, via `/project` |
+| Register + first tickets | client repo, via its `/setup` |
 
 ## Audit
 

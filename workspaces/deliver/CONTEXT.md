@@ -10,12 +10,14 @@ process**, and there is no second narrative describing them.*
 
 | Stage | Command | Scope | When |
 |---|---|---|---|
-| [`stages/project/`](stages/project/CONTEXT.md) | `/project <repo>` | one repo, deep | Adopting · before a sprint · whenever direction may have moved. Idempotent. |
 | [`stages/day/`](stages/day/CONTEXT.md) | `/day [wrap]` | the estate, shallow | Evening: pick tomorrow's ≤10. Session end: bank and cut. |
-| [`stages/conformance/`](stages/conformance/CONTEXT.md) | `/icm-check` | the estate, structural | Does every repo carry the baseline. |
+| [`stages/conformance/`](stages/conformance/CONTEXT.md) | `/icm-check [adopt <repo>]` | the estate, structural | Does every repo carry the baseline · bring a repo onto the pipeline. |
 
-Two agents back them ([`.claude/agents/`](../../.claude/agents/)): `project-lens` (one
-analysis lens per invocation) and `ticket-scout` (work in flight no ticket knows about).
+The deep, per-repo ritual — intent, lenses, the cut — is not a stage here: it is `/setup`,
+carried by every adopted repo and run in it (D45).
+
+`/day` spawns `ticket-scout` ([`.claude/agents/`](../../.claude/agents/)) for work in flight
+no ticket knows about; `project-lens` is spawned by each repo's `/setup`, not here.
 
 ## Layers, for this workspace
 
@@ -30,13 +32,13 @@ analysis lens per invocation) and `ticket-scout` (work in flight no ticket knows
 
 ## The seam with the business workspaces
 
-[`start/07_kickoff`](../start/stages/07_kickoff/CONTEXT.md) ends by running `/project`
-in a new client repo — that is the only doorway between a deal and the machine. Nothing
-in deliver reads a deal folder except that first run's imported documents, and nothing
+[`start/07_kickoff`](../start/stages/07_kickoff/CONTEXT.md) ends by adopting a new client
+repo and running its `/setup` — that is the only doorway between a deal and the machine. Nothing
+in deliver reads a deal folder; the repo's first `/setup` reads only the snapshots kickoff put in its `.icm/docs/`, and nothing
 in sell/start touches a repo's tickets.
 
-**Sustentus takes all three stages like any repo** (D44). The pipeline was extracted from it
+**Sustentus takes both stages like any repo** (D44). The pipeline was extracted from it
 (D12), but the template has since moved past it and is the one source: `/icm-check` measures
-it, `/day` reconciles it, `/project` works in it. Its project-owned files are its own, as
+it, `/day` reconciles it, its own `/setup` works in it. Its project-owned files are its own, as
 every repo's are; what changes it goes through a PR there (its `main` is ruleset-guarded), and
 nothing may break its code or workflow.

@@ -55,13 +55,20 @@ and lourenco-botelho (e9ff070) were synced earlier. sustentus goes by PR
 rewritten — they join its `.prettierignore` so a sync stays byte-identical. serviflow is
 hands-off (moved out of the estate, 2026-09-26) and is not a target.
 
-Routing now points at the in-repo `/setup` (`AGENTS.md`, `CONTEXT.md`); `/project` and its
-stage contract are marked fallback-only. Not retired yet, for two reasons:
-- #1238 is unmerged, so sustentus's `main` does not carry the skill yet.
-- `/project` still has a job the in-repo `/setup` cannot do for itself: adopting one of the
-  ~25 repos with no `.icm/MANIFEST`. Seeding the pipeline needs icm-board's template.
-  Retiring `/project` means either adopting all of them or moving that seed step elsewhere
-  (e.g. `/icm-check` or `/client` stage 07). **Open question for Jamie.**
+Routing now points at the in-repo `/setup` (`AGENTS.md`, `CONTEXT.md`).
+
+**Retired (D47, Jamie 2026-09-29).** `/project`'s skill and `deliver/project` stage are
+deleted. Adoption, the one step a repo cannot do for itself, is now `/icm-check adopt <repo>`
+(`deliver/conformance` § Adopt). `start/07_kickoff` adopts, snapshots, then runs the repo's
+`/setup`. Every live reference is repointed. That includes template wording (the two agents
+and their `.opencode` twins, `session-start.sh`, `icm/CONTEXT.md`, `_shared/output.md`, the
+setup skill's provenance paragraph).
+
+**Left to close this stub:** once icm-board #105 merges, fan the template edits out to every
+pipeline repo, the same way the first sync went: `icm-sync.sh --apply` plus hand copies. The
+new bytes are the setup skill, the two agents and `session-start.sh`. The `.opencode` agents
+and `.icm/CONTEXT.md` are drift-report-only. After that, merge sustentus/sustentus#1238 (or
+refresh it first). Acceptance box 1 holds only once `icm-check.sh` shows no drift on these files.
 
 Unrelated drift that the rollout surfaced but did not touch: `route-request.sh` (+test) differs
 from the template in every pipeline repo (#102 has not been fanned out), and `.icm/CONTEXT.md` /

@@ -19,7 +19,7 @@
 #   .claude/hooks/*          canonical estate hooks (session-start, install-deps,
 #                            vercel-env-hydrate, route-request + its test, wrap-reminder)
 #   .claude/agents/*         auditor.md (the read-only audit executor), project-lens.md and
-#                            ticket-scout.md (the repo-analysis agents /project fans out to)
+#                            ticket-scout.md (the repo-analysis agents /setup fans out to)
 #   .claude/skills/*         canonical estate skills (ticket-craft, pr-conventions)
 #   AGENTS.md                reported only — never templated (each repo writes its own)
 #   CLAUDE.md                the one-line `@AGENTS.md` importer — seeded, but only into
@@ -325,7 +325,7 @@ for repo in "${repos[@]}"; do
     case "$(basename "$f" | tr '[:upper:]' '[:lower:]')" in readme.md|context.md) continue ;; esac
     legacy=$((legacy + 1))
   done
-  (( legacy > 0 )) && warns+=("$legacy legacy flat ticket(s) in .icm/intake/ — unmigrated to the epic layout (/project re-cuts them; never converted here)")
+  (( legacy > 0 )) && warns+=("$legacy legacy flat ticket(s) in .icm/intake/ — unmigrated to the epic layout (the repo's /setup re-cuts them; never converted here)")
   if git -C "$repo" check-ignore -q .icm 2>/dev/null; then
     warns+=(".gitignore excludes .icm — tickets would never reach the board")
   fi

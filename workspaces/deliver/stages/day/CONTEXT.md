@@ -9,7 +9,7 @@ hygiene-checked.
 left. Both share steps 1, 2 and 5, so running either after the other is harmless.
 
 **This ritual touches only `.icm/` ticket state** — stubs, epics, `today.md`. Deciding
-*what a project is for* is [`project`](../project/CONTEXT.md)'s job; this one moves work
+*what a project is for* is the repo's own `/setup`'s job (D45); this one moves work
 that already exists and cuts the leftovers of work that already happened.
 
 ## Inputs
@@ -54,7 +54,7 @@ whatever branch or state it was left in is not `main`'s.
 - *Unmet `blocked:` lines:* a stub whose recorded blockage has visibly lifted gets the
   line removed (ask when unsure).
 - *Legacy-unmigrated:* flat `PREFIX-NNN` tickets the hygiene report lists are migration
-  work — note the repo for a `/project` re-cut; never mass-convert here.
+  work — note the repo for a `/setup` re-cut; never mass-convert here.
 - *Active repo, empty intake:* real work happening off-ticket — repos carrying
   `.icm/dormant` are parked and never reported. Read the log; offer to cut stubs from
   recent history. `ticket-scout` proposes per repo — batch, never create unasked.
@@ -82,8 +82,8 @@ longest-waiting P1 triage stubs · active repos with nothing ticketed.
 - *Week:* walk priorities and build orders — what is genuinely P0/P1 now, what demotes,
   what dies. Dead stubs to their epic's `_done/` with `> Dropped: <reason, date>`, per
   Jamie's call.
-If a repo's priorities look wrong at the *project* level, that's `/project <repo>`, not
-this ritual. Say so and move on.
+If a repo's priorities look wrong at the *project* level, that's `/setup` in that repo,
+not this ritual. Say so and move on.
 
 **4. Close out — `/day wrap`.**
 - *Bank what finished:* stubs whose work merged this session → `_done/`; epics that

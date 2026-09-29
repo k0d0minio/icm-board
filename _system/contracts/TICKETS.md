@@ -8,7 +8,7 @@ and a front run archives with its scope. Canonical copy lives here in `_system`;
 carries a self-contained micro-copy in `.icm/intake/README.md` so cloud sessions that only
 see the repo still have the contract; pipeline repos carry the fuller
 `.icm/intake/CONTEXT.md` (template-owned), which this document never contradicts. Scopes are
-cut by `/pipeline scope` (or `/project` where a repo has no pipeline), walked by `/day`. What
+cut by `/pipeline scope` (or the repo's `/setup`, which cuts the first board), walked by `/day`. What
 a project is **for** lives in [PROJECT.md](PROJECT.md); the run spine lives in
 [PIPELINE.md](PIPELINE.md); this doc is only about the work.*
 

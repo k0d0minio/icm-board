@@ -31,7 +31,7 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
 │   ├── hooks/                 SessionStart (estate board)
 │   └── AUDIT.md               what's broken or undecided across the estate
 │
-├── .claude/                   /client · /project · /day · /icm-check (thin routers)
+├── .claude/                   /client · /day · /icm-check (thin routers)
 ├── .icm/                      this repo's own register + intake epics (+ today.md)
 ├── .github/workflows/         self-check
 │
@@ -46,7 +46,7 @@ icm-board/                     this repo — k0d0minio/icm-board (private)
   itself and no outbound action leaves a session — see `AGENTS.md` § Never build an
   orchestrator. Jamie advances every deal and every ritual himself.
 - **One story per client.** `/client <name>` walks an engagement through stages 01–07;
-  `07_kickoff` hands over to `/project` and the client's own repo, whose handover lane
+  `07_kickoff` adopts the client's own repo (`/icm-check adopt`) and hands it to its `/setup`, whose handover lane
   writes `08-handover.md` back at the end. **One home per fact** (D24): business *state*
   (the rung, the flags, the agreed value, money) lives in Neon and Stripe via the admin
   dashboard; every deal document, private reasoning included, lives in the deal folder

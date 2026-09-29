@@ -16,7 +16,8 @@ far as the task needs.*
 | Write the agreement for eSignature | `/client <name>` | [`sell/05_agreement`](workspaces/sell/stages/05_agreement/CONTEXT.md) |
 | Onboard a signed client | `/client <name>` | [`start/06_onboarding`](workspaces/start/stages/06_onboarding/CONTEXT.md) |
 | Kick the project off — the repo, the snapshots, `/setup`, `/project` | `/client <name>` | [`start/07_kickoff`](workspaces/start/stages/07_kickoff/CONTEXT.md) |
-| Adopt / analyse / ticket a repo | `/project <repo>` | [`deliver/project`](workspaces/deliver/stages/project/CONTEXT.md) |
+| Analyse / ticket an adopted repo — intent, lenses, the cut | **`/setup`, run in that repo** (every pipeline repo carries it, D45) | the repo's `.claude/skills/setup/SKILL.md` |
+| Adopt a repo with no pipeline yet — fallback until it carries `/setup` | `/project <repo>` | [`deliver/project`](workspaces/deliver/stages/project/CONTEXT.md) |
 | Plan the day · wrap the session | `/day [wrap]` | [`deliver/day`](workspaces/deliver/stages/day/CONTEXT.md) |
 | Check the estate's structure | `/icm-check` | [`deliver/conformance`](workspaces/deliver/stages/conformance/CONTEXT.md) |
 | Change the pipeline template — including a **template change request** a client repo's session handed back | a PR on a `claude/` branch touching `_system/template/`, then `icm-sync.sh --apply` per repo | [`PIPELINE.md` § File-level ownership](_system/contracts/PIPELINE.md) · [`template-change.md`](_system/template/icm-pipeline/_shared/template-change.md) |
@@ -44,7 +45,8 @@ table is for orientation, not dispatch. Sell runs from any session with icm-boar
 
 - **Scripts** ([`_system/README.md`](_system/README.md) § scripts) — each prints one
   `RESULT:` line; config from the environment, never `.env`.
-- **Agents** — `project-lens` and `ticket-scout`, spawned by deliver's stages only.
+- **Agents** — `project-lens` and `ticket-scout`, spawned by `/setup` in a repo (every repo
+  carries them, D45) and by the `/project` fallback here.
 - **Setup** — [`_system/setup/questionnaire.md`](_system/setup/questionnaire.md) fills
   the knowledge layer; until it runs, knowledge files carry honest
   `— not yet established` gaps (Q22–Q24 are open). Never invent their content mid-task.

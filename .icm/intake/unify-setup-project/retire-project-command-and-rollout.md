@@ -44,3 +44,25 @@ Read `.icm/intake/unify-setup-project/retire-project-command-and-rollout.md` and
 `.icm/intake/unify-setup-project/breakdown.md`. Confirm `prove-on-one-repo` landed. Sync the
 merged skill across the estate one repo at a time; retire `/project` only once every repo
 carries it, and update the routing docs to match reality at each step.
+
+## Progress — 2026-09-29
+
+Rollout, straight to `main` (template 3451ff6; the `.icm/` T files by `icm-sync.sh --apply`,
+`setup` + `ticket-craft` by hand): berceo 44b9ea9 · casey-hebbel d4aa151 · remi-ai cf330b9 ·
+vinecliff 2d793bc · jamienisbet accc05e (its `.icm/` was already current). agorasim (9706df4)
+and lourenco-botelho (e9ff070) were synced earlier. sustentus goes by PR
+(sustentus/sustentus#1238): the same copies plus the two agents, which its Prettier had
+rewritten — they join its `.prettierignore` so a sync stays byte-identical. serviflow is
+hands-off (moved out of the estate, 2026-09-26) and is not a target.
+
+Routing now points at the in-repo `/setup` (`AGENTS.md`, `CONTEXT.md`); `/project` and its
+stage contract are marked fallback-only. Not retired yet, for two reasons:
+- #1238 is unmerged, so sustentus's `main` does not carry the skill yet.
+- `/project` still has a job the in-repo `/setup` cannot do for itself: adopting one of the
+  ~25 repos with no `.icm/MANIFEST`. Seeding the pipeline needs icm-board's template.
+  Retiring `/project` means either adopting all of them or moving that seed step elsewhere
+  (e.g. `/icm-check` or `/client` stage 07). **Open question for Jamie.**
+
+Unrelated drift that the rollout surfaced but did not touch: `route-request.sh` (+test) differs
+from the template in every pipeline repo (#102 has not been fanned out), and `.icm/CONTEXT.md` /
+`intake/README.md` baseline drift persists (D45 stub).

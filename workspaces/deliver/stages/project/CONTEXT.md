@@ -1,5 +1,12 @@
 # deliver/project — what are we building, and what's the next ticket?
 
+> **Fallback only (D45, 2026-09-29).** Every pipeline repo now carries the merged,
+> intent-first `/setup` skill — register, posture, interrogation, lenses, reconcile and the
+> cut, in the repo, no icm-board needed. On such a repo, run `/setup` there instead. This
+> stage stays for the one job `/setup` cannot do for itself: adopting a repo with no
+> `.icm/MANIFEST` yet (§1c's seed and sync need this repo's template). Retire it once no
+> repo in `projects/` is left unadopted — `unify-setup-project/retire-project-command-and-rollout`.
+
 Entered by `/project <repo>`. Argument: a repo name (`cafe-jardim`) or a client's name —
 resolve with Jamie if ambiguous. Work from the Apps root.
 

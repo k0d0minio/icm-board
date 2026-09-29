@@ -6,6 +6,9 @@ allowed-tools: Bash(git -C:*), Bash(gh repo clone:*), Bash(_system/scripts/icm-c
 
 # /project <repo> — thin entry point
 
+**Fallback only (D45).** A repo that carries `.icm/MANIFEST` runs `/setup` in the repo
+instead; this stays for adopting a repo with no pipeline yet. The stage contract says why.
+
 Read [`workspaces/deliver/stages/project/CONTEXT.md`](../../../workspaces/deliver/stages/project/CONTEXT.md)
 and follow it exactly — **the stage contract is the process**; this file only routes.
 

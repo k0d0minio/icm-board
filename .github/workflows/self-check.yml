@@ -54,3 +54,6 @@ jobs:
 
       - name: close-out.sh archives the working tree
         run: _system/scripts/close-out-working-tree.sh
+
+      - name: deploy-status.sh reads a superseded cancel as SUPERSEDED, not ERROR
+        run: _system/scripts/deploy-status-superseded.sh

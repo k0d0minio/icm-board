@@ -5,7 +5,7 @@
 - priority: P0
 - size: L
 - depends-on: research-fit-and-overlap, design-md-contract
-- sequence: 3 of 7
+- sequence: 3 of 8
 - sources: `breakdown.md` → What I understood (2) · `_system/template/icm-pipeline/skills/README.md`
   (the three-tier contract, Level 1 ≤ 80 tokens, `list-skills.sh --check`) · the three seeded
   skills as the shape to copy · `Leonxlnx/taste-skill` `skills/taste-skill/SKILL.md` (87 KB,

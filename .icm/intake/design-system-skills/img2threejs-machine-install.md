@@ -5,7 +5,7 @@
 - priority: P2
 - size: S
 - depends-on: research-fit-and-overlap
-- sequence: 5 of 7
+- sequence: 5 of 8
 - sources: `breakdown.md` → What I understood (2: sustentus marketing is the only three.js
   user) · `img2threejs/img2threejs` README + `SKILL.md` (33 KB; install is `git clone …
   ~/.claude/skills/img2threejs`, user-global, also `~/.codex/skills/`; Python 3.10+; writes

@@ -54,7 +54,7 @@ Three facts shape the whole epic:
    right way to screenshot and snapshot a preview deploy from a session — but the guard has to
    let it through by name without unblocking `playwright test`.
 
-Already in Jamie's harness and overlapping: the `frontend-design` and `superdesign` plugins,
+Already in Jamie's harness and overlapping: the `frontend-design`, `superdesign` and `diagram-design` plugins,
 the `playwright` MCP plugin, `browser-use`, and the `design:design-system` catalogue skill. The
 research stub decides what each upstream adds beyond those; a duplicate is a drop.
 
@@ -84,13 +84,16 @@ research stub decides what each upstream adds beyond those; a duplicate is a dro
    carve-outs; no impeccable hooks, no `live`.
 5. `img2threejs-machine-install` — user-global, opt-in, documented in the one repo that can use
    it; nothing in the template.
-6. `prove-on-one-repo` — a real UI ticket on one client repo runs the whole loop end to end.
-7. `rollout-and-conformance` — MANIFEST, `icm-check.sh`, `list-skills.sh --check`, sync to the
+6. `diagram-design-for-documents` — branded editorial diagrams in proposals, free looks and
+   docs pages: Jamie's profile committed to `_system/knowledge/`, `render-deal.sh` embeds the
+   PNG, client profiles come from `DESIGN.md`; implements D46's diagram-design/archify verdict.
+7. `prove-on-one-repo` — a real UI ticket on one client repo runs the whole loop end to end.
+8. `rollout-and-conformance` — MANIFEST, `icm-check.sh`, `list-skills.sh --check`, sync to the
    estate, D46 recorded.
 
 ## Parallelizable
 
-2, 4 and 5 depend only on 1 and can run together. 3 needs 2. 6 needs 2, 3 and 4. 7 needs 6.
+2, 4, 5 and 6 depend only on 1 and can run together. 3 needs 2. 7 needs 2, 3 and 4. 8 needs 7.
 
 ## Out of scope (whole scope)
 

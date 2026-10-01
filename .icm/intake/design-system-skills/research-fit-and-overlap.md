@@ -6,11 +6,12 @@
 - size: M
 - complexity: research
 - depends-on: none
-- sequence: 1 of 7
+- sequence: 1 of 8
 - sources: Jamie, 2026-09-25 — "allow incredible front end design and customised design
   systems within each of my projects… researches and analyses how to make this work the most
   efficiently and effectively as possible" · `breakdown.md` → What I understood (the local
-  evidence gathered when this epic was cut) · the five upstream repos named there
+  evidence gathered when this epic was cut) · the five upstream repos named there ·
+  `notes/diagram-design.md` + `notes/archify.md` (2026-10-01, the diagram pair for question 9)
 
 ## Problem
 
@@ -69,15 +70,22 @@ below with evidence (file paths, upstream commits, measured token counts — nev
    and Stop hooks that download a Rust engine to `~/.impeccable/bin/` and run on every stop.
    State whether any of that is acceptable under the estate's gentle-hooks rule and the
    security posture, or whether only the hook-free `npx impeccable detect|critique` paths are.
+9. **Diagrams: diagram-design vs archify.** `cathrynlavery/diagram-design` (MIT, installed
+   here as a plugin) is the static/editorial option: forty types, a brand profile per client,
+   PNG export for a DOCX. `tt-a1i/archify` (MIT) is the interactive, source-backed option: typed
+   JSON, validation receipts, nodes pinned to git lines. Pick one default for proposals and free
+   looks and one for repo docs and handovers, and say how each fits the thin global layer. Record
+   the outcome of the archify trial on a handover, if one has run.
+   `diagram-design-for-documents` implements the verdict.
 
 End the report with a **proposed decision D46** in the register's shape (what, rejected
 alternatives, source) covering: which tools are adopted, in which layer, the carve-out, the
-`DESIGN.md` schema, and what is dropped. Do not write it to `.icm/project.md` — the decision
+`DESIGN.md` schema, the diagram defaults, and what is dropped. Do not write it to `.icm/project.md` — the decision
 is Jamie's; the report proposes.
 
 ## Acceptance
 
-- [ ] `.icm/docs/design-system-skills-research.md` exists and every one of the eight
+- [ ] `.icm/docs/design-system-skills-research.md` exists and every one of the nine
       questions above has an evidenced answer — a claim with no path, SHA or number is a gap
 - [ ] Every tool has exactly one verdict: adopt into `<layer>`, enable as a plugin, or drop —
       with the overlap that justifies a drop named
@@ -93,6 +101,6 @@ Read `.icm/intake/design-system-skills/research-fit-and-overlap.md` and
 `.icm/intake/design-system-skills/breakdown.md`, then `_system/template/README.md`,
 `_system/template/icm-pipeline/MANIFEST`, `_system/template/icm-pipeline/skills/README.md`
 and `~/.claude/hooks/block-local-checks.sh`. Fetch each of the five upstream repos' README and
-skill/manifest files at their current HEAD and record the SHA you read. Answer the eight
+skill/manifest files at their current HEAD and record the SHA you read. Answer the nine
 questions in the stub with evidence and write the report to
 `.icm/docs/design-system-skills-research.md`, ending with a proposed D46. Change nothing else.

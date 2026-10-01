@@ -5,7 +5,7 @@
 - priority: P0
 - size: M
 - depends-on: research-fit-and-overlap
-- sequence: 2 of 7
+- sequence: 2 of 8
 - sources: `breakdown.md` → What I understood (1) · `VoltAgent/awesome-design-md` README + a
   sample `design-md/<site>/DESIGN.md` (the schema, as extracted) · `pbakaus/impeccable`
   `reference/document.md` (the schema, as written: YAML token front matter + ≤ 8 fixed

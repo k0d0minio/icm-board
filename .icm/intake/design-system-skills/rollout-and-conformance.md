@@ -5,7 +5,7 @@
 - priority: P1
 - size: M
 - depends-on: prove-on-one-repo
-- sequence: 7 of 7
+- sequence: 8 of 8
 - sources: `breakdown.md` → Where it sits · `_system/template/icm-pipeline/MANIFEST` ·
   `_system/scripts/icm-check.sh` (CANONICAL, BASELINE, PIPELINE_ICM lists; `--fix` seeds,
   never overwrites) · `_system/scripts/icm-sync.sh` (`--apply`, dry-run default, T files only,

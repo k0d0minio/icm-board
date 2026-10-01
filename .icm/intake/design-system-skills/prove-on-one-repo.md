@@ -5,7 +5,7 @@
 - priority: P1
 - size: M
 - depends-on: design-md-contract, design-capability-skill, preview-inspection-tooling
-- sequence: 6 of 7
+- sequence: 7 of 8
 - sources: `breakdown.md` → Out of scope ("the proof stub picks up an existing UI ticket") ·
   `projects/casey-hebbel/.icm/intake/` (landing-page epic, €800, a separate designer owns the
   brand — the hardest `DESIGN.md` case: the brand arrives from outside) ·

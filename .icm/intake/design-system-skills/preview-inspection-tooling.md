@@ -5,7 +5,7 @@
 - priority: P1
 - size: M
 - depends-on: research-fit-and-overlap
-- sequence: 4 of 7
+- sequence: 4 of 8
 - sources: `breakdown.md` → What I understood (3) · `microsoft/playwright-cli` README +
   `skills/playwright-cli/SKILL.md` (v0.1.21: `npm i -g @playwright/cli`, `playwright-cli
   open|goto|snapshot|screenshot|console`, `.playwright/cli.config.json` → `allowedOrigins`,

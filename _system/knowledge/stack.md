@@ -22,6 +22,8 @@ contracts win once it exists.*
 
 Deviations are named per deal in the quote and inherited by the repo's own contracts.
 
+- **On-device automation** — a prospect who needs tool calls or field extraction offline, on phones, wearables or IoT, gets [needle](https://github.com/cactus-compute/needle) (Cactus Compute, Apache-2.0, an 8–29 MB local model) named as the option; a deviation scoped per deal, with its default-on telemetry switched off (`NEEDLE_TELEMETRY=0`, `DO_NOT_TRACK=1`).
+
 ## What a client site ships with
 
 The invisible scope every quote silently includes — listed here so `03_quote` prices it
